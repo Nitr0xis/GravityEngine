@@ -8,7 +8,7 @@ import sys
 
 from math import *
 
-required_moduls = ['pygame']
+required_moduls: set[str] = {'pygame'}
 
 # ensurepip.bootstrap()
 
@@ -192,7 +192,7 @@ class Circle:
 
     def draw(self, screen):
         if self.full_selected_mode:
-            if self.is_selected is True:
+            if self.is_selected:
                 self.color = DUCKY_GREEN
             else:
                 if game.screen_mode == "dark":
@@ -200,7 +200,7 @@ class Circle:
                 elif game.screen_mode == "light":
                     self.color = BLACK
         else:
-            if self.is_selected is True:
+            if self.is_selected:
                 if self.rayon <= 4:
                     pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)), int(self.rayon) + 1 + 1)
                 elif self.rayon <= 20:
@@ -227,7 +227,7 @@ class Circle:
         """
 
     def speed_power(self):
-        return 0.5 * (self.mass * 1_000_000) * (self.speed ** 2)
+        return 0.5 * self.mass * (self.speed ** 2)
 
     def switch_selection(self):
         if self.is_selected:
@@ -259,8 +259,8 @@ class Circle:
         x1 = self.x
         y1 = self.y
 
-        x2 = self.vector_length * (self.x + (self.vx * 7))
-        y2 = self.vector_length * (self.y + (self.vy * 7))
+        x2 = self.vector_length * (self.x + self.vx * 17.5 * game.speed)
+        y2 = self.vector_length * (self.y + self.vy * 17.5 * game.speed)
 
         if in_terminal:
             print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
@@ -277,8 +277,8 @@ class Circle:
         else:
             coefficient = 0
 
-        vector_x = self.force[0] * coefficient * game.vector_length
-        vector_y = self.force[1] * coefficient * game.vector_length
+        vector_x = self.force[0] * coefficient * game.vector_length * (math.sqrt(game.speed) / 8)
+        vector_y = self.force[1] * coefficient * game.vector_length * (math.sqrt(game.speed) / 8)
         end_coordinates = (self.x + vector_x, self.y + vector_y)
         if in_terminal:
             print(f"N{self.number} Start : ({self.x}; {self.y}); End : {end_coordinates}")
@@ -305,29 +305,29 @@ class Circle:
         text = f"ID : {self.number}"
         game.write(text, (20, y - 20), BLUE, 1)
 
-        if self.age < 2:
-            text = f"Age : {round(self.age * 10) / 10} s"
+        if self.age * game.speed  / 31_557_600 < 2:
+            text = f"Age : {round(self.age * game.speed  / 31_557_600 * 10) / 10} an"
             game.write(text, (20, y - 20), BLUE, 2)
         else:
-            text = f"Age : {round(self.age * 10) / 10} s"
+            text = f"Age : {round(self.age * game.speed  / 31_557_600 * 10) / 10} ans"
             game.write(text, (20, y - 20), BLUE, 2)
 
-        text = f"Masse : {round(self.mass) / 1000} t"
+        text = f"Masse : {self.mass:.2e} t"
         game.write(text, (20, y - 20), BLUE, 3)
 
         text = f"Rayon : {round(self.rayon * 10) / 10} m"
         game.write(text, (20, y - 20), BLUE, 4)
 
-        text = f"Volume : {round(self.volume * 10) / 10} m³"
+        text = f"Volume : {self.volume:.2e} m³"
         game.write(text, (20, y - 20), BLUE, 5)
 
-        text = f"Energie cinétique : {round(self.speed_power() / 1_000_000) / 1_000_000} TJ"
+        text = f"Energie cinétique : {self.speed_power():.2e} J"
         game.write(text, (20, y - 20), BLUE, 7)
 
-        text = f"Force subie : {round((math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2)) * 1_000_000) / 1_000_000} N"
+        text = f"Force subie : {math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2):.2e} N"
         game.write(text, (20, y - 20), BLUE, 8)
 
-        text = f"Vitesse : {round(self.speed * 1000) / 1000} m/s"
+        text = f"Vitesse : {self.speed:.2e} m/s"
         game.write(text, (20, y - 20), BLUE, 10)
 
         text = f"Coordonnées : {int(self.x)}; {int(self.y)}"
@@ -335,7 +335,7 @@ class Circle:
 
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
-            text = f"Corps le plus proche : n°{nearest_tuple[0]} -> {round(nearest_tuple[1])} m"
+            text = f"Corps le plus proche : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
             game.write(text, (20, y - 20), BLUE, 13)
         else:
             text = f"Corps le plus proche : n°Aucun"
@@ -354,7 +354,7 @@ class Circle:
             return 0, 0
 
         # force = game.gravity * ((self.mass * 1_000_000 * other.mass * 1_000_000) / (distance ** 2)) / 100
-        force = game.gravity * ((self.mass * other.mass) / (distance ** 2))# / 100
+        force = game.gravity * ((self.mass * other.mass) / (distance ** 2)) # / 100
         angle = atan2(dy, dx)
 
         # force
@@ -430,7 +430,7 @@ class Circle:
         # Pythagore
         distance = float(rac2((dx ** 2) + (dy ** 2)))
 
-        if game.fusions is True:
+        if game.fusions:
             if self.mass >= other.mass and distance <= self.rayon:
                 self.fusion(other)
 
@@ -488,7 +488,7 @@ class Game:
         self.txt_size = 30  # } pour modifier la taille du texte selon les dimentions de l'ecran
         self.txt_gap: int = 15  # }
 
-        self.speed = 0.5
+        self.speed = 1_000_000_00
         self.growing_speed = 0.5
 
         self.screen_mode: str = "dark"
@@ -496,13 +496,15 @@ class Game:
         self.fusions = True
 
         self.G = 6.6743 * 10 ** -11
-        self.default_gravity = 0.02
+        self.default_gravity = self.G
         self.gravity: float = self.default_gravity  # } peut etre remplacé par G. ps: c'est lent (très)
 
         self.strength_vectors = True
         self.cardinals_vectors = False
         self.vectors_in_front = True
         self.vector_length = 1
+
+        self.random_environment_number: int = 20
 
         self.random_field = 0.01  # <- en TJoules
         # }
@@ -517,7 +519,7 @@ class Game:
         pygame.display.set_caption('Gravity Engine')
 
         self.is_paused = False
-        self.vectors_printed = True
+        self.vectors_printed = False
 
         self.random_mode = False
 
@@ -556,9 +558,11 @@ class Game:
     def handle_input(self, event: pygame.event = None) -> None:
         if event.type is pygame.KEYDOWN:
             self.inputs[event.key] = True
+            return None
 
         elif event.type is pygame.KEYUP:
             self.inputs[event.key] = True
+            return None
 
         else:
             return None
@@ -648,6 +652,7 @@ class Game:
                 self.circle_selected = True
                 return None
         Text(f"Le corps n°{number} n'existe pas", 3)
+        return None
 
     def print_global_info(self, y):
         text = ""
@@ -655,7 +660,7 @@ class Game:
         heaviest_tuple = self.heaviest()
 
         if heaviest_tuple is not None:
-            text = f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {int(heaviest_tuple[1]) / 1000} t"
+            text = f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {int(heaviest_tuple[1] / 1000):.2e} t"
             self.write(text, (20, y), BLUE, 2)
         else:
             text = f"Corps le plus lourd : n°Aucun"
@@ -690,19 +695,26 @@ class Game:
 
         if self.random_mode:
             text = f"Mode aléatoire (R) : Activé"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 3)
+            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
         else:
             text = f"Mode aléatoire (R) : Désactivé"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 3)
+            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
+
+        text = f"Structure aléatoire ({self.random_environment_number} corps) : P"
+        self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 4)
+
+        text = f"Accéleration : ×{self.speed:.2e}"
+        self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+                          self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), BLUE, 0)
 
         if self.is_paused:
             text = f"Pause (Espace) : Activée"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                              self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
+                              self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
         else:
             text = f"Pause (Espace) : Désactivée"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                              self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
+                              self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
 
         text = f"Nombre de corps : {len(circles)}"
         self.write(text, (20, y), BLUE, 0)
@@ -712,26 +724,34 @@ class Game:
 
         oldest_tuple = self.oldest()
         if oldest_tuple is not None:
-            if oldest_tuple[1] < 2:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * 10) / 10} s"
+            if oldest_tuple[1] * game.speed  / 31_557_600 < 2:
+                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} an"
                 self.write(text, (20, y), BLUE, 3)
             else:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * 10) / 10} s"
+                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} ans"
                 self.write(text, (20, y), BLUE, 3)
         else:
             text = f"Corps le plus vieux : n°Aucun"
             self.write(text, (20, y), BLUE, 3)
 
-        if self.net_age() < 2:
-            text = f"Age de la simulation : {int(self.net_age() * 10) / 10}s"
+        if self.net_age() * game.speed / 31_557_600 < 2:
+            text = f"Age de la simulation : {int(self.net_age() * game.speed / 31_557_600 * 10) / 10} an"
             self.write(text, (20, self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
         else:
-            text = f"Age de la simulation : {int(self.net_age() * 10) / 10}s"
+            text = f"Age de la simulation : {int(self.net_age() * game.speed  / 31_557_600 * 10) / 10} ans"
             self.write(text, (20, self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
 
         text = f"FPS : {round(self.temp_FPS)}"
         self.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
                           int(self.screen.get_height() - 20 - game.txt_size)), BLUE, 0)
+
+    def generate_environment(self, count: int = 50):
+        for c in range(count):
+            new = Circle(x=random.uniform(0, self.screen.get_width()),
+                         y=random.uniform(0, self.screen.get_height()),
+                         rayon=0.1,
+                         mass=1)
+            circles.append(new)
 
     def get_frequency(self) -> float | None:
         frequency = 1 / self.get_latency()
@@ -800,7 +820,7 @@ class Game:
                     pygame.mixer.music.load('music1.mp3')
                     pygame.mixer.music.queue('music2.mp3')
                     pygame.mixer.music.queue('music3.mp3')
-                except:
+                except FileNotFoundError:
                     pass
 
                 pygame.mixer.music.play(0, 0, 1)
@@ -867,16 +887,19 @@ class Game:
                             self.vectors_printed = True
 
                     elif event.key == pygame.K_r:
-                        if self.random_mode is True:
+                        if self.random_mode:
                             self.random_mode = False
                         else:
                             self.random_mode = True
 
                     elif event.key == pygame.K_g:
-                        if self.reversed_gravity is True:
+                        if self.reversed_gravity:
                             self.reversed_gravity = False
                         else:
                             self.reversed_gravity = True
+
+                    elif event.key == pygame.K_p:
+                        self.generate_environment(count=self.random_environment_number)
                     # }
 
                     for circle in circles:
@@ -941,7 +964,7 @@ class Game:
 
             self.print_global_info(self.info_y)
             for circle in circles:
-                if circle.is_selected is True:
+                if circle.is_selected:
                     circle.print_info(circle.info_y)
                     pass
 
