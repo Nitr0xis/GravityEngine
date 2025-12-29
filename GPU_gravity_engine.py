@@ -23,7 +23,7 @@ import sys
 
 from math import *
 
-required_moduls: set[str] = {'pygame'}
+required_moduls: set[str] = {'pygame', 'numpy'}
 
 # ensurepip.bootstrap()
 
@@ -32,6 +32,51 @@ for modul in required_moduls:
         subprocess.check_call([sys.executable, "-m", "pip", "install", modul])
 
 import pygame
+import numpy as np
+
+# Essayer d'importer CuPy pour GPU, sinon utiliser NumPy (CPU)
+GPU_AVAILABLE = False
+cp = None
+
+try:
+    import cupy as cp
+    # Tester si le GPU est réellement utilisable
+    try:
+        # Test simple pour vérifier que le GPU fonctionne
+        test_array = cp.zeros(1)
+        del test_array
+        GPU_AVAILABLE = True
+        print("CuPy détecté - Utilisation du GPU")
+    except Exception as e:
+        # GPU non disponible (pilote CUDA insuffisant, pas de GPU, etc.)
+        cp = np
+        GPU_AVAILABLE = False
+        print(f"CuPy détecté mais GPU non utilisable - Utilisation de NumPy (CPU)")
+        print(f"Raison: {type(e).__name__}")
+        if "CUDARuntimeError" in str(type(e)) or "cudaError" in str(e):
+            print("Le pilote CUDA est insuffisant ou le GPU n'est pas accessible.")
+            print("Mise à jour du pilote NVIDIA recommandée pour utiliser le GPU.")
+except ImportError:
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "cupy-cuda12x"], 
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        import cupy as cp
+        # Tester si le GPU est réellement utilisable après installation
+        try:
+            test_array = cp.zeros(1)
+            del test_array
+            GPU_AVAILABLE = True
+            print("CuPy installé - Utilisation du GPU")
+        except Exception as e:
+            cp = np
+            GPU_AVAILABLE = False
+            print(f"CuPy installé mais GPU non utilisable - Utilisation de NumPy (CPU)")
+            print(f"Raison: {type(e).__name__}")
+    except:
+        cp = np
+        GPU_AVAILABLE = False
+        print("CuPy non disponible - Utilisation de NumPy (CPU)")
+        print("Pour utiliser le GPU, installez CuPy: pip install cupy-cuda12x (ou cupy-cuda11x selon votre version CUDA)")
 
 """
 Les parametre sont modulables des lignes 437 à 480.
@@ -76,6 +121,296 @@ def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 25
 
 def moy(l: list[float] | tuple[float] | set[float]) -> float:
     return sum(l) / len(l)
+
+
+# -----------------
+# class GPUDataManager
+# -----------------
+class GPUDataManager:
+    """Gère tous les arrays GPU pour les calculs vectorisés"""
+    def __init__(self):
+        # Utilise CuPy si disponible et fonctionnel, sinon NumPy
+        if GPU_AVAILABLE and cp is not None:
+            self.xp = cp
+        else:
+            self.xp = np
+        self.max_circles = 10000  # Taille maximale initiale
+        self.current_size = 0
+        
+        # Arrays GPU pour toutes les données
+        self.positions_x = None
+        self.positions_y = None
+        self.velocities_x = None
+        self.velocities_y = None
+        self.masses = None
+        self.radii = None
+        self.basic_masses = None
+        
+        # Arrays pour les forces (temporaires)
+        self.forces_x = None
+        self.forces_y = None
+        
+        # Mapping: index dans l'array -> Circle object
+        self.index_to_circle = {}
+        self.circle_to_index = {}
+        
+    def initialize_arrays(self, size=None):
+        """Initialise ou redimensionne les arrays GPU"""
+        if size is None:
+            size = self.max_circles
+        else:
+            self.max_circles = max(self.max_circles, size)
+        
+        dtype = self.xp.float32
+        
+        # Si on utilise CuPy et qu'il y a une erreur CUDA, basculer vers NumPy
+        try:
+            self.positions_x = self.xp.zeros(size, dtype=dtype)
+            self.positions_y = self.xp.zeros(size, dtype=dtype)
+            self.velocities_x = self.xp.zeros(size, dtype=dtype)
+            self.velocities_y = self.xp.zeros(size, dtype=dtype)
+            self.masses = self.xp.zeros(size, dtype=dtype)
+            self.radii = self.xp.zeros(size, dtype=dtype)
+            self.basic_masses = self.xp.zeros(size, dtype=dtype)
+            self.forces_x = self.xp.zeros(size, dtype=dtype)
+            self.forces_y = self.xp.zeros(size, dtype=dtype)
+        except Exception as e:
+            # Si erreur CUDA, basculer vers NumPy
+            if "cuda" in str(e).lower() or "CUDARuntimeError" in str(type(e)):
+                global GPU_AVAILABLE, cp
+                print(f"\nErreur CUDA détectée lors de l'initialisation: {e}")
+                print("Basculement automatique vers NumPy (CPU)...")
+                self.xp = np
+                cp = np
+                GPU_AVAILABLE = False
+                # Réessayer avec NumPy
+                self.positions_x = self.xp.zeros(size, dtype=dtype)
+                self.positions_y = self.xp.zeros(size, dtype=dtype)
+                self.velocities_x = self.xp.zeros(size, dtype=dtype)
+                self.velocities_y = self.xp.zeros(size, dtype=dtype)
+                self.masses = self.xp.zeros(size, dtype=dtype)
+                self.radii = self.xp.zeros(size, dtype=dtype)
+                self.basic_masses = self.xp.zeros(size, dtype=dtype)
+                self.forces_x = self.xp.zeros(size, dtype=dtype)
+                self.forces_y = self.xp.zeros(size, dtype=dtype)
+            else:
+                raise  # Relancer l'erreur si ce n'est pas une erreur CUDA
+        
+    def add_circle(self, circle, index):
+        """Ajoute un cercle aux arrays GPU"""
+        if self.positions_x is None or index >= len(self.positions_x):
+            new_size = max(self.max_circles, (index + 1) * 2)
+            self.initialize_arrays(new_size)
+        
+        self.positions_x[index] = float(circle.x)
+        self.positions_y[index] = float(circle.y)
+        self.velocities_x[index] = float(circle.vx)
+        self.velocities_y[index] = float(circle.vy)
+        self.masses[index] = float(circle.mass)
+        self.radii[index] = float(circle.radius)
+        self.basic_masses[index] = float(circle.basic_mass)
+        
+        self.index_to_circle[index] = circle
+        self.circle_to_index[circle] = index
+        self.current_size = max(self.current_size, index + 1)
+        
+    def update_circle_from_gpu(self, circle):
+        """Met à jour un cercle depuis les données GPU"""
+        if circle in self.circle_to_index:
+            idx = self.circle_to_index[circle]
+            # Synchroniser depuis GPU vers CPU
+            if GPU_AVAILABLE and self.xp is cp and hasattr(cp, 'asnumpy'):
+                circle.x = float(cp.asnumpy(self.positions_x[idx]))
+                circle.y = float(cp.asnumpy(self.positions_y[idx]))
+                circle.vx = float(cp.asnumpy(self.velocities_x[idx]))
+                circle.vy = float(cp.asnumpy(self.velocities_y[idx]))
+                circle.mass = float(cp.asnumpy(self.masses[idx]))
+                circle.radius = float(cp.asnumpy(self.radii[idx]))
+            else:
+                # NumPy ou CuPy non disponible - conversion directe
+                circle.x = float(self.positions_x[idx])
+                circle.y = float(self.positions_y[idx])
+                circle.vx = float(self.velocities_x[idx])
+                circle.vy = float(self.velocities_y[idx])
+                circle.mass = float(self.masses[idx])
+                circle.radius = float(self.radii[idx])
+                
+    def update_circle_to_gpu(self, circle):
+        """Met à jour les arrays GPU depuis un cercle"""
+        if circle in self.circle_to_index:
+            idx = self.circle_to_index[circle]
+            self.positions_x[idx] = float(circle.x)
+            self.positions_y[idx] = float(circle.y)
+            self.velocities_x[idx] = float(circle.vx)
+            self.velocities_y[idx] = float(circle.vy)
+            self.masses[idx] = float(circle.mass)
+            self.radii[idx] = float(circle.radius)
+            
+    def remove_circle(self, circle):
+        """Retire un cercle des arrays (marque comme supprimé)"""
+        if circle in self.circle_to_index:
+            idx = self.circle_to_index[circle]
+            # Marquer comme supprimé en mettant la masse à 0
+            self.masses[idx] = 0.0
+            del self.index_to_circle[idx]
+            del self.circle_to_index[circle]
+            
+    def compute_gravity_forces(self, gravity, reversed_gravity, dt):
+        """Calcule toutes les forces gravitationnelles de manière vectorisée sur GPU"""
+        n = self.current_size
+        if n == 0:
+            return
+            
+        # Réinitialiser les forces
+        self.forces_x.fill(0.0)
+        self.forces_y.fill(0.0)
+        
+        # Extraire les données actives (masse > 0)
+        active_mask = self.masses[:n] > 0
+        
+        if not self.xp.any(active_mask):
+            return
+            
+        # Positions et masses actives
+        px = self.positions_x[:n][active_mask]
+        py = self.positions_y[:n][active_mask]
+        m = self.masses[:n][active_mask]
+        r = self.radii[:n][active_mask]
+        
+        # Calcul vectorisé de toutes les paires
+        # dx[i,j] = px[j] - px[i]
+        dx = px[:, None] - px[None, :]
+        dy = py[:, None] - py[None, :]
+        
+        # Distance au carré
+        dist_sq = dx**2 + dy**2
+        
+        # Éviter la division par zéro et les collisions
+        min_dist = (r[:, None] + r[None, :])
+        dist_sq = self.xp.maximum(dist_sq, min_dist**2)
+        dist = self.xp.sqrt(dist_sq)
+        
+        # Force gravitationnelle: F = G * m1 * m2 / r^2
+        force_magnitude = gravity * (m[:, None] * m[None, :]) / dist_sq
+        
+        # Direction de la force
+        fx = force_magnitude * (dx / dist)
+        fy = force_magnitude * (dy / dist)
+        
+        if reversed_gravity:
+            fx = -fx
+            fy = -fy
+        
+        # Somme des forces sur chaque corps
+        # Masquer la diagonale (force sur soi-même)
+        mask = self.xp.eye(len(px), dtype=bool)
+        fx = self.xp.where(mask, 0, fx)
+        fy = self.xp.where(mask, 0, fy)
+        
+        total_fx = self.xp.sum(fx, axis=1)
+        total_fy = self.xp.sum(fy, axis=1)
+        
+        # Mettre à jour les vitesses: v += F/m * dt
+        active_indices = self.xp.where(active_mask)[0]
+        dt_corrected = dt * 100 * (1.0 / game.frequency) if hasattr(game, 'frequency') and game.frequency > 0 else dt
+        
+        # Éviter la division par zéro
+        m_safe = self.xp.maximum(m, 1e-10)
+        self.velocities_x[active_indices] += (total_fx / m_safe) * dt_corrected
+        self.velocities_y[active_indices] += (total_fy / m_safe) * dt_corrected
+        
+        # Mettre à jour les positions: x += v * dt
+        self.positions_x[active_indices] += self.velocities_x[active_indices] * dt_corrected * game.speed
+        self.positions_y[active_indices] += self.velocities_y[active_indices] * dt_corrected * game.speed
+        
+        # Stocker les forces pour l'affichage
+        self.forces_x[active_indices] = total_fx
+        self.forces_y[active_indices] = total_fy
+        
+    def check_collisions_and_fusions(self, circles_list):
+        """Vérifie les collisions et effectue les fusions sur GPU"""
+        n = self.current_size
+        if n < 2:
+            return
+            
+        active_mask = self.masses[:n] > 0
+        if not self.xp.any(active_mask):
+            return
+            
+        px = self.positions_x[:n][active_mask]
+        py = self.positions_y[:n][active_mask]
+        m = self.masses[:n][active_mask]
+        r = self.radii[:n][active_mask]
+        vx = self.velocities_x[:n][active_mask]
+        vy = self.velocities_y[:n][active_mask]
+        
+        active_indices = self.xp.where(active_mask)[0]
+        
+        # Calcul des distances
+        dx = px[:, None] - px[None, :]
+        dy = py[:, None] - py[None, :]
+        dist = self.xp.sqrt(dx**2 + dy**2)
+        min_dist = r[:, None] + r[None, :]
+        
+        # Masquer la diagonale
+        mask = self.xp.eye(len(px), dtype=bool)
+        collision_mask = (dist <= min_dist) & ~mask
+        
+        # Traiter les collisions (fusion)
+        if self.xp.any(collision_mask):
+            # Convertir en indices CPU pour traitement
+            if GPU_AVAILABLE and self.xp is cp and hasattr(cp, 'asnumpy'):
+                collision_mask_cpu = cp.asnumpy(collision_mask)
+                active_indices_cpu = cp.asnumpy(active_indices)
+            else:
+                # NumPy ou CuPy non disponible - conversion directe
+                collision_mask_cpu = collision_mask
+                active_indices_cpu = active_indices
+                
+            # Traiter chaque collision
+            for i in range(len(active_indices_cpu)):
+                for j in range(i+1, len(active_indices_cpu)):
+                    if collision_mask_cpu[i, j]:
+                        idx_i = int(active_indices_cpu[i])
+                        idx_j = int(active_indices_cpu[j])
+                        
+                        if idx_i in self.index_to_circle and idx_j in self.index_to_circle:
+                            circle_i = self.index_to_circle[idx_i]
+                            circle_j = self.index_to_circle[idx_j]
+                            
+                            if circle_i.mass >= circle_j.mass:
+                                # Fusion: i absorbe j
+                                total_mass = circle_i.mass + circle_j.mass
+                                new_x = (circle_i.x * circle_i.mass + circle_j.x * circle_j.mass) / total_mass
+                                new_y = (circle_i.y * circle_i.mass + circle_j.y * circle_j.mass) / total_mass
+                                new_vx = (circle_i.vx * circle_i.mass + circle_j.vx * circle_j.mass) / total_mass
+                                new_vy = (circle_i.vy * circle_i.mass + circle_j.vy * circle_j.mass) / total_mass
+                                
+                                self.positions_x[idx_i] = new_x
+                                self.positions_y[idx_i] = new_y
+                                self.velocities_x[idx_i] = new_vx
+                                self.velocities_y[idx_i] = new_vy
+                                self.masses[idx_i] = total_mass
+                                
+                                # Calculer le rayon avec rac3
+                                if total_mass != 0:
+                                    new_radius = abs(total_mass) / abs(total_mass) * abs(total_mass) ** (1/3)
+                                else:
+                                    new_radius = 0.0
+                                
+                                self.radii[idx_i] = new_radius
+                                
+                                # Mettre à jour l'objet circle_i
+                                circle_i.x = float(new_x)
+                                circle_i.y = float(new_y)
+                                circle_i.vx = float(new_vx)
+                                circle_i.vy = float(new_vy)
+                                circle_i.mass = total_mass
+                                circle_i.radius = float(new_radius)
+                                
+                                # Marquer j comme supprimé
+                                circle_j.suicide = True
+                                self.masses[idx_j] = 0.0
 
 
 # -----------------
@@ -234,8 +569,6 @@ class Circle:
                 self.radius = 1.0
                 print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
         # ----------------
-
-        #print(self.x, self.y, f"[{type((self.x, self.y))}]")
 
         if self.full_selected_mode:
             if self.is_selected:
@@ -498,7 +831,7 @@ class Circle:
         # Pythagore
         distance = rac2((dx ** 2) + (dy ** 2))
 
-        return distance < self.radius + other.radius
+        return distance <= self.radius + other.radius
 
 
 # -----------------
@@ -541,7 +874,7 @@ class Game:
         self.fusions = True
 
         self.G = 6.6743 * 10 ** -11
-        self.default_gravity = self.G
+        self.default_gravity = 2
         self.gravity: float = self.default_gravity  # } peut etre remplacé par G. ps: c'est lent (très)
 
         self.strength_vectors = True
@@ -556,7 +889,6 @@ class Game:
 
         self.info = pygame.display.Info()
         screen_size: tuple[int, int] = (self.info.current_w, self.info.current_h)
-        print(screen_size)
         if self.FULLSCREEN:
             self.screen = pygame.display.set_mode(screen_size)
         else:
@@ -600,6 +932,10 @@ class Game:
         self.inputs: dict = {}
 
         self.counter = 0
+        
+        # Initialiser le gestionnaire GPU
+        self.gpu_manager = GPUDataManager()
+        self.gpu_manager.initialize_arrays()
 
     def handle_input(self, event: pygame.event = None) -> None:
         if event.type is pygame.KEYDOWN:
@@ -820,6 +1156,10 @@ class Game:
         clock = pygame.time.Clock()
 
         self.circle_selected = False
+        
+        # Réinitialiser le gestionnaire GPU
+        self.gpu_manager = GPUDataManager()
+        self.gpu_manager.initialize_arrays()
 
         running = True
         while running:
@@ -911,6 +1251,9 @@ class Game:
                     mouse_down = False
                     if temp_circle is not None:
                         circles.append(temp_circle)
+                        # Ajouter le cercle au gestionnaire GPU
+                        idx = len(circles) - 1
+                        self.gpu_manager.add_circle(temp_circle, idx)
                         temp_circle = None
 
                 # clavier {
@@ -943,7 +1286,11 @@ class Game:
                             self.reversed_gravity = True
 
                     elif event.key == pygame.K_p:
+                        old_count = len(circles)
                         self.generate_environment(count=self.random_environment_number)
+                        # Ajouter les nouveaux cercles au gestionnaire GPU
+                        for i in range(old_count, len(circles)):
+                            self.gpu_manager.add_circle(circles[i], i)
                     # }
 
                     for circle in circles:
@@ -961,27 +1308,84 @@ class Game:
 
                 if collision_detected:
                     circles.append(temp_circle)
+                    # Ajouter le cercle au gestionnaire GPU
+                    idx = len(circles) - 1
+                    self.gpu_manager.add_circle(temp_circle, idx)
                     temp_circle = None
                     mouse_down = False
 
-            for circle in circles:
+            # Mettre à jour les arrays GPU avec les nouveaux cercles
+            for i, circle in enumerate(circles):
+                if circle not in self.gpu_manager.circle_to_index:
+                    self.gpu_manager.add_circle(circle, i)
+                else:
+                    self.gpu_manager.update_circle_to_gpu(circle)
+            
+            # Mettre à jour current_size
+            self.gpu_manager.current_size = len(circles)
+            
+            # Retirer les cercles supprimés
+            for circle in circles[:]:
                 if circle.suicide is True:
+                    self.gpu_manager.remove_circle(circle)
                     circles.remove(circle)
 
             if self.is_paused:
                 self.refresh_pause()
 
             else:
-                # now = time.time()
+                # Calculs sur GPU
+                dt = 1.0 / self.frequency if self.frequency > 0 else 1.0 / self.FPS
+                
+                # Calculer toutes les forces gravitationnelles sur GPU
+                self.gpu_manager.compute_gravity_forces(
+                    self.gravity, 
+                    self.reversed_gravity, 
+                    dt
+                )
+                
+                # Vérifier les collisions et fusions sur GPU
+                if self.fusions:
+                    self.gpu_manager.check_collisions_and_fusions(circles)
+                
+                # Synchroniser les données GPU vers CPU pour l'affichage
                 for circle in circles:
-                    for other_circle in circles:
-                        if circle != other_circle:
-                            circle.attract_forces.append(circle.attract(other_circle))
-                            circle.update_fusion(other_circle)
-                # print(f"Calcul : {time.time() - now}")
-
+                    if circle in self.gpu_manager.circle_to_index:
+                        idx = self.gpu_manager.circle_to_index[circle]
+                        self.gpu_manager.update_circle_from_gpu(circle)
+                        
+                        # Récupérer les forces depuis GPU
+                        if GPU_AVAILABLE and self.gpu_manager.xp is cp and hasattr(cp, 'asnumpy'):
+                            circle.force[0] = float(cp.asnumpy(self.gpu_manager.forces_x[idx]))
+                            circle.force[1] = float(cp.asnumpy(self.gpu_manager.forces_y[idx]))
+                        else:
+                            circle.force[0] = float(self.gpu_manager.forces_x[idx])
+                            circle.force[1] = float(self.gpu_manager.forces_y[idx])
+                        
+                        # Calculer printed_force
+                        circle.printed_force[0] = circle.force[0] / self.gravity * self.G if self.gravity != 0 else 0
+                        circle.printed_force[1] = circle.force[1] / self.gravity * self.G if self.gravity != 0 else 0
+                        
+                        # Mettre à jour les propriétés calculées
+                        circle.speed = rac2(circle.vx ** 2 + circle.vy ** 2) * self.FPS
+                        circle.surface = 4 * circle.radius ** 2 * math.pi
+                        circle.volume = 4 / 3 * math.pi * circle.radius ** 3
+                        circle.pos = (circle.x, circle.y)
+                
+                # Mettre à jour les âges et autres propriétés non-GPU
                 for circle in circles:
-                    circle.update()
+                    if not circle.is_born and circle in circles:
+                        circle.birthday = self.net_age()
+                        if self.random_mode:
+                            circle.vx = random.uniform(-1 * math.sqrt(2 * self.random_field / circle.mass),
+                                                       math.sqrt(2 * self.random_field / circle.mass))
+                            circle.vy = random.uniform(-1 * math.sqrt(2 * self.random_field / circle.mass),
+                                                       math.sqrt(2 * self.random_field / circle.mass))
+                            self.gpu_manager.update_circle_to_gpu(circle)
+                        circle.is_born = True
+                    
+                    if circle.birthday is not None:
+                        circle.age = self.net_age() - circle.birthday
 
             # now = time.time()
             if self.vectors_in_front:
