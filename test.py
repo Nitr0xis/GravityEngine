@@ -573,6 +573,8 @@ class Game:
 
         self.counter = 0
 
+        self.KEY_ACTIONS = {} # defini dans la boucle principale
+
     def handle_input(self, event: pygame.event.Event = None) -> None:
         if event.type is pygame.KEYDOWN:
             self.inputs[event.key] = True
@@ -761,6 +763,7 @@ class Game:
                           int(self.screen.get_height() - 20 - game.txt_size)), BLUE, 0)
 
     def generate_environment(self, count: int = 50):
+        count = self.random_environment_number
         for c in range(count):
             new = Circle(x=random.uniform(0, self.screen.get_width()),
                          y=random.uniform(0, self.screen.get_height()),
@@ -791,6 +794,16 @@ class Game:
         clock = pygame.time.Clock()
 
         self.circle_selected = False
+
+        self.KEY_ACTIONS = {
+                pygame.K_SPACE: ActionManager.toggle_pause,
+                pygame.K_v: ActionManager.toggle_vectors_printed,
+                pygame.K_r: ActionManager.toggle_random_mode,
+                pygame.K_g: ActionManager.toggle_reversed_gravity,
+                pygame.K_p: self.generate_environment,
+                pygame.K_DELETE: ActionManager.delete_selected_circle,
+                pygame.K_ESCAPE: ActionManager.quit_game,
+            }
 
         running = True
         while running:
@@ -884,42 +897,11 @@ class Game:
                         circles.append(temp_circle)
                         temp_circle = None
 
-                # clavier {
+                # clavier
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_ESCAPE:
-                        running = False
-
-                    elif event.key == pygame.K_SPACE:
-                        if self.is_paused:
-                            self.unpause()
-                        else:
-                            self.pause()
-
-                    elif event.key == pygame.K_v:
-                        if self.vectors_printed:
-                            self.vectors_printed = False
-                        else:
-                            self.vectors_printed = True
-
-                    elif event.key == pygame.K_r:
-                        if self.random_mode:
-                            self.random_mode = False
-                        else:
-                            self.random_mode = True
-
-                    elif event.key == pygame.K_g:
-                        if self.reversed_gravity:
-                            self.reversed_gravity = False
-                        else:
-                            self.reversed_gravity = True
-
-                    elif event.key == pygame.K_p:
-                        self.generate_environment(count=self.random_environment_number)
-                    # }
-
-                    for circle in circles:
-                        if circle.is_selected and event.key == pygame.K_DELETE:
-                            circles.remove(circle)
+                    action = self.KEY_ACTIONS.get(event.key)
+                    if action:
+                        action()     
 
             if mouse_down and temp_circle:
                 temp_circle.radius += self.growing_speed * 100 * (1 / self.frequency)
@@ -981,9 +963,6 @@ class Game:
             for circle in circles:
                 if circle.is_selected:
                     circle.print_info(circle.info_y)
-                    pass
-
-            for circle in circles:
                 circle.reset_force_list()
 
             pygame.display.flip()
@@ -991,6 +970,48 @@ class Game:
 
         pygame.quit()
         sys.exit('See you soon !')
+
+
+class ActionManager:
+    @staticmethod
+    def toggle_pause():
+        if game.is_paused:
+            game.unpause()
+        else:
+            game.pause()
+
+    @staticmethod
+    def toggle_random_mode():
+        if game.random_mode:
+            game.random_mode = False
+        else:
+            game.random_mode = True
+
+    @staticmethod
+    def toggle_reversed_gravity():
+        if game.reversed_gravity:
+            game.reversed_gravity = False
+        else:
+            game.reversed_gravity = True
+
+    @staticmethod
+    def toggle_vectors_printed():
+        if game.vectors_printed:
+            game.vectors_printed = False
+        else:
+            game.vectors_printed = True
+
+    @staticmethod
+    def quit_game():
+        pygame.quit()
+        sys.exit('See you soon !')
+
+    @staticmethod
+    def delete_selected_circle():
+        for circle in circles:
+            if circle.is_selected:
+                circles.remove(circle)
+                break
 
 
 # -----------------

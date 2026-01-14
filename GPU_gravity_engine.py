@@ -981,10 +981,8 @@ class Game:
             for circle in circles:
                 if circle.is_selected:
                     circle.print_info(circle.info_y)
+                    circle.reset_force_list()
                     pass
-
-            for circle in circles:
-                circle.reset_force_list()
 
             pygame.display.flip()
             clock.tick(self.FPS)
