@@ -1,5 +1,4 @@
-"""
-Gravity Engine by Nils DONTOT
+"""Gravity Engine by Nils DONTOT
 
 Touches:
     - Espace -> faire pause/depause
@@ -12,7 +11,7 @@ Touches:
     - Suppr -> Supprimer un corps selectionné
 """
 
-# import ensurepip
+#import ensurepip
 import importlib.util
 import random
 import subprocess
@@ -24,7 +23,7 @@ from math import *
 
 required_moduls: set[str] = {'pygame'}
 
-# ensurepip.bootstrap()
+#ensurepip.bootstrap()
 
 for modul in required_moduls:
     if importlib.util.find_spec(modul) is None:
@@ -41,32 +40,7 @@ To-do :
 
 
 ### ajouter limite de roche
-
 """
-
-
-def rac2(number) -> float:
-    return number ** (1 / 2)
-
-
-def rac3(number) -> float:
-    if number == 0:
-        return 0
-    else:
-        return abs(number) / number * abs(number) ** (1 / 3)
-
-
-def cos(angle) -> float:
-    return math.cos(angle)
-
-
-def sin(angle) -> float:
-    return math.sin(angle)
-
-
-def atan2(y, x) -> float:  # return Radians
-    return math.atan2(y, x)
-
 
 def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
               start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
@@ -182,7 +156,7 @@ class Circle:
         self.vx = 0
         self.vy = 0
 
-        self.speed = rac2(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
 
         self.suicide: bool = False
 
@@ -235,7 +209,6 @@ class Circle:
         # ----------------
 
         #print(self.x, self.y, f"[{type((self.x, self.y))}]")
-        
         if self.full_selected_mode:
             if self.is_selected:
                 self.color = DUCKY_GREEN
@@ -265,7 +238,7 @@ class Circle:
         self.rect = pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), int(self.radius))
 
         """
-        Debug tool:
+        # Debug tool:
 
         txt = game.font.render(f"{self.number}", 1, BLUE)    <- pour afficher les numero sur les cercles
         game.screen.blit(txt, (int(self.x), int(self.y)))
@@ -292,7 +265,7 @@ class Circle:
 
             if other is not self:
                 numbers.append(other.number)
-                distances.append(rac2((self.y - other.y) ** 2 + (self.x - other.x) ** 2))
+                distances.append(sqrt((self.y - other.y) ** 2 + (self.x - other.x) ** 2))
 
         if len(distances) != 0:
             return numbers[distances.index(min(distances))], min(distances)
@@ -318,7 +291,7 @@ class Circle:
         # self.force = (fx, fy)
         force = math.sqrt(self.force[0] ** 2 + self.force[1] ** 2)
         if force != 0:
-            coefficient = 5 / force * rac3(force)
+            coefficient = 5 / force * cbrt(force)
         else:
             coefficient = 0
 
@@ -393,7 +366,7 @@ class Circle:
         dx = other.x - float(self.x)
         dy = other.y - float(self.y)
 
-        distance = float(rac2((dx ** 2) + (dy ** 2)))
+        distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
         if distance <= self.radius + other.radius:
             return 0, 0
@@ -443,7 +416,7 @@ class Circle:
 
         if not self.is_born and self in circles:
             self.birthday = game.net_age()
-
+            # application de la force pour la vitesse initiale aléatoire
             if game.random_mode:
                 self.vx = random.uniform(-1 * math.sqrt(2 * game.random_field / self.mass),
                                          math.sqrt(2 * game.random_field / self.mass))
@@ -461,7 +434,7 @@ class Circle:
         if not self in circles:
             self.is_selected = False
 
-        self.speed = rac2(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
 
         self.x += self.correct_latency(self.vx * game.speed)
         self.y += self.correct_latency(self.vy * game.speed)
@@ -473,7 +446,7 @@ class Circle:
         dy = other.y - float(self.y)
 
         # Pythagore
-        distance = float(rac2((dx ** 2) + (dy ** 2)))
+        distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
         if game.fusions:
             if self.mass >= other.mass and distance <= self.radius:
@@ -487,7 +460,7 @@ class Circle:
         self.vy = (self.vy * self.mass + other.vy * other.mass) / (self.mass + other.mass)
 
         self.mass = self.mass + other.mass
-        self.radius = rac3(self.mass)
+        self.radius = cbrt(self.mass)
 
         other.suicide = True
 
@@ -496,7 +469,7 @@ class Circle:
         dy = other.y - self.y
 
         # Pythagore
-        distance = rac2((dx ** 2) + (dy ** 2))
+        distance = sqrt((dx ** 2) + (dy ** 2))
 
         return distance < self.radius + other.radius
 
@@ -551,7 +524,7 @@ class Game:
 
         self.random_environment_number: int = 20
 
-        self.random_field = 0.01  # <- en TJoules
+        self.random_field = 10 ** -17  # <- en TJoules
         # }
 
         self.info = pygame.display.Info()
@@ -600,7 +573,7 @@ class Game:
 
         self.counter = 0
 
-    def handle_input(self, event: pygame.event = None) -> None:
+    def handle_input(self, event: pygame.event.Event = None) -> None:
         if event.type is pygame.KEYDOWN:
             self.inputs[event.key] = True
             return None
@@ -700,10 +673,7 @@ class Game:
         return None
 
     def print_global_info(self, y):
-        text = ""
-
         heaviest_tuple = self.heaviest()
-
         if heaviest_tuple is not None:
             text = f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
             self.write(text, (20, y), BLUE, 2)

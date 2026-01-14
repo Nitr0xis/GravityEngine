@@ -1,19 +1,17 @@
-"""
-Gravity Engine by Nils DONTOT
+"""Gravity Engine by Nils DONTOT
 
 Touches:
     - Espace -> faire pause/depause
-    - Molette (facultatif) -> cr√©e les plus petits cops possibles
+    - Molette (facultatif) -> crÈe les plus petits cops possibles
     - V -> activer/desactiver les vecteurs de vitesse
     - R -> activer/desactiver le random_mode
-    - G -> activer/desactiver la gravit√© invers√©
+    - G -> activer/desactiver la gravitÈ inversÈ
     - Clique droit/gauche/molette -> maintenir pour faire apparaitre des corps
                                   -> selectionner/deselectionner un corps
-    - Suppr -> Supprimer un corps selectionn√©
+    - Suppr -> Supprimer un corps selectionnÈ
 """
 
-
-# import ensurepip
+#import ensurepip
 import importlib.util
 import random
 import subprocess
@@ -23,96 +21,26 @@ import sys
 
 from math import *
 
-required_moduls: set[str] = {'pygame', 'numpy'}
+required_moduls: set[str] = {'pygame'}
 
-# ensurepip.bootstrap()
+#ensurepip.bootstrap()
 
 for modul in required_moduls:
     if importlib.util.find_spec(modul) is None:
         subprocess.check_call([sys.executable, "-m", "pip", "install", modul])
 
 import pygame
-import numpy as np
-
-# Essayer d'importer CuPy pour GPU, sinon utiliser NumPy (CPU)
-GPU_AVAILABLE = False
-cp = None
-
-try:
-    import cupy as cp
-    # Tester si le GPU est r√©ellement utilisable
-    try:
-        # Test simple pour v√©rifier que le GPU fonctionne
-        test_array = cp.zeros(1)
-        del test_array
-        GPU_AVAILABLE = True
-        print("CuPy d√©tect√© - Utilisation du GPU")
-    except Exception as e:
-        # GPU non disponible (pilote CUDA insuffisant, pas de GPU, etc.)
-        cp = np
-        GPU_AVAILABLE = False
-        print(f"CuPy d√©tect√© mais GPU non utilisable - Utilisation de NumPy (CPU)")
-        print(f"Raison: {type(e).__name__}")
-        if "CUDARuntimeError" in str(type(e)) or "cudaError" in str(e):
-            print("Le pilote CUDA est insuffisant ou le GPU n'est pas accessible.")
-            print("Mise √† jour du pilote NVIDIA recommand√©e pour utiliser le GPU.")
-except ImportError:
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "cupy-cuda12x"], 
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        import cupy as cp
-        # Tester si le GPU est r√©ellement utilisable apr√®s installation
-        try:
-            test_array = cp.zeros(1)
-            del test_array
-            GPU_AVAILABLE = True
-            print("CuPy install√© - Utilisation du GPU")
-        except Exception as e:
-            cp = np
-            GPU_AVAILABLE = False
-            print(f"CuPy install√© mais GPU non utilisable - Utilisation de NumPy (CPU)")
-            print(f"Raison: {type(e).__name__}")
-    except:
-        cp = np
-        GPU_AVAILABLE = False
-        print("CuPy non disponible - Utilisation de NumPy (CPU)")
-        print("Pour utiliser le GPU, installez CuPy: pip install cupy-cuda12x (ou cupy-cuda11x selon votre version CUDA)")
 
 """
-Les parametre sont modulables des lignes 437 √† 480.
-Les commandes y sont indiqu√©es.
+Les parametre sont modulables des lignes 437 ‡ 480.
+Les commandes y sont indiquÈes.
 
 To-do : 
-    - corriger random_mode
+    - corriger les unitÈs et formules
 
 
 ### ajouter limite de roche
-
 """
-
-
-def rac2(number) -> float:
-    return number ** (1 / 2)
-
-
-def rac3(number) -> float:
-    if number == 0:
-        return 0
-    else:
-        return abs(number) / number * abs(number) ** (1 / 3)
-
-
-def cos(angle) -> float:
-    return math.cos(angle)
-
-
-def sin(angle) -> float:
-    return math.sin(angle)
-
-
-def atan2(y, x) -> float:  # return Radians
-    return math.atan2(y, x)
-
 
 def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
               start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
@@ -124,296 +52,6 @@ def moy(l: list[float] | tuple[float] | set[float]) -> float:
 
 
 # -----------------
-# class GPUDataManager
-# -----------------
-class GPUDataManager:
-    """G√®re tous les arrays GPU pour les calculs vectoris√©s"""
-    def __init__(self):
-        # Utilise CuPy si disponible et fonctionnel, sinon NumPy
-        if GPU_AVAILABLE and cp is not None:
-            self.xp = cp
-        else:
-            self.xp = np
-        self.max_circles = 10000  # Taille maximale initiale
-        self.current_size = 0
-        
-        # Arrays GPU pour toutes les donn√©es
-        self.positions_x = None
-        self.positions_y = None
-        self.velocities_x = None
-        self.velocities_y = None
-        self.masses = None
-        self.radii = None
-        self.basic_masses = None
-        
-        # Arrays pour les forces (temporaires)
-        self.forces_x = None
-        self.forces_y = None
-        
-        # Mapping: index dans l'array -> Circle object
-        self.index_to_circle = {}
-        self.circle_to_index = {}
-        
-    def initialize_arrays(self, size=None):
-        """Initialise ou redimensionne les arrays GPU"""
-        if size is None:
-            size = self.max_circles
-        else:
-            self.max_circles = max(self.max_circles, size)
-        
-        dtype = self.xp.float32
-        
-        # Si on utilise CuPy et qu'il y a une erreur CUDA, basculer vers NumPy
-        try:
-            self.positions_x = self.xp.zeros(size, dtype=dtype)
-            self.positions_y = self.xp.zeros(size, dtype=dtype)
-            self.velocities_x = self.xp.zeros(size, dtype=dtype)
-            self.velocities_y = self.xp.zeros(size, dtype=dtype)
-            self.masses = self.xp.zeros(size, dtype=dtype)
-            self.radii = self.xp.zeros(size, dtype=dtype)
-            self.basic_masses = self.xp.zeros(size, dtype=dtype)
-            self.forces_x = self.xp.zeros(size, dtype=dtype)
-            self.forces_y = self.xp.zeros(size, dtype=dtype)
-        except Exception as e:
-            # Si erreur CUDA, basculer vers NumPy
-            if "cuda" in str(e).lower() or "CUDARuntimeError" in str(type(e)):
-                global GPU_AVAILABLE, cp
-                print(f"\nErreur CUDA d√©tect√©e lors de l'initialisation: {e}")
-                print("Basculement automatique vers NumPy (CPU)...")
-                self.xp = np
-                cp = np
-                GPU_AVAILABLE = False
-                # R√©essayer avec NumPy
-                self.positions_x = self.xp.zeros(size, dtype=dtype)
-                self.positions_y = self.xp.zeros(size, dtype=dtype)
-                self.velocities_x = self.xp.zeros(size, dtype=dtype)
-                self.velocities_y = self.xp.zeros(size, dtype=dtype)
-                self.masses = self.xp.zeros(size, dtype=dtype)
-                self.radii = self.xp.zeros(size, dtype=dtype)
-                self.basic_masses = self.xp.zeros(size, dtype=dtype)
-                self.forces_x = self.xp.zeros(size, dtype=dtype)
-                self.forces_y = self.xp.zeros(size, dtype=dtype)
-            else:
-                raise  # Relancer l'erreur si ce n'est pas une erreur CUDA
-        
-    def add_circle(self, circle, index):
-        """Ajoute un cercle aux arrays GPU"""
-        if self.positions_x is None or index >= len(self.positions_x):
-            new_size = max(self.max_circles, (index + 1) * 2)
-            self.initialize_arrays(new_size)
-        
-        self.positions_x[index] = float(circle.x)
-        self.positions_y[index] = float(circle.y)
-        self.velocities_x[index] = float(circle.vx)
-        self.velocities_y[index] = float(circle.vy)
-        self.masses[index] = float(circle.mass)
-        self.radii[index] = float(circle.radius)
-        self.basic_masses[index] = float(circle.basic_mass)
-        
-        self.index_to_circle[index] = circle
-        self.circle_to_index[circle] = index
-        self.current_size = max(self.current_size, index + 1)
-        
-    def update_circle_from_gpu(self, circle):
-        """Met √† jour un cercle depuis les donn√©es GPU"""
-        if circle in self.circle_to_index:
-            idx = self.circle_to_index[circle]
-            # Synchroniser depuis GPU vers CPU
-            if GPU_AVAILABLE and self.xp is cp and hasattr(cp, 'asnumpy'):
-                circle.x = float(cp.asnumpy(self.positions_x[idx]))
-                circle.y = float(cp.asnumpy(self.positions_y[idx]))
-                circle.vx = float(cp.asnumpy(self.velocities_x[idx]))
-                circle.vy = float(cp.asnumpy(self.velocities_y[idx]))
-                circle.mass = float(cp.asnumpy(self.masses[idx]))
-                circle.radius = float(cp.asnumpy(self.radii[idx]))
-            else:
-                # NumPy ou CuPy non disponible - conversion directe
-                circle.x = float(self.positions_x[idx])
-                circle.y = float(self.positions_y[idx])
-                circle.vx = float(self.velocities_x[idx])
-                circle.vy = float(self.velocities_y[idx])
-                circle.mass = float(self.masses[idx])
-                circle.radius = float(self.radii[idx])
-                
-    def update_circle_to_gpu(self, circle):
-        """Met √† jour les arrays GPU depuis un cercle"""
-        if circle in self.circle_to_index:
-            idx = self.circle_to_index[circle]
-            self.positions_x[idx] = float(circle.x)
-            self.positions_y[idx] = float(circle.y)
-            self.velocities_x[idx] = float(circle.vx)
-            self.velocities_y[idx] = float(circle.vy)
-            self.masses[idx] = float(circle.mass)
-            self.radii[idx] = float(circle.radius)
-            
-    def remove_circle(self, circle):
-        """Retire un cercle des arrays (marque comme supprim√©)"""
-        if circle in self.circle_to_index:
-            idx = self.circle_to_index[circle]
-            # Marquer comme supprim√© en mettant la masse √† 0
-            self.masses[idx] = 0.0
-            del self.index_to_circle[idx]
-            del self.circle_to_index[circle]
-            
-    def compute_gravity_forces(self, gravity, reversed_gravity, dt):
-        """Calcule toutes les forces gravitationnelles de mani√®re vectoris√©e sur GPU"""
-        n = self.current_size
-        if n == 0:
-            return
-            
-        # R√©initialiser les forces
-        self.forces_x.fill(0.0)
-        self.forces_y.fill(0.0)
-        
-        # Extraire les donn√©es actives (masse > 0)
-        active_mask = self.masses[:n] > 0
-        
-        if not self.xp.any(active_mask):
-            return
-            
-        # Positions et masses actives
-        px = self.positions_x[:n][active_mask]
-        py = self.positions_y[:n][active_mask]
-        m = self.masses[:n][active_mask]
-        r = self.radii[:n][active_mask]
-        
-        # Calcul vectoris√© de toutes les paires
-        # dx[i,j] = px[j] - px[i]
-        dx = px[:, None] - px[None, :]
-        dy = py[:, None] - py[None, :]
-        
-        # Distance au carr√©
-        dist_sq = dx**2 + dy**2
-        
-        # √âviter la division par z√©ro et les collisions
-        min_dist = (r[:, None] + r[None, :])
-        dist_sq = self.xp.maximum(dist_sq, min_dist**2)
-        dist = self.xp.sqrt(dist_sq)
-        
-        # Force gravitationnelle: F = G * m1 * m2 / r^2
-        force_magnitude = gravity * (m[:, None] * m[None, :]) / dist_sq
-        
-        # Direction de la force
-        fx = force_magnitude * (dx / dist)
-        fy = force_magnitude * (dy / dist)
-        
-        if reversed_gravity:
-            fx = -fx
-            fy = -fy
-        
-        # Somme des forces sur chaque corps
-        # Masquer la diagonale (force sur soi-m√™me)
-        mask = self.xp.eye(len(px), dtype=bool)
-        fx = self.xp.where(mask, 0, fx)
-        fy = self.xp.where(mask, 0, fy)
-        
-        total_fx = self.xp.sum(fx, axis=1)
-        total_fy = self.xp.sum(fy, axis=1)
-        
-        # Mettre √† jour les vitesses: v += F/m * dt
-        active_indices = self.xp.where(active_mask)[0]
-        dt_corrected = dt * 100 * (1.0 / game.frequency) if hasattr(game, 'frequency') and game.frequency > 0 else dt
-        
-        # √âviter la division par z√©ro
-        m_safe = self.xp.maximum(m, 1e-10)
-        self.velocities_x[active_indices] += (total_fx / m_safe) * dt_corrected
-        self.velocities_y[active_indices] += (total_fy / m_safe) * dt_corrected
-        
-        # Mettre √† jour les positions: x += v * dt
-        self.positions_x[active_indices] += self.velocities_x[active_indices] * dt_corrected * game.speed
-        self.positions_y[active_indices] += self.velocities_y[active_indices] * dt_corrected * game.speed
-        
-        # Stocker les forces pour l'affichage
-        self.forces_x[active_indices] = total_fx
-        self.forces_y[active_indices] = total_fy
-        
-    def check_collisions_and_fusions(self, circles_list):
-        """V√©rifie les collisions et effectue les fusions sur GPU"""
-        n = self.current_size
-        if n < 2:
-            return
-            
-        active_mask = self.masses[:n] > 0
-        if not self.xp.any(active_mask):
-            return
-            
-        px = self.positions_x[:n][active_mask]
-        py = self.positions_y[:n][active_mask]
-        m = self.masses[:n][active_mask]
-        r = self.radii[:n][active_mask]
-        vx = self.velocities_x[:n][active_mask]
-        vy = self.velocities_y[:n][active_mask]
-        
-        active_indices = self.xp.where(active_mask)[0]
-        
-        # Calcul des distances
-        dx = px[:, None] - px[None, :]
-        dy = py[:, None] - py[None, :]
-        dist = self.xp.sqrt(dx**2 + dy**2)
-        min_dist = r[:, None] + r[None, :]
-        
-        # Masquer la diagonale
-        mask = self.xp.eye(len(px), dtype=bool)
-        collision_mask = (dist <= min_dist) & ~mask
-        
-        # Traiter les collisions (fusion)
-        if self.xp.any(collision_mask):
-            # Convertir en indices CPU pour traitement
-            if GPU_AVAILABLE and self.xp is cp and hasattr(cp, 'asnumpy'):
-                collision_mask_cpu = cp.asnumpy(collision_mask)
-                active_indices_cpu = cp.asnumpy(active_indices)
-            else:
-                # NumPy ou CuPy non disponible - conversion directe
-                collision_mask_cpu = collision_mask
-                active_indices_cpu = active_indices
-                
-            # Traiter chaque collision
-            for i in range(len(active_indices_cpu)):
-                for j in range(i+1, len(active_indices_cpu)):
-                    if collision_mask_cpu[i, j]:
-                        idx_i = int(active_indices_cpu[i])
-                        idx_j = int(active_indices_cpu[j])
-                        
-                        if idx_i in self.index_to_circle and idx_j in self.index_to_circle:
-                            circle_i = self.index_to_circle[idx_i]
-                            circle_j = self.index_to_circle[idx_j]
-                            
-                            if circle_i.mass >= circle_j.mass:
-                                # Fusion: i absorbe j
-                                total_mass = circle_i.mass + circle_j.mass
-                                new_x = (circle_i.x * circle_i.mass + circle_j.x * circle_j.mass) / total_mass
-                                new_y = (circle_i.y * circle_i.mass + circle_j.y * circle_j.mass) / total_mass
-                                new_vx = (circle_i.vx * circle_i.mass + circle_j.vx * circle_j.mass) / total_mass
-                                new_vy = (circle_i.vy * circle_i.mass + circle_j.vy * circle_j.mass) / total_mass
-                                
-                                self.positions_x[idx_i] = new_x
-                                self.positions_y[idx_i] = new_y
-                                self.velocities_x[idx_i] = new_vx
-                                self.velocities_y[idx_i] = new_vy
-                                self.masses[idx_i] = total_mass
-                                
-                                # Calculer le rayon avec rac3
-                                if total_mass != 0:
-                                    new_radius = abs(total_mass) / abs(total_mass) * abs(total_mass) ** (1/3)
-                                else:
-                                    new_radius = 0.0
-                                
-                                self.radii[idx_i] = new_radius
-                                
-                                # Mettre √† jour l'objet circle_i
-                                circle_i.x = float(new_x)
-                                circle_i.y = float(new_y)
-                                circle_i.vx = float(new_vx)
-                                circle_i.vy = float(new_vy)
-                                circle_i.mass = total_mass
-                                circle_i.radius = float(new_radius)
-                                
-                                # Marquer j comme supprim√©
-                                circle_j.suicide = True
-                                self.masses[idx_j] = 0.0
-
-
-# -----------------
 # class Camera
 # -----------------
 class Camera:
@@ -421,7 +59,7 @@ class Camera:
         super().__init__()
 
         self.zoom = 1
-        self.pos: list[float] = [0, 0]
+        self.pos: tuple[float, float] = (0, 0)
 
         self.zoom_speed = zoom_speed
         self.moving_speed = moving_speed
@@ -492,14 +130,14 @@ class Circle:
         game.circle_number += 1
         self.number: int = game.circle_number
 
-        self.x: float = float(x) if x is not None else 0.0
-        self.y: float = float(y) if y is not None else 0.0
+        self.x = float(x)
+        self.y = float(y)
 
         self.basic_mass = mass
         self.mass = self.basic_mass
 
         self.radius = radius
-        self.radiusn = self.mass ** (1 / 3)
+        self.radius = self.mass ** (1 / 3)
 
         self.surface = 4 * self.radius ** 2 * math.pi
         self.volume = 4 / 3 * math.pi * self.radius ** 3
@@ -518,7 +156,7 @@ class Circle:
         self.vx = 0
         self.vy = 0
 
-        self.speed = rac2(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
 
         self.suicide: bool = False
 
@@ -543,33 +181,34 @@ class Circle:
     def draw(self, screen):
         # --- SECURITY ---
         if not isinstance(self.x, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier √©l√©ment
+            # Si c'est une liste/tuple, prendre le premier ÈlÈment
             if isinstance(self.x, (list, tuple)) and len(self.x) > 0:
                 self.x = float(self.x[0])
             else:
-                # Sinon, r√©initialiser √† 0
+                # Sinon, rÈinitialiser ‡ 0
                 self.x = 0.0
                 print(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
 
         if not isinstance(self.y, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier √©l√©ment
+            # Si c'est une liste/tuple, prendre le premier ÈlÈment
             if isinstance(self.y, (list, tuple)) and len(self.y) > 0:
                 self.y = float(self.y[0])
             else:
-                # Sinon, r√©initialiser √† 0
+                # Sinon, rÈinitialiser ‡ 0
                 self.y = 0.0
                 print(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
 
         if not isinstance(self.radius, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier √©l√©ment
+            # Si c'est une liste/tuple, prendre le premier ÈlÈment
             if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
                 self.radius = float(self.radius[0])
             else:
-                # Sinon, utiliser une valeur par d√©faut
+                # Sinon, utiliser une valeur par dÈfaut
                 self.radius = 1.0
                 print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
         # ----------------
 
+        #print(self.x, self.y, f"[{type((self.x, self.y))}]")
         if self.full_selected_mode:
             if self.is_selected:
                 self.color = DUCKY_GREEN
@@ -599,7 +238,7 @@ class Circle:
         self.rect = pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), int(self.radius))
 
         """
-        Debug tool:
+        # Debug tool:
 
         txt = game.font.render(f"{self.number}", 1, BLUE)    <- pour afficher les numero sur les cercles
         game.screen.blit(txt, (int(self.x), int(self.y)))
@@ -626,7 +265,7 @@ class Circle:
 
             if other is not self:
                 numbers.append(other.number)
-                distances.append(rac2((self.y - other.y) ** 2 + (self.x - other.x) ** 2))
+                distances.append(sqrt((self.y - other.y) ** 2 + (self.x - other.x) ** 2))
 
         if len(distances) != 0:
             return numbers[distances.index(min(distances))], min(distances)
@@ -652,7 +291,7 @@ class Circle:
         # self.force = (fx, fy)
         force = math.sqrt(self.force[0] ** 2 + self.force[1] ** 2)
         if force != 0:
-            coefficient = 5 / force * rac3(force)
+            coefficient = 5 / force * cbrt(force)
         else:
             coefficient = 0
 
@@ -678,6 +317,7 @@ class Circle:
         draw_line(self.CSVy_color, (self.x, y1), (self.x, y2), self.vector_width)
 
     def print_info(self, y: int):
+        text = ""
         pygame.draw.rect(game.screen, BLUE, (20, y, 340, 5))
 
         text = f"ID : {self.number}"
@@ -696,10 +336,10 @@ class Circle:
         text = f"Rayon : {round(self.radius * 10) / 10} m"
         game.write(text, (20, y - 20), BLUE, 4)
 
-        text = f"Volume : {self.volume:.2e} m¬≥"
+        text = f"Volume : {self.volume:.2e} m≥"
         game.write(text, (20, y - 20), BLUE, 5)
 
-        text = f"Energie cin√©tique : {self.speed_power():.2e} J"
+        text = f"Energie cinÈtique : {self.speed_power():.2e} J"
         game.write(text, (20, y - 20), BLUE, 7)
 
         text = f"Force subie : {math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2):.2e} N"
@@ -708,15 +348,15 @@ class Circle:
         text = f"Vitesse : {self.speed:.2e} m/s"
         game.write(text, (20, y - 20), BLUE, 10)
 
-        text = f"Coordonn√©es : {int(self.x)}; {int(self.y)}"
+        text = f"CoordonnÈes : {int(self.x)}; {int(self.y)}"
         game.write(text, (20, y - 20), BLUE, 11)
 
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
-            text = f"Corps le plus proche : n¬∞{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
+            text = f"Corps le plus proche : n∞{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
             game.write(text, (20, y - 20), BLUE, 13)
         else:
-            text = f"Corps le plus proche : n¬∞Aucun"
+            text = f"Corps le plus proche : n∞Aucun"
             game.write(text, (20, y - 20), BLUE, 13)
 
     def reset_force_list(self):
@@ -726,7 +366,7 @@ class Circle:
         dx = other.x - float(self.x)
         dy = other.y - float(self.y)
 
-        distance = float(rac2((dx ** 2) + (dy ** 2)))
+        distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
         if distance <= self.radius + other.radius:
             return 0, 0
@@ -776,7 +416,7 @@ class Circle:
 
         if not self.is_born and self in circles:
             self.birthday = game.net_age()
-
+            # application de la force pour la vitesse initiale alÈatoire
             if game.random_mode:
                 self.vx = random.uniform(-1 * math.sqrt(2 * game.random_field / self.mass),
                                          math.sqrt(2 * game.random_field / self.mass))
@@ -794,7 +434,7 @@ class Circle:
         if not self in circles:
             self.is_selected = False
 
-        self.speed = rac2(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
 
         self.x += self.correct_latency(self.vx * game.speed)
         self.y += self.correct_latency(self.vy * game.speed)
@@ -806,21 +446,21 @@ class Circle:
         dy = other.y - float(self.y)
 
         # Pythagore
-        distance = float(rac2((dx ** 2) + (dy ** 2)))
+        distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
         if game.fusions:
             if self.mass >= other.mass and distance <= self.radius:
                 self.fusion(other)
 
     def fusion(self, other):
-        self.x = float((self.x * self.mass + other.x * other.mass) / (self.mass + other.mass))
-        self.y = float((self.y * self.mass + other.y * other.mass) / (self.mass + other.mass))
+        self.x = (self.x * self.mass + other.x * other.mass) / (self.mass + other.mass)
+        self.y = (self.y * self.mass + other.y * other.mass) / (self.mass + other.mass)
 
-        self.vx = float((self.vx * self.mass + other.vx * other.mass) / (self.mass + other.mass))
-        self.vy = float((self.vy * self.mass + other.vy * other.mass) / (self.mass + other.mass))
+        self.vx = (self.vx * self.mass + other.vx * other.mass) / (self.mass + other.mass)
+        self.vy = (self.vy * self.mass + other.vy * other.mass) / (self.mass + other.mass)
 
         self.mass = self.mass + other.mass
-        self.radius = rac3(self.mass)
+        self.radius = cbrt(self.mass)
 
         other.suicide = True
 
@@ -829,9 +469,9 @@ class Circle:
         dy = other.y - self.y
 
         # Pythagore
-        distance = rac2((dx ** 2) + (dy ** 2))
+        distance = sqrt((dx ** 2) + (dy ** 2))
 
-        return distance <= self.radius + other.radius
+        return distance < self.radius + other.radius
 
 
 # -----------------
@@ -844,13 +484,13 @@ class Game:
         """
         Touches:
             - Espace -> faire pause/depause
-            - Molette (facultatif) -> cr√©e les plus petits cops possibles
+            - Molette (facultatif) -> crÈe les plus petits cops possibles
             - V -> activer/desactiver les vecteurs de vitesse
             - R -> activer/desactiver le random_mode
-            - G -> activer/desactiver la gravit√© invers√©
+            - G -> activer/desactiver la gravitÈ inversÈ
             - Clique droit/gauche/molette -> maintenir pour faire apparaitre des corps
                                           -> selectionner/deselectionner un corps
-            - Suppr -> Supprimer un corps selectionn√©
+            - Suppr -> Supprimer un corps selectionnÈ
 
         """
 
@@ -874,8 +514,8 @@ class Game:
         self.fusions = True
 
         self.G = 6.6743 * 10 ** -11
-        self.default_gravity = 2
-        self.gravity: float = self.default_gravity  # } peut etre remplac√© par G. ps: c'est lent (tr√®s)
+        self.default_gravity = self.G
+        self.gravity: float = self.default_gravity  # } peut etre remplacÈ par G. ps: c'est lent (trËs)
 
         self.strength_vectors = True
         self.cardinals_vectors = False
@@ -884,7 +524,7 @@ class Game:
 
         self.random_environment_number: int = 20
 
-        self.random_field = 0.01  # <- en TJoules
+        self.random_field = 10 ** -17  # <- en TJoules
         # }
 
         self.info = pygame.display.Info()
@@ -932,12 +572,8 @@ class Game:
         self.inputs: dict = {}
 
         self.counter = 0
-        
-        # Initialiser le gestionnaire GPU
-        self.gpu_manager = GPUDataManager()
-        self.gpu_manager.initialize_arrays()
 
-    def handle_input(self, event: pygame.event = None) -> None:
+    def handle_input(self, event: pygame.event.Event = None) -> None:
         if event.type is pygame.KEYDOWN:
             self.inputs[event.key] = True
             return None
@@ -1033,66 +669,65 @@ class Game:
                 circle.is_selected = True
                 self.circle_selected = True
                 return None
-        Text(f"Le corps n¬∞{number} n'existe pas", 3)
+        Text(f"Le corps n∞{number} n'existe pas", 3)
         return None
 
     def print_global_info(self, y):
         heaviest_tuple = self.heaviest()
-
         if heaviest_tuple is not None:
-            text = f"Corps le plus lourd : n¬∞{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
+            text = f"Corps le plus lourd : n∞{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
             self.write(text, (20, y), BLUE, 2)
         else:
-            text = f"Corps le plus lourd : n¬∞Aucun"
+            text = f"Corps le plus lourd : n∞Aucun"
             self.write(text, (20, y), BLUE, 2)
 
-        text = "(Ce logiciel inclue un syst√®me de correction des FPS)"
+        text = "(Ce logiciel inclue un systËme de correction des FPS)"
         advertisement_printable: bool = heaviest_tuple is not None and self.screen.get_width() - \
-                                        self.font.size(f"Gravit√© invers√©e (G) : D√©sactiv√©e")[0] - self.font.size(
-            f"Corps le plus lourd : n¬∞{heaviest_tuple[0]} -> {int(heaviest_tuple[1] * 10) / 10} t")[0] > \
+                                        self.font.size(f"GravitÈ inversÈe (G) : DÈsactivÈe")[0] - self.font.size(
+            f"Corps le plus lourd : n∞{heaviest_tuple[0]} -> {int(heaviest_tuple[1] * 10) / 10} t")[0] > \
                                         self.font.size(text)[0]
         if advertisement_printable:
             self.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y), BLUE, 0)
 
         if self.circle_selected and len(circles) > 0:
-            self.write(f"D√©truire : Suppr", (
-                int((self.screen.get_width() / 2) - (self.font.size("D√©truire : Suppr")[0] / 2)),
+            self.write(f"DÈtruire : Suppr", (
+                int((self.screen.get_width() / 2) - (self.font.size("DÈtruire : Suppr")[0] / 2)),
                 y + self.txt_size + self.txt_gap), BLUE, 0)
 
         if self.reversed_gravity:
-            text = f"Gravit√© invers√©e (G) : Activ√©e"
+            text = f"GravitÈ inversÈe (G) : ActivÈe"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
         else:
-            text = f"Gravit√© invers√©e (G) : D√©sactiv√©e"
+            text = f"GravitÈ inversÈe (G) : DÈsactivÈe"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
 
         if self.vectors_printed:
-            text = f"Vecteurs (V) : Activ√©s"
+            text = f"Vecteurs (V) : ActivÈs"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
         else:
-            text = f"Vecteurs (V) : D√©sactiv√©s"
+            text = f"Vecteurs (V) : DÈsactivÈs"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
 
         if self.random_mode:
-            text = f"Mode al√©atoire (R) : Activ√©"
+            text = f"Mode alÈatoire (R) : ActivÈ"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
         else:
-            text = f"Mode al√©atoire (R) : D√©sactiv√©"
+            text = f"Mode alÈatoire (R) : DÈsactivÈ"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
 
-        text = f"Structure al√©atoire ({self.random_environment_number} corps) : P"
+        text = f"Structure alÈatoire ({self.random_environment_number} corps) : P"
         self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 4)
 
-        text = f"Acc√©leration : √ó{self.speed:.2e}"
+        text = f"AccÈleration : ◊{self.speed:.2e}"
         self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), BLUE, 0)
 
         if self.is_paused:
-            text = f"Pause (Espace) : Activ√©e"
+            text = f"Pause (Espace) : ActivÈe"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                               self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
         else:
-            text = f"Pause (Espace) : D√©sactiv√©e"
+            text = f"Pause (Espace) : DÈsactivÈe"
             self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                               self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
 
@@ -1105,13 +740,13 @@ class Game:
         oldest_tuple = self.oldest()
         if oldest_tuple is not None:
             if oldest_tuple[1] * game.speed  / 31_557_600 < 2:
-                text = f"Corps le plus vieux : n¬∞{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} an"
+                text = f"Corps le plus vieux : n∞{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} an"
                 self.write(text, (20, y), BLUE, 3)
             else:
-                text = f"Corps le plus vieux : n¬∞{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} ans"
+                text = f"Corps le plus vieux : n∞{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} ans"
                 self.write(text, (20, y), BLUE, 3)
         else:
-            text = f"Corps le plus vieux : n¬∞Aucun"
+            text = f"Corps le plus vieux : n∞Aucun"
             self.write(text, (20, y), BLUE, 3)
 
         if self.net_age() * game.speed / 31_557_600 < 2:
@@ -1156,10 +791,6 @@ class Game:
         clock = pygame.time.Clock()
 
         self.circle_selected = False
-        
-        # R√©initialiser le gestionnaire GPU
-        self.gpu_manager = GPUDataManager()
-        self.gpu_manager.initialize_arrays()
 
         running = True
         while running:
@@ -1243,7 +874,7 @@ class Game:
 
                         if can_create_circle:
                             temp_circle = Circle(x, y, 3, 1)
-                            #can_create_circle = False  <- useless
+                            can_create_circle = False
                     else:
                         temp_circle = Circle(x, y, 3, 1)
 
@@ -1251,9 +882,6 @@ class Game:
                     mouse_down = False
                     if temp_circle is not None:
                         circles.append(temp_circle)
-                        # Ajouter le cercle au gestionnaire GPU
-                        idx = len(circles) - 1
-                        self.gpu_manager.add_circle(temp_circle, idx)
                         temp_circle = None
 
                 # clavier {
@@ -1286,11 +914,7 @@ class Game:
                             self.reversed_gravity = True
 
                     elif event.key == pygame.K_p:
-                        old_count = len(circles)
                         self.generate_environment(count=self.random_environment_number)
-                        # Ajouter les nouveaux cercles au gestionnaire GPU
-                        for i in range(old_count, len(circles)):
-                            self.gpu_manager.add_circle(circles[i], i)
                     # }
 
                     for circle in circles:
@@ -1308,84 +932,27 @@ class Game:
 
                 if collision_detected:
                     circles.append(temp_circle)
-                    # Ajouter le cercle au gestionnaire GPU
-                    idx = len(circles) - 1
-                    self.gpu_manager.add_circle(temp_circle, idx)
                     temp_circle = None
                     mouse_down = False
 
-            # Mettre √† jour les arrays GPU avec les nouveaux cercles
-            for i, circle in enumerate(circles):
-                if circle not in self.gpu_manager.circle_to_index:
-                    self.gpu_manager.add_circle(circle, i)
-                else:
-                    self.gpu_manager.update_circle_to_gpu(circle)
-            
-            # Mettre √† jour current_size
-            self.gpu_manager.current_size = len(circles)
-            
-            # Retirer les cercles supprim√©s
-            for circle in circles[:]:
+            for circle in circles:
                 if circle.suicide is True:
-                    self.gpu_manager.remove_circle(circle)
                     circles.remove(circle)
 
             if self.is_paused:
                 self.refresh_pause()
 
             else:
-                # Calculs sur GPU
-                dt = 1.0 / self.frequency if self.frequency > 0 else 1.0 / self.FPS
-                
-                # Calculer toutes les forces gravitationnelles sur GPU
-                self.gpu_manager.compute_gravity_forces(
-                    self.gravity, 
-                    self.reversed_gravity, 
-                    dt
-                )
-                
-                # V√©rifier les collisions et fusions sur GPU
-                if self.fusions:
-                    self.gpu_manager.check_collisions_and_fusions(circles)
-                
-                # Synchroniser les donn√©es GPU vers CPU pour l'affichage
+                # now = time.time()
                 for circle in circles:
-                    if circle in self.gpu_manager.circle_to_index:
-                        idx = self.gpu_manager.circle_to_index[circle]
-                        self.gpu_manager.update_circle_from_gpu(circle)
-                        
-                        # R√©cup√©rer les forces depuis GPU
-                        if GPU_AVAILABLE and self.gpu_manager.xp is cp and hasattr(cp, 'asnumpy'):
-                            circle.force[0] = float(cp.asnumpy(self.gpu_manager.forces_x[idx]))
-                            circle.force[1] = float(cp.asnumpy(self.gpu_manager.forces_y[idx]))
-                        else:
-                            circle.force[0] = float(self.gpu_manager.forces_x[idx])
-                            circle.force[1] = float(self.gpu_manager.forces_y[idx])
-                        
-                        # Calculer printed_force
-                        circle.printed_force[0] = circle.force[0] / self.gravity * self.G if self.gravity != 0 else 0
-                        circle.printed_force[1] = circle.force[1] / self.gravity * self.G if self.gravity != 0 else 0
-                        
-                        # Mettre √† jour les propri√©t√©s calcul√©es
-                        circle.speed = rac2(circle.vx ** 2 + circle.vy ** 2) * self.FPS
-                        circle.surface = 4 * circle.radius ** 2 * math.pi
-                        circle.volume = 4 / 3 * math.pi * circle.radius ** 3
-                        circle.pos = (circle.x, circle.y)
-                
-                # Mettre √† jour les √¢ges et autres propri√©t√©s non-GPU
+                    for other_circle in circles:
+                        if circle != other_circle:
+                            circle.attract_forces.append(circle.attract(other_circle))
+                            circle.update_fusion(other_circle)
+                # print(f"Calcul : {time.time() - now}")
+
                 for circle in circles:
-                    if not circle.is_born and circle in circles:
-                        circle.birthday = self.net_age()
-                        if self.random_mode:
-                            circle.vx = random.uniform(-1 * math.sqrt(2 * self.random_field / circle.mass),
-                                                       math.sqrt(2 * self.random_field / circle.mass))
-                            circle.vy = random.uniform(-1 * math.sqrt(2 * self.random_field / circle.mass),
-                                                       math.sqrt(2 * self.random_field / circle.mass))
-                            self.gpu_manager.update_circle_to_gpu(circle)
-                        circle.is_born = True
-                    
-                    if circle.birthday is not None:
-                        circle.age = self.net_age() - circle.birthday
+                    circle.update()
 
             # now = time.time()
             if self.vectors_in_front:
@@ -1427,7 +994,7 @@ class Game:
 
 
 # -----------------
-# Engine
+# Starting
 # -----------------
 if __name__ == '__main__':
     pygame.init()
