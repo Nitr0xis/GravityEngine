@@ -44,7 +44,7 @@ To-do :
 
 def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
               start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
-    pygame.draw.line(game.screen, color, start_pos, end_pos, width)
+    pygame.draw.line(engine.screen, color, start_pos, end_pos, width)
 
 
 def moy(l: list[float] | tuple[float] | set[float]) -> float:
@@ -65,23 +65,23 @@ class Camera:
         self.moving_speed = moving_speed
 
     def update_data(self):
-        if pygame.K_a in game.inputs:
+        if pygame.K_a in engine.inputs:
             self.zoom -= self.zoom_speed
 
-        if pygame.K_e in game.inputs:
+        if pygame.K_e in engine.inputs:
             self.zoom += self.zoom_speed
 
         # arrows
-        if pygame.K_LEFT in game.inputs:
+        if pygame.K_LEFT in engine.inputs:
             self.pos[0] -= self.moving_speed
 
-        if pygame.K_RIGHT in game.inputs:
+        if pygame.K_RIGHT in engine.inputs:
             self.pos[0] += self.moving_speed
 
-        if pygame.K_UP in game.inputs:
+        if pygame.K_UP in engine.inputs:
             self.pos[1] -= self.moving_speed
 
-        if pygame.K_DOWN in game.inputs:
+        if pygame.K_DOWN in engine.inputs:
             self.pos[1] += self.moving_speed
 
     def update_visual(self):
@@ -96,7 +96,7 @@ class Text:
                  color: tuple[int, int, int] | tuple[int, int, int, int] = (10, 124, 235)):
         super().__init__()
 
-        game.texts.append(self)
+        engine.texts.append(self)
 
         self.birthday = time.time()
 
@@ -104,7 +104,7 @@ class Text:
         self.duration = duration
 
         self.x = dest[0]
-        self.y = dest[1] + line * (game.txt_gap + game.txt_size)
+        self.y = dest[1] + line * (engine.txt_gap + engine.txt_size)
         self.line = line
 
         self.color = color
@@ -112,8 +112,8 @@ class Text:
         self.rect = None
 
     def update(self):
-        written = game.font.render(self.text, 1, self.color)
-        self.rect = game.screen.blit(written, dest=(self.x, self.y + self.line * (game.txt_gap + game.txt_size)))
+        written = engine.font.render(self.text, 1, self.color)
+        self.rect = engine.screen.blit(written, dest=(self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)))
         return self.rect
 
 
@@ -127,8 +127,8 @@ class Circle:
         self.pos = None
         self.full_selected_mode = False
 
-        game.circle_number += 1
-        self.number: int = game.circle_number
+        engine.circle_number += 1
+        self.number: int = engine.circle_number
 
         self.x = float(x)
         self.y = float(y)
@@ -144,9 +144,9 @@ class Circle:
 
         self.rect = None
 
-        if game.screen_mode == "dark":
+        if engine.screen_mode == "dark":
             self.color = WHITE
-        elif game.screen_mode == "light":
+        elif engine.screen_mode == "light":
             self.color = BLACK
 
         self.is_selected = False
@@ -156,7 +156,7 @@ class Circle:
         self.vx = 0
         self.vy = 0
 
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS
 
         self.suicide: bool = False
 
@@ -165,10 +165,10 @@ class Circle:
         self.age = 0
         self.time_in_pause = 0
 
-        self.info_y: int = 6 * game.txt_gap + 4 * game.txt_size
+        self.info_y: int = 6 * engine.txt_gap + 4 * engine.txt_size
 
         self.vector_width = 1
-        self.vector_length = game.vector_length
+        self.vector_length = engine.vector_length
 
         self.GSV_color = RED
         self.CSVx_color = GREEN
@@ -213,9 +213,9 @@ class Circle:
             if self.is_selected:
                 self.color = DUCKY_GREEN
             else:
-                if game.screen_mode == "dark":
+                if engine.screen_mode == "dark":
                     self.color = WHITE
-                elif game.screen_mode == "light":
+                elif engine.screen_mode == "light":
                     self.color = BLACK
         else:
             if self.is_selected:
@@ -240,8 +240,8 @@ class Circle:
         """
         # Debug tool:
 
-        txt = game.font.render(f"{self.number}", 1, BLUE)    <- pour afficher les numero sur les cercles
-        game.screen.blit(txt, (int(self.x), int(self.y)))
+        txt = engine.font.render(f"{self.number}", 1, BLUE)    <- pour afficher les numero sur les cercles
+        engine.screen.blit(txt, (int(self.x), int(self.y)))
         """
 
     def speed_power(self):
@@ -277,14 +277,14 @@ class Circle:
         x1 = self.x
         y1 = self.y
 
-        x2 = self.vector_length * (self.x + self.vx * 17.5 * game.speed)
-        y2 = self.vector_length * (self.y + self.vy * 17.5 * game.speed)
+        x2 = self.vector_length * (self.x + self.vx * 17.5 * engine.speed)
+        y2 = self.vector_length * (self.y + self.vy * 17.5 * engine.speed)
 
         if in_terminal:
             print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
 
         draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
-        if game.cardinals_vectors:
+        if engine.cardinals_vectors:
             self.print_CSV()
 
     def PrintStrengthV(self, in_terminal: bool = False):
@@ -295,8 +295,8 @@ class Circle:
         else:
             coefficient = 0
 
-        vector_x = self.force[0] * coefficient * game.vector_length * (math.sqrt(game.speed) / 8)
-        vector_y = self.force[1] * coefficient * game.vector_length * (math.sqrt(game.speed) / 8)
+        vector_x = self.force[0] * coefficient * engine.vector_length * (math.sqrt(engine.speed) / 8)
+        vector_y = self.force[1] * coefficient * engine.vector_length * (math.sqrt(engine.speed) / 8)
         end_coordinates = (self.x + vector_x, self.y + vector_y)
         if in_terminal:
             print(f"N{self.number} Start : ({self.x}; {self.y}); End : {end_coordinates}")
@@ -318,46 +318,46 @@ class Circle:
 
     def print_info(self, y: int):
         text = ""
-        pygame.draw.rect(game.screen, BLUE, (20, y, 340, 5))
+        pygame.draw.rect(engine.screen, BLUE, (20, y, 340, 5))
 
         text = f"ID : {self.number}"
-        game.write(text, (20, y - 20), BLUE, 1)
+        engine.write(text, (20, y - 20), BLUE, 1)
 
-        if self.age * game.speed  / 31_557_600 < 2:
-            text = f"Age : {round(self.age * game.speed  / 31_557_600 * 10) / 10} an"
-            game.write(text, (20, y - 20), BLUE, 2)
+        if self.age * engine.speed  / 31_557_600 < 2:
+            text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} an"
+            engine.write(text, (20, y - 20), BLUE, 2)
         else:
-            text = f"Age : {round(self.age * game.speed  / 31_557_600 * 10) / 10} ans"
-            game.write(text, (20, y - 20), BLUE, 2)
+            text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} ans"
+            engine.write(text, (20, y - 20), BLUE, 2)
 
         text = f"Masse : {self.mass:.2e} t"
-        game.write(text, (20, y - 20), BLUE, 3)
+        engine.write(text, (20, y - 20), BLUE, 3)
 
         text = f"Rayon : {round(self.radius * 10) / 10} m"
-        game.write(text, (20, y - 20), BLUE, 4)
+        engine.write(text, (20, y - 20), BLUE, 4)
 
         text = f"Volume : {self.volume:.2e} m³"
-        game.write(text, (20, y - 20), BLUE, 5)
+        engine.write(text, (20, y - 20), BLUE, 5)
 
         text = f"Energie cinétique : {self.speed_power():.2e} J"
-        game.write(text, (20, y - 20), BLUE, 7)
+        engine.write(text, (20, y - 20), BLUE, 7)
 
         text = f"Force subie : {math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2):.2e} N"
-        game.write(text, (20, y - 20), BLUE, 8)
+        engine.write(text, (20, y - 20), BLUE, 8)
 
         text = f"Vitesse : {self.speed:.2e} m/s"
-        game.write(text, (20, y - 20), BLUE, 10)
+        engine.write(text, (20, y - 20), BLUE, 10)
 
         text = f"Coordonnées : {int(self.x)}; {int(self.y)}"
-        game.write(text, (20, y - 20), BLUE, 11)
+        engine.write(text, (20, y - 20), BLUE, 11)
 
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
             text = f"Corps le plus proche : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
-            game.write(text, (20, y - 20), BLUE, 13)
+            engine.write(text, (20, y - 20), BLUE, 13)
         else:
             text = f"Corps le plus proche : n°Aucun"
-            game.write(text, (20, y - 20), BLUE, 13)
+            engine.write(text, (20, y - 20), BLUE, 13)
 
     def reset_force_list(self):
         self.attract_forces = []
@@ -371,14 +371,14 @@ class Circle:
         if distance <= self.radius + other.radius:
             return 0, 0
 
-        # force = game.gravity * ((self.mass * 1_000_000 * other.mass * 1_000_000) / (distance ** 2)) / 100
-        force = game.gravity * ((self.mass * other.mass) / (distance ** 2)) # / 100
+        # force = engine.gravity * ((self.mass * 1_000_000 * other.mass * 1_000_000) / (distance ** 2)) / 100
+        force = engine.gravity * ((self.mass * other.mass) / (distance ** 2)) # / 100
         angle = atan2(dy, dx)
 
         # force
         fx = cos(angle) * force
         fy = sin(angle) * force
-        if game.reversed_gravity:
+        if engine.reversed_gravity:
             fx *= -1
             fy *= -1
 
@@ -391,7 +391,7 @@ class Circle:
 
     @staticmethod
     def correct_latency(speed: float) -> float:
-        final_speed = speed * 100 * (1 / game.frequency)
+        final_speed = speed * 100 * (1 / engine.frequency)
         return final_speed
 
     def update(self):
@@ -407,26 +407,26 @@ class Circle:
         # printed force
         self.printed_force = [0.0, 0.0]
         for f in self.attract_forces:
-            self.printed_force[0] += f[0] / game.gravity * game.G
-            self.printed_force[1] += f[1] / game.gravity * game.G
+            self.printed_force[0] += f[0] / engine.gravity * engine.G
+            self.printed_force[1] += f[1] / engine.gravity * engine.G
 
         self.printed_force[0] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
         self.printed_force[1] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
 
 
         if not self.is_born and self in circles:
-            self.birthday = game.net_age()
+            self.birthday = engine.net_age()
             # application de la force pour la vitesse initiale aléatoire
-            if game.random_mode:
-                self.vx = random.uniform(-1 * math.sqrt(2 * game.random_field / self.mass),
-                                         math.sqrt(2 * game.random_field / self.mass))
-                self.vy = random.uniform(-1 * math.sqrt(2 * game.random_field / self.mass),
-                                         math.sqrt(2 * game.random_field / self.mass))
+            if engine.random_mode:
+                self.vx = random.uniform(-1 * math.sqrt(2 * engine.random_field / self.mass),
+                                         math.sqrt(2 * engine.random_field / self.mass))
+                self.vy = random.uniform(-1 * math.sqrt(2 * engine.random_field / self.mass),
+                                         math.sqrt(2 * engine.random_field / self.mass))
 
             self.is_born = True
 
         if self.birthday is not None:
-            self.age = game.net_age() - self.birthday
+            self.age = engine.net_age() - self.birthday
 
         self.surface = 4 * self.radius ** 2 * math.pi
         self.volume = 4 / 3 * math.pi * self.radius ** 3
@@ -434,10 +434,10 @@ class Circle:
         if not self in circles:
             self.is_selected = False
 
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * game.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS
 
-        self.x += self.correct_latency(self.vx * game.speed)
-        self.y += self.correct_latency(self.vy * game.speed)
+        self.x += self.correct_latency(self.vx * engine.speed)
+        self.y += self.correct_latency(self.vy * engine.speed)
 
         self.pos = (self.x, self.y)
 
@@ -448,7 +448,7 @@ class Circle:
         # Pythagore
         distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
-        if game.fusions:
+        if engine.fusions:
             if self.mass >= other.mass and distance <= self.radius:
                 self.fusion(other)
 
@@ -475,9 +475,9 @@ class Circle:
 
 
 # -----------------
-# class Game
+# class Engine
 # -----------------
-class Game:
+class Engine:
     def __init__(self):
         # parametres {
 
@@ -748,26 +748,26 @@ class Game:
 
         oldest_tuple = self.oldest()
         if oldest_tuple is not None:
-            if oldest_tuple[1] * game.speed  / 31_557_600 < 2:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} an"
+            if oldest_tuple[1] * engine.speed  / 31_557_600 < 2:
+                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} an"
                 self.write(text, (20, y), BLUE, 3)
             else:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * game.speed  / 31_557_600 * 10) / 10} ans"
+                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} ans"
                 self.write(text, (20, y), BLUE, 3)
         else:
             text = f"Corps le plus vieux : n°Aucun"
             self.write(text, (20, y), BLUE, 3)
 
-        if self.net_age() * game.speed / 31_557_600 < 2:
-            text = f"Age de la simulation : {int(self.net_age() * game.speed / 31_557_600 * 10) / 10} an"
-            self.write(text, (20, self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
+        if self.net_age() * engine.speed / 31_557_600 < 2:
+            text = f"Age de la simulation : {int(self.net_age() * engine.speed / 31_557_600 * 10) / 10} an"
+            self.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
         else:
-            text = f"Age de la simulation : {int(self.net_age() * game.speed  / 31_557_600 * 10) / 10} ans"
-            self.write(text, (20, self.screen.get_height() - 20 - game.txt_size), BLUE, 0)
+            text = f"Age de la simulation : {int(self.net_age() * engine.speed  / 31_557_600 * 10) / 10} ans"
+            self.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
 
         text = f"FPS : {round(self.temp_FPS)}"
         self.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
-                          int(self.screen.get_height() - 20 - game.txt_size)), BLUE, 0)
+                          int(self.screen.get_height() - 20 - engine.txt_size)), BLUE, 0)
 
     def generate_environment(self, count: int = 50):
         count = self.random_environment_number
@@ -955,31 +955,31 @@ class Game:
 class ActionManager:
     @staticmethod
     def toggle_pause():
-        if game.is_paused:
-            game.unpause()
+        if engine.is_paused:
+            engine.unpause()
         else:
-            game.pause()
+            engine.pause()
 
     @staticmethod
     def toggle_random_mode():
-        if game.random_mode:
-            game.random_mode = False
+        if engine.random_mode:
+            engine.random_mode = False
         else:
-            game.random_mode = True
+            engine.random_mode = True
 
     @staticmethod
     def toggle_reversed_gravity():
-        if game.reversed_gravity:
-            game.reversed_gravity = False
+        if engine.reversed_gravity:
+            engine.reversed_gravity = False
         else:
-            game.reversed_gravity = True
+            engine.reversed_gravity = True
 
     @staticmethod
     def toggle_vectors_printed():
-        if game.vectors_printed:
-            game.vectors_printed = False
+        if engine.vectors_printed:
+            engine.vectors_printed = False
         else:
-            game.vectors_printed = True
+            engine.vectors_printed = True
 
     @staticmethod
     def quit_game(text: str = "See you soon !"):
@@ -995,44 +995,44 @@ class ActionManager:
     
     @staticmethod
     def handle_mouse_button_down(event: pygame.event):
-        game.circle_collided = None
-        game.can_create_circle = False
-        game.mouse_down = True
+        engine.circle_collided = None
+        engine.can_create_circle = False
+        engine.mouse_down = True
         x, y = pygame.mouse.get_pos()
         if len(circles) > 0:
             for circle in circles:
-                if circle.rect is not None:
-                    if circle.rect.collidepoint(event.pos):
-                        game.circle_collided = circle.number
-                        for c in circles:
-                            if c != circle:
-                                c.is_selected = False
-                            break
+                click_on_circle: bool = circle.rect is not None and circle.rect.collidepoint(event.pos)
+                if click_on_circle:
+                    engine.circle_collided = circle.number
+                    for c in circles:
+                        if c != circle:
+                            c.is_selected = False
+                        break
 
-            if game.circle_collided is not None:
+            if engine.circle_collided is not None:
                 for circle in circles:
-                    if circle.number == game.circle_collided:
+                    if circle.number == engine.circle_collided:
                         circle.switch_selection()
                         break
 
-            elif game.circle_selected:
+            elif engine.circle_selected:
                 for circle in circles:
                     circle.is_selected = False
             else:
-                game.can_create_circle = True
+                engine.can_create_circle = True
 
-            if game.can_create_circle:
-                game.temp_circle = Circle(x, y, 3, 1)
-                game.can_create_circle = False
+            if engine.can_create_circle:
+                engine.temp_circle = Circle(x, y, 3, 1)
+                engine.can_create_circle = False
         else:
-            game.temp_circle = Circle(x, y, 3, 1)
+            engine.temp_circle = Circle(x, y, 3, 1)
 
     @staticmethod
     def handle_mouse_button_up(event: pygame.event):
-        game.mouse_down = False
-        if game.temp_circle is not None:
-            circles.append(game.temp_circle)
-            game.temp_circle = None
+        engine.mouse_down = False
+        if engine.temp_circle is not None:
+            circles.append(engine.temp_circle)
+            engine.temp_circle = None
 
 
 # -----------------
@@ -1060,5 +1060,5 @@ if __name__ == '__main__':
 
     circles: list[Circle] = []
 
-    game = Game()
-    game.run()
+    engine = Engine()
+    engine.run()
