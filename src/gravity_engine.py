@@ -37,18 +37,10 @@ Les commandes y sont indiquées.
 
 To-do : 
     - corriger les unités et formules
-
+    - remplire Utils
 
 ### ajouter limite de roche
 """
-
-def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
-              start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
-    pygame.draw.line(engine.screen, color, start_pos, end_pos, width)
-
-
-def moy(l: list[float] | tuple[float] | set[float]) -> float:
-    return sum(l) / len(l)
 
 
 # -----------------
@@ -283,7 +275,7 @@ class Circle:
         if in_terminal:
             print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
 
-        draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
+        Utils.draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
         if engine.cardinals_vectors:
             self.print_CSV()
 
@@ -300,7 +292,7 @@ class Circle:
         end_coordinates = (self.x + vector_x, self.y + vector_y)
         if in_terminal:
             print(f"N{self.number} Start : ({self.x}; {self.y}); End : {end_coordinates}")
-        draw_line(SP_BLUE, (self.x, self.y), end_coordinates)
+        Utils.draw_line(SP_BLUE, (self.x, self.y), end_coordinates)
 
     def print_CSV(self, in_terminal: bool = False):
         x1 = self.x
@@ -313,51 +305,51 @@ class Circle:
             print(
                 f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) Start y : ({y1}; {self.x}); End y : ({y2}; {self.x})")
 
-        draw_line(self.CSVx_color, (x1, self.y), (x2, self.y), self.vector_width)
-        draw_line(self.CSVy_color, (self.x, y1), (self.x, y2), self.vector_width)
+        Utils.draw_line(self.CSVx_color, (x1, self.y), (x2, self.y), self.vector_width)
+        Utils.draw_line(self.CSVy_color, (self.x, y1), (self.x, y2), self.vector_width)
 
     def print_info(self, y: int):
         text = ""
         pygame.draw.rect(engine.screen, BLUE, (20, y, 340, 5))
 
         text = f"ID : {self.number}"
-        engine.write(text, (20, y - 20), BLUE, 1)
+        Utils.write(text, (20, y - 20), BLUE, 1)
 
         if self.age * engine.speed  / 31_557_600 < 2:
             text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} an"
-            engine.write(text, (20, y - 20), BLUE, 2)
+            Utils.write(text, (20, y - 20), BLUE, 2)
         else:
             text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} ans"
-            engine.write(text, (20, y - 20), BLUE, 2)
+            Utils.write(text, (20, y - 20), BLUE, 2)
 
         text = f"Masse : {self.mass:.2e} t"
-        engine.write(text, (20, y - 20), BLUE, 3)
+        Utils.write(text, (20, y - 20), BLUE, 3)
 
         text = f"Rayon : {round(self.radius * 10) / 10} m"
-        engine.write(text, (20, y - 20), BLUE, 4)
+        Utils.write(text, (20, y - 20), BLUE, 4)
 
         text = f"Volume : {self.volume:.2e} m³"
-        engine.write(text, (20, y - 20), BLUE, 5)
+        Utils.write(text, (20, y - 20), BLUE, 5)
 
         text = f"Energie cinétique : {self.speed_power():.2e} J"
-        engine.write(text, (20, y - 20), BLUE, 7)
+        Utils.write(text, (20, y - 20), BLUE, 7)
 
         text = f"Force subie : {math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2):.2e} N"
-        engine.write(text, (20, y - 20), BLUE, 8)
+        Utils.write(text, (20, y - 20), BLUE, 8)
 
         text = f"Vitesse : {self.speed:.2e} m/s"
-        engine.write(text, (20, y - 20), BLUE, 10)
+        Utils.write(text, (20, y - 20), BLUE, 10)
 
         text = f"Coordonnées : {int(self.x)}; {int(self.y)}"
-        engine.write(text, (20, y - 20), BLUE, 11)
+        Utils.write(text, (20, y - 20), BLUE, 11)
 
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
             text = f"Corps le plus proche : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
-            engine.write(text, (20, y - 20), BLUE, 13)
+            Utils.write(text, (20, y - 20), BLUE, 13)
         else:
             text = f"Corps le plus proche : n°Aucun"
-            engine.write(text, (20, y - 20), BLUE, 13)
+            Utils.write(text, (20, y - 20), BLUE, 13)
 
     def reset_force_list(self):
         self.attract_forces = []
@@ -529,8 +521,9 @@ class Engine:
 
         self.info = pygame.display.Info()
         screen_size: tuple[int, int] = (self.info.current_w, self.info.current_h)
+        available_screen_modes: list[tuple[int, int]] = pygame.display.list_modes()
         if self.FULLSCREEN:
-            self.screen = pygame.display.set_mode(screen_size)
+            self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.FULLSCREEN)
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
@@ -611,59 +604,6 @@ class Engine:
         self.pause_beginning = None
         self.is_paused = False
 
-    def write(self,
-              text: str = "[text]",
-              dest: tuple[int, int] = (0, 0),
-              color: tuple[int, int, int] = (255, 255, 255),
-              line: int = 0) -> pygame.Rect | None:
-
-        written = self.font.render(text, 1, color)
-        rect = self.screen.blit(written, dest=(dest[0], dest[1] + line * (self.txt_gap + self.txt_size)))
-        return rect
-
-    @staticmethod
-    def heaviest() -> tuple | None:
-        circles_mass = []
-
-        if len(circles) != 0:
-
-            for circle in circles:
-                circles_mass.append(circle.mass)
-
-            index = circles_mass.index(max(circles_mass))
-            circle_id = circles[index].number
-
-            return circle_id, max(circles_mass)
-
-        else:
-            return None
-
-    @staticmethod
-    def oldest() -> tuple | None:
-        circles_age = []
-
-        if len(circles) != 0:
-
-            for circle in circles:
-                circles_age.append(circle.age)
-
-            index = circles_age.index(max(circles_age))
-            circle_id = circles[index].number
-
-            return circle_id, max(circles_age)
-
-        else:
-            return None
-
-    @staticmethod
-    def mass_sum() -> int:
-        all_mass = 0
-
-        for circle in circles:
-            all_mass += circle.mass
-
-        return all_mass
-
     def brut_age(self) -> float | None:
         age = time.time() - self.beginning_hour
         return age
@@ -682,13 +622,13 @@ class Engine:
         return None
 
     def print_global_info(self, y):
-        heaviest_tuple = self.heaviest()
+        heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
             text = f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
-            self.write(text, (20, y), BLUE, 2)
+            Utils.write(text, (20, y), BLUE, 2)
         else:
             text = f"Corps le plus lourd : n°Aucun"
-            self.write(text, (20, y), BLUE, 2)
+            Utils.write(text, (20, y), BLUE, 2)
 
         text = "(Ce logiciel inclue un système de correction des FPS)"
         advertisement_printable: bool = heaviest_tuple is not None and self.screen.get_width() - \
@@ -696,77 +636,77 @@ class Engine:
             f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {int(heaviest_tuple[1] * 10) / 10} t")[0] > \
                                         self.font.size(text)[0]
         if advertisement_printable:
-            self.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y), BLUE, 0)
+            Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y), BLUE, 0)
 
         if self.circle_selected and len(circles) > 0:
-            self.write(f"Détruire : Suppr", (
+            Utils.write(f"Détruire : Suppr", (
                 int((self.screen.get_width() / 2) - (self.font.size("Détruire : Suppr")[0] / 2)),
                 y + self.txt_size + self.txt_gap), BLUE, 0)
 
         if self.reversed_gravity:
             text = f"Gravité inversée (G) : Activée"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
         else:
             text = f"Gravité inversée (G) : Désactivée"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
 
         if self.vectors_printed:
             text = f"Vecteurs (V) : Activés"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
         else:
             text = f"Vecteurs (V) : Désactivés"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
 
         if self.random_mode:
             text = f"Mode aléatoire (R) : Activé"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
         else:
             text = f"Mode aléatoire (R) : Désactivé"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
 
         text = f"Structure aléatoire ({self.random_environment_number} corps) : P"
-        self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 4)
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 4)
 
         text = f"Facteur temps : ×{self.speed:.2e}"
-        self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), BLUE, 0)
 
         if self.is_paused:
             text = f"Pause (Espace) : Activée"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                               self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
         else:
             text = f"Pause (Espace) : Désactivée"
-            self.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                               self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
 
         text = f"Nombre de corps : {len(circles)}"
-        self.write(text, (20, y), BLUE, 0)
+        Utils.write(text, (20, y), BLUE, 0)
 
-        text = f"Masse totale : {round(self.mass_sum() / 1000) / 1000} kt"
-        self.write(text, (20, y), BLUE, 1)
+        text = f"Masse totale : {round(Utils.mass_sum() / 1000) / 1000} kt"
+        Utils.write(text, (20, y), BLUE, 1)
 
-        oldest_tuple = self.oldest()
+        oldest_tuple = Utils.oldest()
         if oldest_tuple is not None:
             if oldest_tuple[1] * engine.speed  / 31_557_600 < 2:
                 text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} an"
-                self.write(text, (20, y), BLUE, 3)
+                Utils.write(text, (20, y), BLUE, 3)
             else:
                 text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} ans"
-                self.write(text, (20, y), BLUE, 3)
+                Utils.write(text, (20, y), BLUE, 3)
         else:
             text = f"Corps le plus vieux : n°Aucun"
-            self.write(text, (20, y), BLUE, 3)
+            Utils.write(text, (20, y), BLUE, 3)
 
         if self.net_age() * engine.speed / 31_557_600 < 2:
             text = f"Age de la simulation : {int(self.net_age() * engine.speed / 31_557_600 * 10) / 10} an"
-            self.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
+            Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
         else:
             text = f"Age de la simulation : {int(self.net_age() * engine.speed  / 31_557_600 * 10) / 10} ans"
-            self.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
+            Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
 
         text = f"FPS : {round(self.temp_FPS)}"
-        self.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
+        Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
                           int(self.screen.get_height() - 20 - engine.txt_size)), BLUE, 0)
 
     def generate_environment(self, count: int = 50):
@@ -1039,7 +979,64 @@ class ActionManager:
 # class Utils
 # -----------------
 class Utils:
-    pass
+    @staticmethod
+    def heaviest() -> tuple | None:
+        circles_mass = []
+
+        if len(circles) != 0:
+
+            for circle in circles:
+                circles_mass.append(circle.mass)
+
+            index = circles_mass.index(max(circles_mass))
+            circle_id = circles[index].number
+
+            return circle_id, max(circles_mass)
+
+        else:
+            return None
+
+    @staticmethod
+    def oldest() -> tuple | None:
+        circles_age = []
+
+        if len(circles) != 0:
+
+            for circle in circles:
+                circles_age.append(circle.age)
+
+            index = circles_age.index(max(circles_age))
+            circle_id = circles[index].number
+
+            return circle_id, max(circles_age)
+
+        else:
+            return None
+
+    @staticmethod
+    def mass_sum() -> int:
+        all_mass = 0
+        for circle in circles:
+            all_mass += circle.mass
+        return all_mass
+
+    @staticmethod
+    def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
+              start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
+        pygame.draw.line(engine.screen, color, start_pos, end_pos, width)
+
+    @staticmethod
+    def moy(l: list[float] | tuple[float] | set[float]) -> float:
+        return sum(l) / len(l)
+
+    @staticmethod
+    def write(text: str = "[text]",
+              dest: tuple[int, int] = (0, 0),
+              color: tuple[int, int, int] = (255, 255, 255),
+              line: int = 0) -> pygame.Rect | None:
+        written = engine.font.render(text, 1, color)
+        rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
+        return rect
 
 
 # -----------------
