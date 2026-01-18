@@ -1,14 +1,23 @@
-"""Gravity Engine by Nils DONTOT
+"""
+Gravity Engine by Nils DONTOT
+Copyright (c) 2026 Nils DONTOT
 
-Touches:
-    - Espace -> faire pause/depause
-    - Molette (facultatif) -> crée les plus petits cops possibles
-    - V -> activer/desactiver les vecteurs de vitesse
-    - R -> activer/desactiver le random_mode
-    - G -> activer/desactiver la gravité inversé
-    - Clique droit/gauche/molette -> maintenir pour faire apparaitre des corps
-                                  -> selectionner/deselectionner un corps
-    - Suppr -> Supprimer un corps selectionné
+--- Informations ---
+Email: nils.dontot.pro@gmail.com
+GitHub account: https://github.com/NilsDontot/
+GitHub repository: https://github.com/NilsDontot/GravityEngine/
+LICENCE: https://github.com/NilsDontot/GravityEngine/blob/main/LICENSE, Creative Commons BY-NC-SA 4.0 License
+README: https://github.com/NilsDontot/GravityEngine/blob/main/README.md
+
+Controls:
+    - Space -> pause/unpause
+    - Mouse wheel (optional) -> create the smallest bodies possible
+    - V -> toggle velocity vectors display
+    - R -> toggle random_mode
+    - G -> toggle reversed gravity
+    - Left/Right/Wheel click -> hold to create bodies
+                             -> select/deselect a body
+    - Delete -> Delete selected body
 """
 
 
@@ -23,40 +32,40 @@ from math import *
 
 REQUIRED_MODULES: set[str] = {'pygame'}
 
-for modul in REQUIRED_MODULES:
-    if importlib.util.find_spec(modul) is None:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", modul])
+for module in REQUIRED_MODULES:
+    if importlib.util.find_spec(module) is None:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", module])
 
 import pygame
 
 """
-To-do : 
-    - corriger les unités et formules
-    - remplacer l'affichage en pixel par des fractions d'ecran
+Todo:
+    - fix units and formulas
+    - replace pixel display with screen fractions
 
-Idées :
-    - trasfere de masse lorsque collision sans fusion
-    - reflechir au systeme de quadtree pour les forces
+Ideas:
+    - mass transfer on collision without fusion
+    - consider quadtree system for forces
 
-### ajouter limite de roche
+### add rock limit
 """
 
 
 # -----------------
-# class Text
+# class TempText
 # -----------------
 class TempText:
     def __init__(self, text: str = "", duration: float = 1, dest: tuple[float, float] = (0, 0), line: int = 0,
                  color: tuple[int, int, int] | tuple[int, int, int, int] = (10, 124, 235)):
         """
-        Used to display a temporary text on the screen.
-        It is automatically removed from the list when the duration is over.
+        Used to display temporary text on the screen.
+        It is automatically removed from the list when the duration expires.
         """
         super().__init__()
 
         engine.temp_texts.append(self)
 
-        self.birthday = time.time()
+        self.birth_time = time.time()
 
         self.text = text
         self.duration = duration
@@ -66,17 +75,16 @@ class TempText:
         self.line = line
         self.color = color
 
-        self.birthday = time.time()
-
         self.rect = None
 
     def update(self):
-        if time.time() - self.birthday > self.duration:
+        if time.time() - self.birth_time > self.duration:
             if self in engine.temp_texts:
                 engine.temp_texts.remove(self)
             return False
         else:
-            Utils.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)), self.color)
+            Utils.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
+                        self.color)
             return True
 
 
@@ -124,7 +132,7 @@ class Circle:
         self.suicide: bool = False
 
         self.is_born = False
-        self.birthday = None
+        self.birth_time = None
         self.age = 0
         self.time_in_pause = 0
 
@@ -134,39 +142,39 @@ class Circle:
         self.vector_length = engine.vector_length
 
         self.GSV_color = RED
-        self.CSVx_color = GREEN
-        self.CSVy_color = YELLOW
+        self.CSV_x_color = GREEN
+        self.CSV_y_color = YELLOW
 
         self.attract_forces: list[tuple[float, float]] = []
-        self.force: list[float] = [0.0, 0.0]   # tjrs que deux elements
-        self.printed_force: list[float] = [0.0, 0.0]    # tjrs que deux elements
+        self.force: list[float] = [0.0, 0.0]
+        self.printed_force: list[float] = [0.0, 0.0]
 
     def draw(self, screen):
         # --- SECURITY ---
         if not isinstance(self.x, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier élément
+            # If list/tuple, take first element
             if isinstance(self.x, (list, tuple)) and len(self.x) > 0:
                 self.x = float(self.x[0])
             else:
-                # Sinon, réinitialiser à 0
+                # Otherwise, reset to 0
                 self.x = 0.0
                 print(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
 
         if not isinstance(self.y, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier élément
+            # If list/tuple, take first element
             if isinstance(self.y, (list, tuple)) and len(self.y) > 0:
                 self.y = float(self.y[0])
             else:
-                # Sinon, réinitialiser à 0
+                # Otherwise, reset to 0
                 self.y = 0.0
                 print(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
 
         if not isinstance(self.radius, (int, float)):
-            # Si c'est une liste/tuple, prendre le premier élément
+            # If list/tuple, take first element
             if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
                 self.radius = float(self.radius[0])
             else:
-                # Sinon, utiliser une valeur par défaut
+                # Otherwise, use default value
                 self.radius = 1.0
                 print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
         # ----------------
@@ -183,18 +191,21 @@ class Circle:
         else:
             if self.is_selected:
                 if self.radius <= 4:
-                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)), int(self.radius) + 1 + 1)
+                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
+                                       int(self.radius) + 1 + 1)
                 elif self.radius <= 20:
                     pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
                                        int(self.radius) + self.radius / 4 + 1)
                 else:
-                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)), int(self.radius) + 4 + 1)
+                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
+                                       int(self.radius) + 4 + 1)
 
         if not self.is_selected:
             if self.radius <= 4:
                 pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)), int(self.radius) + 1)
             elif self.radius <= 20:
-                pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)), int(self.radius) + self.radius / 5)
+                pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)),
+                                   int(self.radius) + self.radius / 5)
             else:
                 pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)), int(self.radius) + 3)
 
@@ -202,8 +213,7 @@ class Circle:
 
         """
         # Debug tool:
-
-        txt = engine.font.render(f"{self.number}", 1, BLUE)    <- pour afficher les numero sur les cercles
+        txt = engine.font.render(f"{self.number}", 1, BLUE)
         engine.screen.blit(txt, (int(self.x), int(self.y)))
         """
 
@@ -211,13 +221,11 @@ class Circle:
         return 0.5 * self.mass * (self.speed ** 2)
 
     def switch_selection(self):
-        if self.is_selected:
-            self.is_selected = False
-        else:
-            self.is_selected = True
+        self.is_selected = not self.is_selected
 
     def get_nearest(self) -> tuple[int, float] | None:
         """
+        Find the nearest body.
 
         :return: (ID of the nearest, distance)
         """
@@ -225,18 +233,17 @@ class Circle:
         distances = []
 
         for other in circles:
-
             if other is not self:
                 numbers.append(other.number)
                 distances.append(sqrt((self.y - other.y) ** 2 + (self.x - other.x) ** 2))
 
         if len(distances) != 0:
             return numbers[distances.index(min(distances))], min(distances)
-
         else:
             return None
 
     def print_GSV(self, in_terminal: bool = False):
+        """Print Global Speed Vector."""
         x1 = self.x
         y1 = self.y
 
@@ -247,11 +254,11 @@ class Circle:
             print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
 
         Utils.draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
-        if engine.cardinals_vectors:
+        if engine.cardinal_vectors:
             self.print_CSV()
 
-    def PrintStrengthV(self, in_terminal: bool = False):
-        # self.force = (fx, fy)
+    def print_strength_vector(self, in_terminal: bool = False):
+        """Print the force vector."""
         force = math.sqrt(self.force[0] ** 2 + self.force[1] ** 2)
         if force != 0:
             coefficient = 5 / force * cbrt(force)
@@ -261,11 +268,13 @@ class Circle:
         vector_x = self.force[0] * coefficient * engine.vector_length * (math.sqrt(engine.speed) / 8)
         vector_y = self.force[1] * coefficient * engine.vector_length * (math.sqrt(engine.speed) / 8)
         end_coordinates = (self.x + vector_x, self.y + vector_y)
+
         if in_terminal:
             print(f"N{self.number} Start : ({self.x}; {self.y}); End : {end_coordinates}")
         Utils.draw_line(SP_BLUE, (self.x, self.y), end_coordinates)
 
     def print_CSV(self, in_terminal: bool = False):
+        """Print Cardinal Speed Vectors (X and Y components)."""
         x1 = self.x
         x2 = self.x + self.vx * 7
 
@@ -273,59 +282,63 @@ class Circle:
         y2 = self.y + self.vy * 7
 
         if in_terminal:
-            print(
-                f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) Start y : ({y1}; {self.x}); End y : ({y2}; {self.x})")
+            print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) " \
+                  f"Start y : ({y1}; {self.x}); End y : ({y2}; {self.x})")
 
-        Utils.draw_line(self.CSVx_color, (x1, self.y), (x2, self.y), self.vector_width)
-        Utils.draw_line(self.CSVy_color, (self.x, y1), (self.x, y2), self.vector_width)
+        Utils.draw_line(self.CSV_x_color, (x1, self.y), (x2, self.y), self.vector_width)
+        Utils.draw_line(self.CSV_y_color, (self.x, y1), (self.x, y2), self.vector_width)
 
     def print_info(self, y: int):
-        text = ""
+        """Display detailed body information."""
         pygame.draw.rect(engine.screen, BLUE, (20, y, 340, 5))
 
         text = f"ID : {self.number}"
         Utils.write(text, (20, y - 20), BLUE, 1)
 
-        if self.age * engine.speed  / 31_557_600 < 2:
-            text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} an"
+        # Age display
+        if self.age * engine.speed / 31_557_600 < 2:
+            text = f"Age : {round(self.age * engine.speed / 31_557_600 * 10) / 10} year"
             Utils.write(text, (20, y - 20), BLUE, 2)
         else:
-            text = f"Age : {round(self.age * engine.speed  / 31_557_600 * 10) / 10} ans"
+            text = f"Age : {round(self.age * engine.speed / 31_557_600 * 10) / 10} years"
             Utils.write(text, (20, y - 20), BLUE, 2)
 
-        text = f"Masse : {self.mass:.2e} t"
+        text = f"Mass : {self.mass:.2e} t"
         Utils.write(text, (20, y - 20), BLUE, 3)
 
-        text = f"Rayon : {round(self.radius * 10) / 10} m"
+        text = f"Radius : {round(self.radius * 10) / 10} m"
         Utils.write(text, (20, y - 20), BLUE, 4)
 
         text = f"Volume : {self.volume:.2e} m³"
         Utils.write(text, (20, y - 20), BLUE, 5)
 
-        text = f"Energie cinétique : {self.speed_power():.2e} J"
+        text = f"Kinetic energy : {self.speed_power():.2e} J"
         Utils.write(text, (20, y - 20), BLUE, 7)
 
-        text = f"Force subie : {math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2):.2e} N"
+        force_magnitude = math.sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2)
+        text = f"Force applied : {force_magnitude:.2e} N"
         Utils.write(text, (20, y - 20), BLUE, 8)
 
-        text = f"Vitesse : {self.speed:.2e} m/s"
+        text = f"Velocity : {self.speed:.2e} m/s"
         Utils.write(text, (20, y - 20), BLUE, 10)
 
-        text = f"Coordonnées : {int(self.x)}; {int(self.y)}"
+        text = f"Coordinates : {int(self.x)}; {int(self.y)}"
         Utils.write(text, (20, y - 20), BLUE, 11)
 
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
-            text = f"Corps le plus proche : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
+            text = f"Nearest body : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
             Utils.write(text, (20, y - 20), BLUE, 13)
         else:
-            text = f"Corps le plus proche : n°Aucun"
+            text = f"Nearest body : None"
             Utils.write(text, (20, y - 20), BLUE, 13)
 
     def reset_force_list(self):
+        """Clear the forces list."""
         self.attract_forces = []
 
     def attract(self, other, effective: bool = True) -> tuple[float, float]:
+        """Calculate gravitational attraction with another body."""
         dx = other.x - float(self.x)
         dy = other.y - float(self.y)
 
@@ -334,19 +347,17 @@ class Circle:
         if distance <= self.radius + other.radius:
             return 0, 0
 
-        # force = engine.gravity * ((self.mass * 1_000_000 * other.mass * 1_000_000) / (distance ** 2)) / 100
-        force = engine.gravity * ((self.mass * other.mass) / (distance ** 2)) # / 100
+        force = engine.gravity * ((self.mass * other.mass) / (distance ** 2))
         angle = atan2(dy, dx)
 
-        # force
         fx = cos(angle) * force
         fy = sin(angle) * force
+
         if engine.reversed_gravity:
             fx *= -1
             fy *= -1
 
         if effective:
-            # velocity
             self.vx += fx / self.mass
             self.vy += fy / self.mass
 
@@ -354,32 +365,35 @@ class Circle:
 
     @staticmethod
     def correct_latency(speed: float) -> float:
+        """Correct latency based on frame rate."""
         final_speed = speed * 100 * (1 / engine.frequency)
         return final_speed
 
     def update(self):
-        # real force
+        """Update physical state of the body."""
+        # Real force
         self.force = [0.0, 0.0]
         for f in self.attract_forces:
             self.force[0] += f[0]
             self.force[1] += f[1]
 
-        self.force[0] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
-        self.force[1] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
+        if len(self.attract_forces) > 0:
+            self.force[0] /= len(self.attract_forces)
+            self.force[1] /= len(self.attract_forces)
 
-        # printed force
+        # Printed force
         self.printed_force = [0.0, 0.0]
         for f in self.attract_forces:
             self.printed_force[0] += f[0] / engine.gravity * engine.G
             self.printed_force[1] += f[1] / engine.gravity * engine.G
 
-        self.printed_force[0] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
-        self.printed_force[1] /= len(self.attract_forces) if len(self.attract_forces) != 0 else 1
-
+        if len(self.attract_forces) > 0:
+            self.printed_force[0] /= len(self.attract_forces)
+            self.printed_force[1] /= len(self.attract_forces)
 
         if not self.is_born and self in circles:
-            self.birthday = engine.net_age()
-            # application de la force pour la vitesse initiale aléatoire
+            self.birth_time = engine.net_age()
+            # Apply random initial velocity if random mode enabled
             if engine.random_mode:
                 self.vx = random.uniform(-1 * math.sqrt(2 * engine.random_field / self.mass),
                                          math.sqrt(2 * engine.random_field / self.mass))
@@ -388,8 +402,8 @@ class Circle:
 
             self.is_born = True
 
-        if self.birthday is not None:
-            self.age = engine.net_age() - self.birthday
+        if self.birth_time is not None:
+            self.age = engine.net_age() - self.birth_time
 
         self.surface = 4 * self.radius ** 2 * math.pi
         self.volume = 4 / 3 * math.pi * self.radius ** 3
@@ -405,10 +419,10 @@ class Circle:
         self.pos = (self.x, self.y)
 
     def update_fusion(self, other):
+        """Check and perform fusion with another body if applicable."""
         dx = other.x - float(self.x)
         dy = other.y - float(self.y)
 
-        # Pythagore
         distance = float(sqrt((dx ** 2) + (dy ** 2)))
 
         if engine.fusions:
@@ -416,22 +430,24 @@ class Circle:
                 self.fusion(other)
 
     def fusion(self, other):
-        self.x = (self.x * self.mass + other.x * other.mass) / (self.mass + other.mass)
-        self.y = (self.y * self.mass + other.y * other.mass) / (self.mass + other.mass)
+        """Merge two bodies conserving momentum."""
+        total_mass = self.mass + other.mass
+        self.x = (self.x * self.mass + other.x * other.mass) / total_mass
+        self.y = (self.y * self.mass + other.y * other.mass) / total_mass
 
-        self.vx = (self.vx * self.mass + other.vx * other.mass) / (self.mass + other.mass)
-        self.vy = (self.vy * self.mass + other.vy * other.mass) / (self.mass + other.mass)
+        self.vx = (self.vx * self.mass + other.vx * other.mass) / total_mass
+        self.vy = (self.vy * self.mass + other.vy * other.mass) / total_mass
 
-        self.mass = self.mass + other.mass
+        self.mass = total_mass
         self.radius = cbrt(self.mass)
 
         other.suicide = True
 
-    def is_colliding_with(self, other):
+    def is_colliding_with(self, other) -> bool:
+        """Check collision with another body."""
         dx = other.x - self.x
         dy = other.y - self.y
 
-        # Pythagore
         distance = sqrt((dx ** 2) + (dy ** 2))
 
         return distance < self.radius + other.radius
@@ -442,53 +458,48 @@ class Circle:
 # -----------------
 class Engine:
     def __init__(self):
-        # parametres {
-
         """
-        Touches:
-            - Espace -> faire pause/depause
-            - Molette (facultatif) -> crée les plus petits cops possibles
-            - V -> activer/desactiver les vecteurs de vitesse
-            - R -> activer/desactiver le random_mode
-            - G -> activer/desactiver la gravité inversé
-            - Clique droit/gauche/molette -> maintenir pour faire apparaitre des corps
-                                          -> selectionner/deselectionner un corps
-            - Suppr -> Supprimer un corps selectionné
-
+        Controls:
+            - Space -> pause/unpause
+            - Mouse wheel (optional) -> create smallest bodies possible
+            - V -> toggle velocity vectors
+            - R -> toggle random_mode
+            - G -> toggle reversed gravity
+            - Left/Right/Wheel click -> hold to create bodies
+                                    -> select/deselect body
+            - Delete -> Delete selected body
         """
 
         self.FULLSCREEN = True
 
-        WIDTH: int = 0  # } <- seulement dans le cas ou FULLSCREEN est desactive
-        HEIGHT: int = 0  # }
+        WIDTH: int = 0
+        HEIGHT: int = 0
 
-        self.used_font = 'assets/font.ttf'  # <- fichier en .ttf pour la police d'ecriture
+        self.used_font = 'assets/font.ttf'
 
         self.FPS = 120
 
-        self.txt_size = 30  # } pour modifier la taille du texte selon les dimentions de l'ecran
-        self.txt_gap: int = 15  # }
+        self.txt_size = 30
+        self.txt_gap: int = 15
 
         self.speed = 1_000_000_00
         self.growing_speed = 0.5
 
-        self.screen_mode: str = "dark" # light or dark
+        self.screen_mode: str = "dark"
         self.music = False
         self.fusions = True
 
         self.G = 6.6743 * 10 ** -11
         self.default_gravity = self.G
-        self.gravity: float = self.default_gravity  # } peut etre remplacé par G. ps: c'est lent (très)
+        self.gravity: float = self.default_gravity
 
         self.strength_vectors = True
-        self.cardinals_vectors = False
+        self.cardinal_vectors = False
         self.vectors_in_front = True
         self.vector_length = 1
 
         self.random_environment_number: int = 20
-
-        self.random_field = 10 ** -17  # <- en kJoules
-        # }
+        self.random_field = 10 ** -17
 
         self.info = pygame.display.Info()
         screen_size: tuple[int, int] = (self.info.current_w, self.info.current_h)
@@ -502,9 +513,7 @@ class Engine:
 
         self.is_paused = False
         self.vectors_printed = False
-
         self.random_mode = False
-
         self.reversed_gravity = False
 
         self.temp_FPS = self.FPS
@@ -513,14 +522,11 @@ class Engine:
         self.temp_texts: list[TempText] = []
 
         self.music_volume = 1
-
         self.circle_number = 0
-
         self.circle_selected = False
 
-        self.beginning_hour = time.time()
+        self.beginning_time = time.time()
         self.time_in_pause = 0
-
         self.pause_beginning = None
 
         self.info_y: int = 20
@@ -532,11 +538,10 @@ class Engine:
         self.latency = None
 
         self.inputs: dict = {}
-
         self.counter = 0
 
-        self.INPUT_MAP = {} # defini dans la boucle principale
-        self.MOUSEBUTTON_MAP = {} # defini dans la boucle principale
+        self.INPUT_MAP = {}
+        self.MOUSEBUTTON_MAP = {}
 
         self.can_create_circle = True
         self.circle_collided = False
@@ -547,24 +552,21 @@ class Engine:
     def handle_input(self, event: pygame.event.Event = None) -> None:
         if event.type is pygame.KEYDOWN:
             self.inputs[event.key] = True
-            return None
-
         elif event.type is pygame.KEYUP:
             self.inputs[event.key] = True
-            return None
-
-        else:
-            return None
 
     def refresh_pause(self):
+        """Update pause time."""
         self.time_in_pause += time.time() - self.pause_beginning
         self.pause_beginning = time.time()
 
     def pause(self):
+        """Pause the simulation."""
         self.pause_beginning = time.time()
         self.is_paused = True
 
     def unpause(self):
+        """Resume the simulation."""
         for circle in circles:
             circle.time_in_pause += time.time() - self.pause_beginning
 
@@ -573,105 +575,107 @@ class Engine:
         self.pause_beginning = None
         self.is_paused = False
 
-    def brut_age(self) -> float | None:
-        age = time.time() - self.beginning_hour
+    def brut_age(self) -> float:
+        """Return total elapsed time in seconds."""
+        age = time.time() - self.beginning_time
         return age
 
-    def net_age(self) -> float | None:
+    def net_age(self) -> float:
+        """Return net elapsed time (excluding pauses)."""
         age = self.brut_age() - self.time_in_pause
         return age
 
     def select_circle(self, number: int) -> None:
+        """Select a body by its number."""
         for circle in circles:
             if circle.number == number:
                 circle.is_selected = True
                 self.circle_selected = True
                 return None
-        TempText(f"Le corps n°{number} n'existe pas", 3)
-        return None
+        TempText(f"Body n°{number} does not exist", 3)
 
     def print_global_info(self, y):
+        """Display global simulation information."""
         heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
-            text = f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
+            text = f"Heaviest body : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} t"
             Utils.write(text, (20, y), BLUE, 2)
         else:
-            text = f"Corps le plus lourd : n°Aucun"
+            text = f"Heaviest body : None"
             Utils.write(text, (20, y), BLUE, 2)
 
-        text = "(Ce logiciel inclue un système de correction des FPS)"
+        text = "(This software includes an FPS correction system)"
         advertisement_printable: bool = heaviest_tuple is not None and self.screen.get_width() - \
-                                        self.font.size(f"Gravité inversée (G) : Désactivée")[0] - self.font.size(
-            f"Corps le plus lourd : n°{heaviest_tuple[0]} -> {int(heaviest_tuple[1] * 10) / 10} t")[0] > \
+                                        self.font.size(f"Reversed gravity (G) : Disabled")[0] - \
+                                        self.font.size(f"Heaviest body : n°{heaviest_tuple[0]} -> " \
+                                        f"{int(heaviest_tuple[1] * 10) / 10} t")[0] > \
                                         self.font.size(text)[0]
         if advertisement_printable:
-            Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y), BLUE, 0)
+            Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y),
+                        BLUE, 0)
 
         if self.circle_selected and len(circles) > 0:
-            Utils.write(f"Détruire : Suppr", (
-                int((self.screen.get_width() / 2) - (self.font.size("Détruire : Suppr")[0] / 2)),
+            Utils.write(f"Delete : Delete key", (
+                int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
                 y + self.txt_size + self.txt_gap), BLUE, 0)
 
         if self.reversed_gravity:
-            text = f"Gravité inversée (G) : Activée"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
+            text = f"Reversed gravity (G) : Enabled"
         else:
-            text = f"Gravité inversée (G) : Désactivée"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
+            text = f"Reversed gravity (G) : Disabled"
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 0)
 
         if self.vectors_printed:
-            text = f"Vecteurs (V) : Activés"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
+            text = f"Vectors (V) : Enabled"
         else:
-            text = f"Vecteurs (V) : Désactivés"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
+            text = f"Vectors (V) : Disabled"
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 1)
 
         if self.random_mode:
-            text = f"Mode aléatoire (R) : Activé"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
+            text = f"Random mode (R) : Enabled"
         else:
-            text = f"Mode aléatoire (R) : Désactivé"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
+            text = f"Random mode (R) : Disabled"
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 2)
 
-        text = f"Structure aléatoire ({self.random_environment_number} corps) : P"
+        text = f"Random environment ({self.random_environment_number} bodies) : P"
         Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), BLUE, 4)
 
-        text = f"Facteur temps : ×{self.speed:.2e}"
+        text = f"Time factor : ×{self.speed:.2e}"
         Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), BLUE, 0)
 
         if self.is_paused:
-            text = f"Pause (Espace) : Activée"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                              self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
+            text = f"Pause (Space) : Enabled"
         else:
-            text = f"Pause (Espace) : Désactivée"
-            Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                              self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
+            text = f"Pause (Space) : Disabled"
+        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+                          self.screen.get_height() - 20 - self.txt_size), BLUE, 0)
 
-        text = f"Nombre de corps : {len(circles)}"
+        text = f"Number of bodies : {len(circles)}"
         Utils.write(text, (20, y), BLUE, 0)
 
-        text = f"Masse totale : {round(Utils.mass_sum() / 1000) / 1000} kt"
+        text = f"Total mass : {round(Utils.mass_sum() / 1000) / 1000} kt"
         Utils.write(text, (20, y), BLUE, 1)
 
         oldest_tuple = Utils.oldest()
         if oldest_tuple is not None:
-            if oldest_tuple[1] * engine.speed  / 31_557_600 < 2:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} an"
+            oldest_age_years = oldest_tuple[1] * engine.speed / 31_557_600
+            if oldest_age_years < 2:
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} year"
                 Utils.write(text, (20, y), BLUE, 3)
             else:
-                text = f"Corps le plus vieux : n°{oldest_tuple[0]} -> {int(oldest_tuple[1] * engine.speed  / 31_557_600 * 10) / 10} ans"
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} years"
                 Utils.write(text, (20, y), BLUE, 3)
         else:
-            text = f"Corps le plus vieux : n°Aucun"
+            text = f"Oldest body : None"
             Utils.write(text, (20, y), BLUE, 3)
 
-        if self.net_age() * engine.speed / 31_557_600 < 2:
-            text = f"Age de la simulation : {int(self.net_age() * engine.speed / 31_557_600 * 10) / 10} an"
+        sim_age_years = self.net_age() * engine.speed / 31_557_600
+        if sim_age_years < 2:
+            text = f"Simulation age : {int(sim_age_years * 10) / 10} year"
             Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
         else:
-            text = f"Age de la simulation : {int(self.net_age() * engine.speed  / 31_557_600 * 10) / 10} ans"
+            text = f"Simulation age : {int(sim_age_years * 10) / 10} years"
             Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), BLUE, 0)
 
         text = f"FPS : {round(self.temp_FPS)}"
@@ -679,6 +683,7 @@ class Engine:
                           int(self.screen.get_height() - 20 - engine.txt_size)), BLUE, 0)
 
     def generate_environment(self, count: int = 50):
+        """Generate random environment with bodies."""
         count = self.random_environment_number
         for c in range(count):
             new = Circle(x=random.uniform(0, self.screen.get_width()),
@@ -687,28 +692,31 @@ class Engine:
                          mass=1)
             circles.append(new)
 
-    def get_frequency(self) -> float | None:
+    def get_frequency(self) -> float:
+        """Return current frame frequency."""
         frequency = 1 / self.get_latency()
         self.save_time_1 = time.time()
         return frequency
 
-    def get_latency(self) -> float | None:
+    def get_latency(self) -> float:
+        """Return latency since last frame."""
         latency = time.time() - self.save_time_2
         self.save_time_2 = time.time()
         return latency
 
     def handle_music(self, loop: int = 0, start: float = 0, fade_ms: int = 0):
+        """Handle background music playback."""
         if not pygame.mixer.music.get_busy() and self.music is True:
-                try:
-                    pygame.mixer.music.load('assets/music1.mp3')
-                    pygame.mixer.music.queue('assets/music2.mp3')
-                    pygame.mixer.music.queue('assets/music3.mp3')
-                except FileNotFoundError:
-                    pass
-                pygame.mixer.music.play(loop, start, fade_ms)
+            try:
+                pygame.mixer.music.load('assets/music1.mp3')
+                pygame.mixer.music.queue('assets/music2.mp3')
+                pygame.mixer.music.queue('assets/music3.mp3')
+            except FileNotFoundError:
+                pass
+            pygame.mixer.music.play(loop, start, fade_ms)
 
-    # noinspection PyGlobalUndefined
     def run(self):
+        """Launch the main simulation loop."""
         pygame.mixer.music.set_volume(self.music_volume)
 
         global circles
@@ -722,29 +730,29 @@ class Engine:
         self.circle_selected = False
 
         self.KEY_MAP = {
-                pygame.K_SPACE: ActionManager.toggle_pause,
-                pygame.K_v: ActionManager.toggle_vectors_printed,
-                pygame.K_r: ActionManager.toggle_random_mode,
-                pygame.K_g: ActionManager.toggle_reversed_gravity,
-                pygame.K_p: self.generate_environment,
-                pygame.K_DELETE: ActionManager.delete_selected_circle,
-                pygame.K_ESCAPE: ActionManager.quit_engine,
-            }
+            pygame.K_SPACE: ActionManager.toggle_pause,
+            pygame.K_v: ActionManager.toggle_vectors_printed,
+            pygame.K_r: ActionManager.toggle_random_mode,
+            pygame.K_g: ActionManager.toggle_reversed_gravity,
+            pygame.K_p: self.generate_environment,
+            pygame.K_DELETE: ActionManager.delete_selected_circle,
+            pygame.K_ESCAPE: ActionManager.quit_engine,
+        }
         self.MOUSEBUTTON_MAP = {
-                pygame.MOUSEBUTTONDOWN: ActionManager.handle_mouse_button_down,
-                pygame.MOUSEBUTTONUP: ActionManager.handle_mouse_button_up,
-            }
+            pygame.MOUSEBUTTONDOWN: ActionManager.handle_mouse_button_down,
+            pygame.MOUSEBUTTONUP: ActionManager.handle_mouse_button_up,
+        }
 
         running = True
 
-        # main loop
+        # Main loop
         while running:
             if self.screen_mode == "dark":
                 self.screen.fill(BLACK)
             elif self.screen_mode == "light":
                 self.screen.fill(WHITE)
 
-            # Filtrer les textes expirés en une seule ligne
+            # Filter expired texts in one line
             self.temp_texts = [text for text in self.temp_texts if text.update()]
 
             if self.counter == 0 or self.counter == int(self.FPS / 2):
@@ -774,19 +782,16 @@ class Engine:
                 self.handle_input(event)
                 if event.type == pygame.QUIT:
                     ActionManager.quit_engine()
-
                 elif event.type in self.MOUSEBUTTON_MAP:
                     action = self.MOUSEBUTTON_MAP.get(event.type)
                     if action:
                         action(event)
-
-                # clavier
                 elif event.type == pygame.KEYDOWN:
                     action = self.KEY_MAP.get(event.key)
                     if action:
-                        action()     
+                        action()
 
-            # suite du pygame.MOUSEBUTTONDOWN
+            # Mouse button hold behavior
             if self.mouse_down and self.temp_circle:
                 self.temp_circle.radius += self.growing_speed * 100 * (1 / self.frequency)
                 self.temp_circle.mass = self.temp_circle.radius ** 3
@@ -801,47 +806,45 @@ class Engine:
                     self.temp_circle = None
                     self.mouse_down = False
 
+            # Remove suicidal bodies
             for circle in circles:
                 if circle.suicide is True:
                     circles.remove(circle)
 
             if self.is_paused:
                 self.refresh_pause()
-
             else:
-                # now = time.time()
+                # Calculate gravitational forces
                 for circle in circles:
                     for other_circle in circles:
                         if circle != other_circle:
                             circle.attract_forces.append(circle.attract(other_circle))
                             circle.update_fusion(other_circle)
-                # print(f"Calcul : {time.time() - now}")
 
+                # Update bodies
                 for circle in circles:
                     circle.update()
 
-            # now = time.time()
+            # Render
             if self.vectors_in_front:
                 for circle in circles:
                     circle.draw(self.screen)
                 if self.vectors_printed:
                     for circle in circles:
                         if self.strength_vectors:
-                            circle.PrintStrengthV(False)
+                            circle.print_strength_vector(False)
                         circle.print_GSV(False)
-
             else:
                 if self.vectors_printed:
                     for circle in circles:
                         if self.strength_vectors:
-                            circle.PrintStrengthV(False)
+                            circle.print_strength_vector(False)
                         circle.print_GSV(False)
                 for circle in circles:
                     circle.draw(self.screen)
 
             if self.temp_circle:
                 self.temp_circle.draw(self.screen)
-            # print(f"Affichage : {time.time() - now}")
 
             self.print_global_info(self.info_y)
             for circle in circles:
@@ -868,27 +871,18 @@ class ActionManager:
 
     @staticmethod
     def toggle_random_mode():
-        if engine.random_mode:
-            engine.random_mode = False
-        else:
-            engine.random_mode = True
+        engine.random_mode = not engine.random_mode
 
     @staticmethod
     def toggle_reversed_gravity():
-        if engine.reversed_gravity:
-            engine.reversed_gravity = False
-        else:
-            engine.reversed_gravity = True
+        engine.reversed_gravity = not engine.reversed_gravity
 
     @staticmethod
     def toggle_vectors_printed():
-        if engine.vectors_printed:
-            engine.vectors_printed = False
-        else:
-            engine.vectors_printed = True
+        engine.vectors_printed = not engine.vectors_printed
 
     @staticmethod
-    def quit_engine(text: str = "See you soon !"):
+    def quit_engine(text: str = "See you soon!"):
         pygame.quit()
         sys.exit(text)
 
@@ -898,20 +892,21 @@ class ActionManager:
             if circle.is_selected:
                 circles.remove(circle)
                 break
-    
+
     @staticmethod
     def handle_mouse_button_down(event: pygame.event):
         engine.circle_collided = None
         engine.can_create_circle = False
         engine.mouse_down = True
         x, y = pygame.mouse.get_pos()
+
         if len(circles) > 0:
             for circle in circles:
                 dx = fabs(x - circle.x)
                 dy = fabs(y - circle.y)
                 dist = sqrt(dx ** 2 + dy ** 2)
                 click_on_circle: bool = dist <= circle.radius
-                #click_on_circle: bool = circle.rect is not None and circle.rect.collidepoint(event.pos)
+
                 if click_on_circle:
                     engine.circle_collided = circle.number
                     for c in circles:
@@ -924,7 +919,6 @@ class ActionManager:
                     if circle.number == engine.circle_collided:
                         circle.switch_selection()
                         break
-
             elif engine.circle_selected:
                 for circle in circles:
                     circle.is_selected = False
@@ -951,10 +945,10 @@ class ActionManager:
 class Utils:
     @staticmethod
     def heaviest() -> tuple | None:
+        """Find the heaviest body."""
         circles_mass = []
 
         if len(circles) != 0:
-
             for circle in circles:
                 circles_mass.append(circle.mass)
 
@@ -962,16 +956,15 @@ class Utils:
             circle_id = circles[index].number
 
             return circle_id, max(circles_mass)
-
         else:
             return None
 
     @staticmethod
     def oldest() -> tuple | None:
+        """Find the oldest body."""
         circles_age = []
 
         if len(circles) != 0:
-
             for circle in circles:
                 circles_age.append(circle.age)
 
@@ -979,12 +972,12 @@ class Utils:
             circle_id = circles[index].number
 
             return circle_id, max(circles_age)
-
         else:
             return None
 
     @staticmethod
     def mass_sum() -> int:
+        """Return total mass of all bodies."""
         all_mass = 0
         for circle in circles:
             all_mass += circle.mass
@@ -992,18 +985,23 @@ class Utils:
 
     @staticmethod
     def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
-              start_pos: tuple[float, float] = (0, 0), end_pos: tuple[float, float] = (0, 0), width: int = 1):
+                  start_pos: tuple[float, float] = (0, 0),
+                  end_pos: tuple[float, float] = (0, 0),
+                  width: int = 1):
+        """Draw a line on the screen."""
         pygame.draw.line(engine.screen, color, start_pos, end_pos, width)
 
     @staticmethod
-    def moy(l: list[float] | tuple[float] | set[float]) -> float:
-        return sum(l) / len(l)
+    def average(l: list[float] | tuple[float] | set[float]) -> float:
+        """Calculate arithmetic mean of a sequence."""
+        return sum(l) / len(l) if len(l) > 0 else 0
 
     @staticmethod
     def write(text: str = "[text]",
               dest: tuple[int, int] = (0, 0),
               color: tuple[int, int, int] = (255, 255, 255),
               line: int = 0) -> pygame.Rect | None:
+        """Write text to the screen."""
         written = engine.font.render(text, 1, color)
         rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
         return rect
@@ -1014,7 +1012,8 @@ class Utils:
 # -----------------
 if __name__ == '__main__':
     pygame.init()
-    # colors
+
+    # Colors
     WHITE = (255, 255, 255)
     BLUE = (10, 124, 235)
     SP_BLUE = (130, 130, 220)
