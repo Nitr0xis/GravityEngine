@@ -123,28 +123,99 @@ python src/main.py
 
 ## ⚙️ Configuration
 
-You can modify simulation parameters in the `Engine.__init__()` method:
+You can modify simulation parameters in the `Engine.__init__()` method. Parameters are organized into logical sections:
+
+### Display Settings
 ```python
-# Display settings
-self.FULLSCREEN = True          # Fullscreen mode
-self.screen_mode = "dark"       # "dark" or "light"
-self.FPS = 120                  # Target frame rate
-
-# Physics settings
-self.speed = 1_000_000_00       # Time acceleration factor
-self.gravity = 6.6743e-11       # Gravitational constant (G)
-self.fusions = True             # Enable/disable body fusion
-
-# Visualization
-self.vectors_printed = False    # Show velocity vectors
-self.strength_vectors = True    # Show force vectors
-self.cardinal_vectors = False   # Show X/Y velocity components
-
-# Random generation
-self.random_mode = False        # Random initial velocities
-self.random_field = 1e-17       # Random velocity energy (kJ)
-self.random_environment_number = 20  # Bodies in random environment
+self.FULLSCREEN = True              # Enable fullscreen mode
+self.screen_mode = "dark"           # Color scheme: "dark" or "light"
 ```
+
+### UI Settings
+```python
+self.txt_size = 30                  # Font size for UI text
+self.txt_gap = 15                   # Spacing between text lines
+self.info_y = 20                    # Y position for info display
+```
+
+### Physics Settings
+```python
+self.G = 6.6743e-11                 # Gravitational constant (m³ kg⁻¹ s⁻²)
+self.gravity = self.G               # Active gravitational constant
+self.fusions = True                 # Enable/disable body fusion on collision
+```
+
+### Simulation Settings
+```python
+self.FPS = 120                      # Target frames per second
+self.speed = 1_000_000_00           # Time acceleration factor
+self.growing_speed = 0.5            # Body growth rate when creating
+```
+
+### Visualization Settings
+```python
+self.vectors_printed = False        # Show velocity vectors by default
+self.strength_vectors = True        # Show force vectors
+self.cardinal_vectors = False       # Show X/Y velocity components
+self.vectors_in_front = True        # Draw vectors on top of bodies
+self.vector_length = 1              # Vector display scale multiplier
+```
+
+### Random Generation Settings
+```python
+self.random_mode = False            # Random initial velocities on creation
+self.random_field = 1e-17           # Random velocity energy in kJ
+self.random_environment_number = 20 # Bodies created with 'P' key
+```
+
+### Audio Settings
+```python
+self.music = False                  # Enable/disable background music
+self.music_volume = 1               # Music volume (0.0 to 1.0)
+```
+
+### Quick Configuration Examples
+
+#### Create a Slower, More Visible Simulation
+```python
+self.speed = 1_000_000              # Reduce time acceleration
+self.vectors_printed = True         # Show vectors by default
+self.vector_length = 2              # Make vectors longer
+```
+
+#### High-Performance Mode
+```python
+self.FPS = 60                       # Lower FPS for better performance
+self.vectors_printed = False        # Disable vectors
+self.strength_vectors = False       # Disable force vectors
+```
+
+#### Chaotic System
+```python
+self.random_mode = True             # Random initial velocities
+self.random_field = 1e-16           # Higher random energy
+self.reversed_gravity = True        # Reverse gravity direction
+```
+
+#### Solar System-like Setup
+```python
+self.speed = 10_000_000             # Moderate time acceleration
+self.fusions = False                # Prevent planets from merging
+self.random_mode = False            # Controlled initial conditions
+```
+
+### Advanced Configuration
+
+For more advanced modifications, you can edit:
+
+- **Body creation parameters** in `Circle.__init__()`
+- **Force calculations** in `Circle.attract()`
+- **Collision behavior** in `Circle.fusion()`
+- **Keyboard mappings** in `Engine.run()` → `KEY_MAP`
+
+### Configuration File (Future Feature)
+
+> 📋 **Coming Soon**: External configuration file support (JSON/YAML) is planned for Q2 2026. See [ROADMAP.md](ROADMAP.md) for details.
 
 ## 🔬 Physics
 
