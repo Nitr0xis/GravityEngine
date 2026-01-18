@@ -128,6 +128,7 @@ GravityEngine/
 
 | File | Description | Required |
 |------|-------------|----------|
+| `app/gravity_engine.exe` | Main simulation executable | ✅ Required |
 | `src/gravity_engine.py` | Main simulation program | ✅ Required |
 | `assets/font.ttf` | UI font file | ✅ Required |
 | `assets/music*.mp3` | Background music files | 🚫 Feature under development |
@@ -137,10 +138,11 @@ GravityEngine/
 
 ### File Locations
 
-- **Main executable**: `src/gravity_engine.py`
+- **Main executable**: `src/gravity_engine.exe`
+- **Main source code**: `src/gravity_engine.py`
 - **Configuration**: Edit parameters in `Engine.__init__()` within `src/gravity_engine.py`
 - **Font**: Place your `.ttf` font file in `assets/font.ttf`
-- **Music**: Place `.mp3` files in `assets/` (if using background music)
+- **Music**: Place `.mp3` files in `assets/` (if using background music) [ ⚠️ feature in development]
 
 > 💡 **Tip**: If the `assets/` folder doesn't exist, create it manually and add your font file before running the program.
 
@@ -386,7 +388,7 @@ See [LICENSE](LICENSE) for the full license text.
 
 ## 📸 Screenshots
 
-*(Add screenshots here showing different features)*
+*(Screenshots showing different features will soon be added)*
 
 ### Main Simulation
 ![Main View](assets/screenshot1.png)
