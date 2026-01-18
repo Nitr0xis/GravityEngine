@@ -459,6 +459,8 @@ class Circle:
 class Engine:
     def __init__(self):
         """
+        Initialize the Gravity Engine simulation.
+        
         Controls:
             - Space -> pause/unpause
             - Mouse wheel (optional) -> create smallest bodies possible
@@ -469,85 +471,95 @@ class Engine:
                                     -> select/deselect body
             - Delete -> Delete selected body
         """
-
+        
+        # ==================== DISPLAY SETTINGS ====================
         self.FULLSCREEN = True
-
+        self.screen_mode: str = "dark"  # "dark" or "light"
+        
         WIDTH: int = 0
         HEIGHT: int = 0
-
-        self.used_font = 'assets/font.ttf'
-
-        self.FPS = 120
-
-        self.txt_size = 30
-        self.txt_gap: int = 15
-
-        self.speed = 1_000_000_00
-        self.growing_speed = 0.5
-
-        self.screen_mode: str = "dark"
-        self.music = False
-        self.fusions = True
-
-        self.G = 6.6743 * 10 ** -11
-        self.default_gravity = self.G
-        self.gravity: float = self.default_gravity
-
-        self.strength_vectors = True
-        self.cardinal_vectors = False
-        self.vectors_in_front = True
-        self.vector_length = 1
-
-        self.random_environment_number: int = 20
-        self.random_field = 10 ** -17
-
+        
+        # Initialize screen
         self.info = pygame.display.Info()
         screen_size: tuple[int, int] = (self.info.current_w, self.info.current_h)
         available_screen_modes: list[tuple[int, int]] = pygame.display.list_modes()
+        
         if self.FULLSCREEN:
             self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.FULLSCREEN)
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-
+        
         pygame.display.set_caption('Gravity Engine')
-
-        self.is_paused = False
-        self.vectors_printed = False
-        self.random_mode = False
-        self.reversed_gravity = False
-
-        self.temp_FPS = self.FPS
-
+        
+        # ==================== UI SETTINGS ====================
+        self.used_font = 'assets/font.ttf'
+        self.txt_size = 30
+        self.txt_gap: int = 15
         self.font = pygame.font.Font(self.used_font, self.txt_size)
+        self.info_y: int = 20
+        
+        # Temporary texts
         self.temp_texts: list[TempText] = []
-
+        
+        # ==================== PHYSICS SETTINGS ====================
+        self.G = 6.6743 * 10 ** -11
+        self.default_gravity = self.G
+        self.gravity: float = self.default_gravity
+        self.fusions = True
+        
+        # ==================== SIMULATION SETTINGS ====================
+        self.FPS = 120
+        self.speed = 1_000_000_00  # Time acceleration factor
+        self.growing_speed = 0.5   # Body growth speed when creating
+        
+        # ==================== VISUALIZATION SETTINGS ====================
+        self.vectors_printed = False
+        self.strength_vectors = True
+        self.cardinal_vectors = False
+        self.vectors_in_front = True
+        self.vector_length = 1
+        
+        # ==================== RANDOM GENERATION SETTINGS ====================
+        self.random_mode = False
+        self.random_field = 10 ** -17  # Random velocity energy (kJ)
+        self.random_environment_number: int = 20
+        
+        # ==================== AUDIO SETTINGS ====================
+        self.music = False
         self.music_volume = 1
-        self.circle_number = 0
-        self.circle_selected = False
-
+        
+        # ==================== SIMULATION STATE ====================
+        self.is_paused = False
+        self.reversed_gravity = False
+        
+        # Time tracking
         self.beginning_time = time.time()
         self.time_in_pause = 0
         self.pause_beginning = None
-
-        self.info_y: int = 20
-
-        self.save_time_1 = 0
-        self.save_time_2 = 0
-
+        
+        # Performance tracking
+        self.temp_FPS = self.FPS
         self.frequency = self.FPS
         self.latency = None
-
-        self.inputs: dict = {}
+        self.save_time_1 = 0
+        self.save_time_2 = 0
         self.counter = 0
-
+        
+        # ==================== BODY MANAGEMENT ====================
+        self.circle_number = 0
+        self.circle_selected = False
+        
+        # ==================== INPUT HANDLING ====================
+        self.inputs: dict = {}
         self.INPUT_MAP = {}
         self.MOUSEBUTTON_MAP = {}
-
+        
+        # Mouse interaction state
+        self.mouse_down = False
         self.can_create_circle = True
         self.circle_collided = False
-        self.mouse_down = False
-        self.temp_circle: Circle
         self.collision_detected = False
+        self.temp_circle: Circle
 
     def handle_input(self, event: pygame.event.Event = None) -> None:
         if event.type is pygame.KEYDOWN:
