@@ -35,7 +35,7 @@ Les commandes y sont indiquées.
 
 To-do : 
     - corriger les unités et formules
-    - remplire Utils
+    - remplacer l'affichage en pixel par des fractions d'ecran
 
 Idées :
     - trasfere de masse lorsque collision sans fusion

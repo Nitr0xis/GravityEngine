@@ -2,3 +2,7 @@
 /build
 .bat
 /.vs
+/src/__pycache__
+/src/GPU_gravity_engine.py
+/src/test.py
+.spec
