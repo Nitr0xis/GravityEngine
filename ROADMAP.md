@@ -18,6 +18,7 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
 
 #### Priority 1: Coherent Physical Units
 - [ ] Complete revision of unit system
+  - [ ] Add corpses density
   - [ ] Standardize masses (currently in tonnes)
   - [ ] Standardize distances (currently in meters/pixels)
   - [ ] Verify and correct gravitational constant G
@@ -65,6 +66,9 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
   - [ ] Benchmarks with 10, 50, 100, 500 bodies
   - [ ] Before/after optimization comparison
   - [ ] Parameter tuning
+
+#### Priority 3: Finish music features development
+- [ ] Setup assets/music*.mp3
 
 ---
 
