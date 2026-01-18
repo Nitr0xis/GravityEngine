@@ -38,6 +38,7 @@ Les commandes y sont indiquées.
 To-do : 
     - corriger les unités et formules
     - remplire Utils
+    - reflechir au systeme de quadtree pour les forces
 
 ### ajouter limite de roche
 """
@@ -749,7 +750,7 @@ class Engine:
                 pygame.K_g: ActionManager.toggle_reversed_gravity,
                 pygame.K_p: self.generate_environment,
                 pygame.K_DELETE: ActionManager.delete_selected_circle,
-                pygame.K_ESCAPE: ActionManager.quit_game,
+                pygame.K_ESCAPE: ActionManager.quit_engine,
             }
         self.MOUSEBUTTON_MAP = {
                 pygame.MOUSEBUTTONDOWN: ActionManager.handle_mouse_button_down,
@@ -807,7 +808,7 @@ class Engine:
             for event in pygame.event.get():
                 self.handle_input(event)
                 if event.type == pygame.QUIT:
-                    ActionManager.quit_game()
+                    ActionManager.quit_engine()
 
                 elif event.type in self.MOUSEBUTTON_MAP:
                     action = self.MOUSEBUTTON_MAP.get(event.type)
@@ -886,7 +887,7 @@ class Engine:
             pygame.display.flip()
             clock.tick(self.FPS)
 
-        ActionManager.quit_game()
+        ActionManager.quit_engine()
 
 
 # -----------------
@@ -922,7 +923,7 @@ class ActionManager:
             engine.vectors_printed = True
 
     @staticmethod
-    def quit_game(text: str = "See you soon !"):
+    def quit_engine(text: str = "See you soon !"):
         pygame.quit()
         sys.exit(text)
 
@@ -941,7 +942,11 @@ class ActionManager:
         x, y = pygame.mouse.get_pos()
         if len(circles) > 0:
             for circle in circles:
-                click_on_circle: bool = circle.rect is not None and circle.rect.collidepoint(event.pos)
+                dx = fabs(x - circle.x)
+                dy = fabs(y - circle.y)
+                dist = sqrt(dx ** 2 + dy ** 2)
+                click_on_circle: bool = dist <= circle.radius
+                #click_on_circle: bool = circle.rect is not None and circle.rect.collidepoint(event.pos)
                 if click_on_circle:
                     engine.circle_collided = circle.number
                     for c in circles:
