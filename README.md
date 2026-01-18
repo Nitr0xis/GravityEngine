@@ -19,6 +19,7 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 
 ## 📋 Table of Contents
 
+- [Before we begin](#-before-we-begin)
 - [Overview](#overview)
 - [Features](#features)
 - [Installation](#installation)
@@ -30,6 +31,10 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
+
+## 🪶 Before we begin
+
+Hello, I am 15 years old and I am passionate about programming and physics. That is why I decided in mid-2025 to create a gravity simulator with Python. Here is the result of my work. I am constantly trying to improve it, and I hope you like it.
 
 ## 🌌 Overview
 
