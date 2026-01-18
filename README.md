@@ -312,6 +312,7 @@ Planned optimizations (see [ROADMAP.md](ROADMAP.md)):
 ## 📈 Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
+Previous features and deadlines are described into the file.
 
 ### Q1 2026 Priorities
 1. ✅ Coherent physical units
