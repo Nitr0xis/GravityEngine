@@ -22,6 +22,7 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 - [Overview](#overview)
 - [Features](#features)
 - [Installation](#installation)
+- [Project Structure](#-project-structure)
 - [Controls](#controls)
 - [Configuration](#configuration)
 - [Physics](#physics)
@@ -101,6 +102,46 @@ pip install pygame
 # Run the program
 python src/main.py
 ```
+
+## 📁 Project Structure
+```
+GravityEngine/
+│
+├── src/
+│   └── main.py                 # Main program file - run this to start
+│
+├── assets/
+│   ├── font.ttf                # UI font (required)
+│   ├── music1.mp3              # Background music (optional)
+│   ├── music2.mp3              # Background music (optional)
+│   └── music3.mp3              # Background music (optional)
+│
+├── README.md                   # This file
+├── ROADMAP.md                  # Development roadmap and timeline
+├── LICENSE                     # License information (CC BY-NC-SA 4.0)
+├── .gitignore                  # Git ignore rules
+└── .gitattributes              # Git attributes configuration
+```
+
+### Important Files
+
+| File | Description | Required |
+|------|-------------|----------|
+| `src/main.py` | Main simulation program | ✅ Required |
+| `assets/font.ttf` | UI font file | ✅ Required |
+| `assets/music*.mp3` | Background music files | ⚠️ Optional (only if music enabled) |
+| `README.md` | Documentation | 📖 Recommended |
+| `ROADMAP.md` | Development timeline | 📖 Recommended |
+| `LICENSE` | License terms | ⚖️ Legal |
+
+### File Locations
+
+- **Main executable**: `src/main.py`
+- **Configuration**: Edit parameters in `Engine.__init__()` within `src/main.py`
+- **Font**: Place your `.ttf` font file in `assets/font.ttf`
+- **Music**: Place `.mp3` files in `assets/` (if using background music)
+
+> 💡 **Tip**: If the `assets/` folder doesn't exist, create it manually and add your font file before running the program.
 
 ## 🎮 Controls
 
