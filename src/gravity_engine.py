@@ -40,6 +40,7 @@ import pygame
 
 """
 Todo:
+    - finish build process (.bat file)
     - fix units and formulas
     - replace pixel display with screen fractions
 
