@@ -36,7 +36,7 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 
 Hello, I am 15 years old and I am passionate about programming and physics. That is why I decided in mid-2025 to create a gravity simulator with Python. Here is the result of my work. I am constantly trying to improve it, and I hope you like it.
 
-Every previous changes are avaiable in [ROADMAP.md](ROADMAP.md).
+Every previous changes are available in [ROADMAP.md](ROADMAP.md).
 
 ## 🌌 Overview
 
@@ -145,11 +145,11 @@ GravityEngine/
 
 ### File Locations
 
-- **Main executable**: `src/gravity_engine.exe`
+- **Main executable**: `app/gravity_engine.exe`
 - **Main source code**: `src/gravity_engine.py`
 - **Configuration**: Edit parameters in `Engine.__init__()` within `src/gravity_engine.py`
 - **Font**: Place your `.ttf` font file in `assets/font.ttf`
-- **Music**: Place `.mp3` files in `assets/` (if using background music) [ ⚠️ feature in development]
+- **Music**: Place `.mp3` files in `assets/` (if using background music) [⚠️ feature in development]
 
 > 💡 **Tip**: If the `assets/` folder doesn't exist, create it manually and add your font file before running the program.
 
