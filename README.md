@@ -135,7 +135,7 @@ GravityEngine/
 
 | File | Description | Required |
 |------|-------------|----------|
-| `app/gravity_engine.exe` | Main simulation executable | ✅ Required |
+| `app/gravity_engine.exe` | Main simulation executable | 📖 Recommended (actually doesn't work) |
 | `src/gravity_engine.py` | Main simulation program | ✅ Required |
 | `assets/font.ttf` | UI font file | ✅ Required |
 | `assets/music*.mp3` | Background music files | 🚫 Feature under development |
