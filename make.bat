@@ -260,9 +260,10 @@ GravityEngine/
 ├── assets/
 │   ├── font.ttf
 │   └── icon.ico (recommended)
-├── build.bat
-├── build_release.bat
-├── clean.bat
+├── builders/
+│   ├── build.bat
+│   ├── build_release.bat
+│   └── clean.bat
 ├── make.bat
 ├── README.md
 ├── ROADMAP.md
