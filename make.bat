@@ -86,7 +86,7 @@ if errorlevel 1 (
     set /p run_choice="  Run the executable now? (Y/N): "
     if /i "%run_choice%"=="Y" (
         if exist "dist\GravityEngine.exe" (
-            start "dist\GravityEngine.exe"
+            start "" "dist\GravityEngine.exe"
         )
     )
 )
@@ -130,7 +130,7 @@ echo  Running from source (Python)...
 echo.
 echo  ================================================
 echo.
-python src/gravity_engine.py
+python src/gravity_engine
 echo.
 echo  ================================================
 echo.
