@@ -65,7 +65,7 @@ Instances of abusive, harassing, or otherwise unacceptable behavior may be repor
 ### 1. Reporting Bugs 🐛
 
 **Before submitting a bug report:**
-- Check the [existing issues](https://github.com/NilsDontot/GravityEngine/issues) to avoid duplicates
+- Check the [existing issues](https://github.com/Nitr0xis/GravityEngine/issues) to avoid duplicates
 - Try to reproduce the bug with the latest version
 - Collect relevant information (OS, Python version, error messages)
 
@@ -102,7 +102,7 @@ Add any other context about the problem here.
 ### 2. Suggesting Enhancements 💡
 
 **Before submitting an enhancement:**
-- Check if it's already suggested in [issues](https://github.com/NilsDontot/GravityEngine/issues)
+- Check if it's already suggested in [issues](https://github.com/Nitr0xis/GravityEngine/issues)
 - Check the [ROADMAP.md](ROADMAP.md) to see if it's already planned
 - Consider if it fits the project's scope
 
@@ -712,7 +712,7 @@ Thank you to all contributors who help make Gravity Engine better!
 <!-- This section will be updated as contributors join -->
 
 **Core Contributors:**
-- Nils DONTOT ([@NilsDontot](https://github.com/NilsDontot)) - Creator and maintainer
+- Nils DONTOT ([@Nitr0xis](https://github.com/Nitr0xis)) - Creator and maintainer
 
 **Contributors:**
 - *Your name could be here!* 🌟
@@ -745,7 +745,7 @@ git push origin feature/my-feature
 
 - 📖 Read the [README.md](README.md)
 - 🗺️ Check [ROADMAP.md](ROADMAP.md)
-- 🐛 Search [existing issues](https://github.com/NilsDontot/GravityEngine/issues)
+- 🐛 Search [existing issues](https://github.com/Nitr0xis/GravityEngine/issues)
 - 📧 Email: [nils.dontot.pro@gmail.com](mailto:nils.dontot.pro@gmail.com)
 
 ---
