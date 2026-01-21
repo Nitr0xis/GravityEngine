@@ -113,7 +113,6 @@ $RECYCLE.BIN/
 
 # Build outputs (if using PyInstaller or similar)
 /build/
-/dist/
 
 # Assets
 # ...
