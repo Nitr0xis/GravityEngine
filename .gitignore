@@ -102,8 +102,6 @@ $RECYCLE.BIN/
 # Custom files
 /src/GPU_gravity_engine.py
 /src/test.py
-!/dist
-!GravityEngine.exe
 
 # Temporary files
 *.tmp
