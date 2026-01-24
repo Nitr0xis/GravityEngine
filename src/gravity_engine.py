@@ -1,13 +1,13 @@
 """
-Gravity Engine by Nils DONTOT
+Gravity Engine by Nitr0xis (Nils DONTOT)
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
 Email: nils.dontot.pro@gmail.com
-GitHub account: https://github.com/NilsDontot/
-GitHub repository: https://github.com/NilsDontot/GravityEngine/
-LICENCE: https://github.com/NilsDontot/GravityEngine/blob/main/LICENSE, Creative Commons BY-NC-SA 4.0 License
-README: https://github.com/NilsDontot/GravityEngine/blob/main/README.md
+GitHub account: https://github.com/Nitr0xis/
+GitHub repository: https://github.com/Nitr0xis/GravityEngine/
+LICENCE: https://github.com/Nitr0xis/GravityEngine/blob/main/LICENSE, Creative Commons BY-NC-SA 4.0 License
+README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
 Controls:
     - Space -> pause/unpause
@@ -634,20 +634,10 @@ class Engine:
             text = f"Heaviest body : None"
             Utils.write(text, (20, y), BLUE, 2)
 
-        text = "(This software includes an FPS correction system)"
-        advertisement_printable: bool = heaviest_tuple is not None and self.screen.get_width() - \
-                                        self.font.size(f"Reversed gravity (G) : Disabled")[0] - \
-                                        self.font.size(f"Heaviest body : n°{heaviest_tuple[0]} -> " \
-                                        f"{int(heaviest_tuple[1] * 10) / 10} t")[0] > \
-                                        self.font.size(text)[0]
-        if advertisement_printable:
-            Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y),
-                        BLUE, 0)
-
         if self.circle_selected and len(circles) > 0:
             Utils.write(f"Delete : Delete key", (
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
-                y + self.txt_size + self.txt_gap), BLUE, 0)
+                y), BLUE, 0)
 
         if self.reversed_gravity:
             text = f"Reversed gravity (G) : Enabled"
