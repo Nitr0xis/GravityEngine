@@ -4,10 +4,10 @@ Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
 Email: nils.dontot.pro@gmail.com
-GitHub account: https://github.com/Nitr0xis/
-GitHub repository: https://github.com/Nitr0xis/GravityEngine/
-LICENCE: https://github.com/Nitr0xis/GravityEngine/blob/main/LICENSE, Creative Commons BY-NC-SA 4.0 License
-README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
+GitHub account: https://github.com/NilsDontot/
+GitHub repository: https://github.com/NilsDontot/GravityEngine/
+LICENCE: https://github.com/NilsDontot/GravityEngine/blob/main/LICENSE, Creative Commons BY-NC-SA 4.0 License
+README: https://github.com/NilsDontot/GravityEngine/blob/main/README.md
 
 Controls:
     - Space -> pause/unpause
@@ -57,7 +57,7 @@ Ideas:
 # ================================================================================================
 
 def resource_path(relative_path):
-    """Get absolute path to resource, works for dev and PyInstaller (use \)"""
+    """Get absolute path to resource, works for dev and PyInstaller"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -100,8 +100,7 @@ class TempText:
                 engine.temp_texts.remove(self)
             return False
         else:
-            Utils.write(self.text,
-                        (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
+            Utils.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
                         self.color)
             return True
 
@@ -300,7 +299,7 @@ class Circle:
         y2 = self.y + self.vy * 7
 
         if in_terminal:
-            print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) "
+            print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) " \
                   f"Start y : ({y1}; {self.x}); End y : ({y2}; {self.x})")
 
         Utils.draw_line(self.CSV_x_color, (x1, self.y), (x2, self.y), self.vector_width)
@@ -481,7 +480,7 @@ class Engine:
         
         Controls:
             - Space -> pause/unpause
-            - Mouse wheel (optional) -> create the smallest bodies possible
+            - Mouse wheel (optional) -> create smallest bodies possible
             - V -> toggle velocity vectors
             - R -> toggle random_mode
             - G -> toggle reversed gravity
@@ -510,10 +509,10 @@ class Engine:
         pygame.display.set_caption('Gravity Engine')
         
         # ==================== UI SETTINGS ====================
-        self.font_path = resource_path(r'..\assets\font.ttf')
+        self.used_font = resource_path('assets/font.ttf')
         self.txt_size = 30
         self.txt_gap: int = 15
-        self.font = pygame.font.Font(self.font_path, self.txt_size)
+        self.font = pygame.font.Font(self.used_font, self.txt_size)
         self.info_y: int = 20
         
         # Temporary texts
@@ -635,10 +634,20 @@ class Engine:
             text = f"Heaviest body : None"
             Utils.write(text, (20, y), BLUE, 2)
 
+        text = "(This software includes an FPS correction system)"
+        advertisement_printable: bool = heaviest_tuple is not None and self.screen.get_width() - \
+                                        self.font.size(f"Reversed gravity (G) : Disabled")[0] - \
+                                        self.font.size(f"Heaviest body : n°{heaviest_tuple[0]} -> " \
+                                        f"{int(heaviest_tuple[1] * 10) / 10} t")[0] > \
+                                        self.font.size(text)[0]
+        if advertisement_printable:
+            Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)), y),
+                        BLUE, 0)
+
         if self.circle_selected and len(circles) > 0:
             Utils.write(f"Delete : Delete key", (
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
-                y), BLUE, 0)
+                y + self.txt_size + self.txt_gap), BLUE, 0)
 
         if self.reversed_gravity:
             text = f"Reversed gravity (G) : Enabled"
@@ -1019,7 +1028,7 @@ class Utils:
 
     @staticmethod
     def write(text: str = "[text]",
-              dest: tuple[float, float] = (0, 0),
+              dest: tuple[int, int] = (0, 0),
               color: tuple[int, int, int] = (255, 255, 255),
               line: int = 0) -> pygame.Rect | None:
         """Write text to the screen."""

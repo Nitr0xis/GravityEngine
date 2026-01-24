@@ -13,7 +13,7 @@ cls
 echo.
 echo  ================================================
 echo    Gravity Engine - Build System
-echo    by Nils DONTOT
+echo    by Nitr0xis (Nils DONTOT)
 echo  ================================================
 echo.
 echo  [1] Build Development      (with console)
@@ -238,9 +238,9 @@ echo    Gravity Engine - Build System
 echo  ================================================
 echo.
 echo  Thank you for using Gravity Engine!
-echo  by Nils DONTOT
+echo  by Nitr0xis (Nils DONTOT)
 echo.
-echo  GitHub: https://github.com/NilsDontot/GravityEngine
+echo  GitHub: https://github.com/Nitr0xis/GravityEngine
 echo.
 echo  ================================================
 echo.
