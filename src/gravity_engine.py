@@ -501,7 +501,7 @@ class Engine:
         
         Controls:
             - Space -> pause/unpause
-            - Mouse wheel (optional) -> create smallest bodies possible
+            - Mouse wheel (optional) -> create the smallest bodies possible
             - V -> toggle velocity vectors
             - R -> toggle random_mode
             - G -> toggle reversed gravity
@@ -1053,6 +1053,24 @@ class Utils:
 # -----------------
 if __name__ == '__main__':
     pygame.init()
+
+    # DEBUG: Print paths
+    print("=" * 60)
+    print("RESOURCE PATH DEBUG")
+    print("=" * 60)
+    print(f"__file__: {os.path.abspath(__file__)}")
+    print(f"Script dir: {os.path.dirname(os.path.abspath(__file__))}")
+    print(f"Project root: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
+
+    if hasattr(sys, '_MEIPASS'):
+        print(f"PyInstaller mode: {sys._MEIPASS}")
+    else:
+        print("Development mode")
+
+    test_font = resource_path('assets/font.ttf')
+    print(f"Font path: {test_font}")
+    print(f"Font exists: {os.path.exists(test_font)}")
+    print("=" * 60)
 
     # Colors
     WHITE = (255, 255, 255)
