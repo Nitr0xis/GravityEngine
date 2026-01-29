@@ -837,6 +837,14 @@ class Engine:
         self.speed = 50_000_000  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
+        # ==================== SPLASH SCREEN SETTINGS ====================
+        self.splash_screen_enabled = True  # Enable/disable splash screen
+        self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
+        self.author_first_name = "Nils"  # Your first name
+        self.author_last_name = "DONTOT"  # Your last name
+        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
+        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
+        
         # ==================== VISUALIZATION SETTINGS ====================
         self.vectors_printed = False
         self.strength_vectors = True
@@ -1158,6 +1166,84 @@ class Engine:
                 pass
             pygame.mixer.music.play(loop, start, fade_ms)
 
+    def show_splash_screen(self):
+        """
+        Display a splash screen at startup with author information and project description.
+        
+        The splash screen blocks all interactions for the configured duration.
+        """
+        if not self.splash_screen_enabled:
+            return
+        
+        # Create a clock for timing
+        clock = pygame.time.Clock()
+        start_time = time.time()
+        
+        # Create a larger font for the splash screen
+        splash_font_large = pygame.font.Font(self.used_font, 60)
+        splash_font_medium = pygame.font.Font(self.used_font, 40)
+        splash_font_small = pygame.font.Font(self.used_font, 30)
+        
+        # Main splash screen loop
+        running = True
+        while running:
+            # Calculate elapsed time
+            elapsed = time.time() - start_time
+            
+            # Check if duration has passed
+            if elapsed >= self.splash_screen_duration:
+                running = False
+                break
+            
+            # Fill screen with background color
+            if self.screen_mode == "dark":
+                self.screen.fill(BLACK)
+            else:
+                self.screen.fill(WHITE)
+            
+            # Calculate center positions
+            screen_width = self.screen.get_width()
+            screen_height = self.screen.get_height()
+            
+            # Render author name (first name + last name)
+            author_text = f"{self.author_first_name} {self.author_last_name}"
+            author_surface = splash_font_large.render(author_text, True, BLUE)
+            author_rect = author_surface.get_rect(center=(screen_width // 2, screen_height // 2 - 80))
+            self.screen.blit(author_surface, author_rect)
+            
+            # Render project description
+            desc_surface = splash_font_medium.render(self.project_description, True, BLUE)
+            desc_rect = desc_surface.get_rect(center=(screen_width // 2, screen_height // 2))
+            self.screen.blit(desc_surface, desc_rect)
+            
+            # Render copyright/version info (optional)
+            version_text = "Copyright (c) 2026"
+            version_surface = splash_font_small.render(version_text, True, DARK_GREY)
+            version_rect = version_surface.get_rect(center=(screen_width // 2, screen_height // 2 + 60))
+            self.screen.blit(version_surface, version_rect)
+            
+            # Update display
+            pygame.display.flip()
+            
+            # Process events (but ignore all input)
+            for event in pygame.event.get():
+                # Ignore all events during splash screen
+                if event.type == pygame.QUIT:
+                    # Allow quit to work
+                    pygame.quit()
+                    sys.exit()
+                # All other events are ignored
+            
+            # Maintain FPS
+            clock.tick(self.FPS)
+        
+        # Clear the screen after splash
+        if self.screen_mode == "dark":
+            self.screen.fill(BLACK)
+        else:
+            self.screen.fill(WHITE)
+        pygame.display.flip()
+
     def run(self):
         """
         Launch the main simulation loop.
@@ -1170,6 +1256,9 @@ class Engine:
         
         The loop runs at the target FPS and continues until the window is closed.
         """
+        # Show splash screen at startup
+        self.show_splash_screen()
+        
         # Initialize music volume
         pygame.mixer.music.set_volume(self.music_volume)
 
@@ -1334,16 +1423,18 @@ class Engine:
                     circle.draw(self.screen)
                 if self.vectors_printed:
                     for circle in circles:
+                        circle.print_GSV(False)
                         if self.strength_vectors:
                             circle.print_strength_vector(False)
-                        circle.print_GSV(False)
+                        
             else:
                 # Draw vectors first, then bodies on top
                 if self.vectors_printed:
                     for circle in circles:
                         if self.strength_vectors:
+                            circle.print_GSV(False)
                             circle.print_strength_vector(False)
-                        circle.print_GSV(False)
+                        
                 for circle in circles:
                     circle.draw(self.screen)
 
