@@ -357,7 +357,7 @@ class Circle:
         engine.screen.blit(txt, (int(self.x), int(self.y)))
         """
 
-    def speed_power(self):
+    def kinetic_energy(self):
         """
         Calculate kinetic energy of the body.
         
@@ -526,7 +526,7 @@ class Circle:
         Utils.write(text, (20, y - 20), BLUE, 5)
 
         # Kinetic energy (in joules)
-        text = f"Kinetic energy : {self.speed_power():.2e} J"
+        text = f"Kinetic energy : {self.kinetic_energy():.2e} J"
         Utils.write(text, (20, y - 20), BLUE, 7)
 
         # Net force magnitude (in newtons)
