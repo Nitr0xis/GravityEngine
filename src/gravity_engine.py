@@ -262,8 +262,8 @@ class Circle:
 
         # Force tracking
         self.attract_forces: list[tuple[float, float]] = []  # List of force vectors from other bodies
-        self.force: list[float] = [0.0, 0.0]  # Net force vector (x, y)
-        self.printed_force: list[float] = [0.0, 0.0]  # Force for display (scaled to real units)
+        self.force: list[float] = [0.0, 0.0]  # Net force vector (x, y), in pixel variants
+        self.printed_force: list[float] = [0.0, 0.0]  # Force for display (scaled to real units [Newtons])
 
     def draw(self, screen):
         """
