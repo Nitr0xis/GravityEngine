@@ -200,7 +200,7 @@ class Circle:
         self.basic_mass = mass  # Original mass (before fusion)
         self.mass = self.basic_mass  # Current mass (may change after fusion)
 
-        # Density property (mass per unit volume)
+        # Density property (mass per unit volume, kg/m^3)
         self.density = float(density)
 
         # Radius calculation from mass and density
@@ -398,7 +398,7 @@ class Circle:
         else:
             return None
 
-    def print_GSV(self, in_terminal: bool = False):
+    def print_global_speed_vector(self, in_terminal: bool = False):
         """
         Print Global Speed Vector (total velocity vector).
         
@@ -425,7 +425,7 @@ class Circle:
         
         # Optionally draw cardinal components (X and Y separately)
         if engine.cardinal_vectors:
-            self.print_CSV()
+            self.print_cardinal_speed_vectors()
 
     def print_strength_vector(self, in_terminal: bool = False):
         """
@@ -443,7 +443,7 @@ class Circle:
         # Calculate scaling coefficient for visualization
         # Uses cube root to compress large force values for display
         if force != 0:
-            coefficient = 5 / force * cbrt(force)
+            coefficient = 1 / force * cbrt(force)
         else:
             coefficient = 0
 
@@ -458,7 +458,7 @@ class Circle:
         # Draw force vector in special blue color
         Utils.draw_line(SP_BLUE, (self.x, self.y), end_coordinates)
 
-    def print_CSV(self, in_terminal: bool = False):
+    def print_cardinal_speed_vectors(self, in_terminal: bool = False):
         """
         Print Cardinal Speed Vectors (X and Y components separately).
         
@@ -795,6 +795,14 @@ class Engine:
                                     -> select/deselect body
             - Delete -> Delete selected body
         """
+
+        # ==================== SPLASH SCREEN SETTINGS ====================
+        self.splash_screen_enabled = True  # Enable/disable splash screen
+        self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
+        self.author_first_name = "Nils"  # Your first name
+        self.author_last_name = "DONTOT"  # Your last name
+        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
+        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
         self.FULLSCREEN = True
@@ -813,7 +821,12 @@ class Engine:
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         
-        pygame.display.set_caption('Gravity Engine')
+        pygame.display.set_caption(f'Gravity Engine by {self.author_first_name} {self.author_last_name}')
+
+        # ==================== SIMULATION SETTINGS ====================
+        self.FPS = 120
+        self.speed = 100_000  # Time acceleration factor
+        self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
         self.used_font = resource_path('assets/font.ttf')
@@ -830,23 +843,12 @@ class Engine:
         self.default_gravity = self.G
         self.gravity: float = self.default_gravity
         self.fusions = True
+
+        self.minimum_mass = 1000  # in kg
         
         # Default density for new bodies (mass per unit volume)
         # This determines how large a body will be for a given mass
-        self.default_density = 5.515  # 1.0 <=> 1000 kg/m^3, by default on 5.515 (Earth density)
-        
-        # ==================== SIMULATION SETTINGS ====================
-        self.FPS = 120
-        self.speed = 50_000_000  # Time acceleration factor
-        self.growing_speed = 0.1   # Body growth speed when creating
-        
-        # ==================== SPLASH SCREEN SETTINGS ====================
-        self.splash_screen_enabled = True  # Enable/disable splash screen
-        self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
-        self.author_first_name = "Nils"  # Your first name
-        self.author_last_name = "DONTOT"  # Your last name
-        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
-        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
+        self.default_density = 5515  # 1000 <=> 1000 kg/m^3, by default on 5.515 (Earth density)
         
         # ==================== VISUALIZATION SETTINGS ====================
         self.vectors_printed = False
@@ -857,7 +859,12 @@ class Engine:
         
         # ==================== RANDOM GENERATION SETTINGS ====================
         self.random_mode = False
-        self.random_field = 10 ** -17  # Random velocity energy (kJ)
+        
+        # Define max random energy in Joules
+        max_kinetic_energy_joules = 5e-5  # in J
+        # Convert in simulation used units (kg⋅m²/frame²)
+        self.random_field = max_kinetic_energy_joules / (self.FPS ** 2)
+
         self.random_environment_number: int = 20
         
         # ==================== AUDIO SETTINGS ====================
@@ -1116,7 +1123,7 @@ class Engine:
             new = Circle(x=random.uniform(0, self.screen.get_width()),
                          y=random.uniform(0, self.screen.get_height()),
                          density=self.default_density,
-                         mass=1)
+                         mass=1000)
             circles.append(new)
 
     def get_frequency(self) -> float:
@@ -1426,7 +1433,7 @@ class Engine:
                     circle.draw(self.screen)
                 if self.vectors_printed:
                     for circle in circles:
-                        circle.print_GSV(False)
+                        circle.print_global_speed_vector(False)
                         if self.strength_vectors:
                             circle.print_strength_vector(False)
                         
@@ -1435,7 +1442,7 @@ class Engine:
                 if self.vectors_printed:
                     for circle in circles:
                         if self.strength_vectors:
-                            circle.print_GSV(False)
+                            circle.print_global_speed_vector(False)
                             circle.print_strength_vector(False)
                         
                 for circle in circles:
@@ -1569,11 +1576,11 @@ class ActionManager:
 
             # Create temporary body if allowed
             if engine.can_create_circle:
-                engine.temp_circle = Circle(x, y, engine.default_density, 1)
+                engine.temp_circle = Circle(x, y, engine.default_density, mass=engine.minimum_mass)
                 engine.can_create_circle = False
         else:
             # No bodies exist - always create new one
-            engine.temp_circle = Circle(x, y, engine.default_density, 1)
+            engine.temp_circle = Circle(x, y, engine.default_density, mass=engine.minimum_mass)
 
     @staticmethod
     def handle_mouse_button_up(event: pygame.event):
