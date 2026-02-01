@@ -335,7 +335,7 @@ self.minimum_mass = 1000                # Minimum mass for new bodies (kg)
 ### Simulation Settings
 ```python
 self.FPS = 120                          # Target frames per second
-self.speed = 50_000                     # Time acceleration factor
+self.time_acceleration = 50_000                     # Time acceleration factor
 self.growing_speed = 0.1                # Base body growth rate when creating
 ```
 
@@ -407,7 +407,7 @@ Place these files in `assets/musics/` to enable background music.
 
 #### Slower, More Visible Simulation
 ```python
-self.speed = 1_000                      # Reduce time acceleration dramatically
+self.time_acceleration = 1_000          # Reduce time acceleration dramatically
 self.vectors_printed = True             # Show vectors by default
 self.vector_length = 2                  # Make vectors longer
 self.cardinal_vectors = True            # Show X/Y components
@@ -424,14 +424,14 @@ self.vectors_in_front = False           # Skip vector layer
 #### Chaotic System
 ```python
 self.random_mode = True                 # Random initial velocities
-self.random_field = 1e-16               # Higher random energy
+max_kinetic_energy_joules = 5e-4        # Higher random energy
 self.reversed_gravity = True            # Reverse gravity direction
 self.fusions = False                    # Prevent merging for more chaos
 ```
 
 #### Solar System-like Setup
 ```python
-self.speed = 10_000                     # Moderate time acceleration
+self.time_acceleration = 10_000         # Moderate time acceleration
 self.fusions = False                    # Prevent planets from merging
 self.random_mode = False                # Controlled initial conditions
 self.default_density = 5515             # Earth-like density
@@ -544,11 +544,11 @@ This is unusual for physics simulations (forces should typically be summed). Thi
 
 ### Time Acceleration
 
-The simulation includes a configurable time acceleration factor (`self.speed`):
+The simulation includes a configurable time acceleration factor (`self.time_acceleration`):
 - Default: 50,000× real-time
 - Real-time physics calculations
 - FPS-independent updates ensure consistent physics
-- Position updates scaled by: `speed * 100 * (1 / frequency)`
+- Position updates scaled by: `time_acceleration * 100 * (1 / frequency)`
 
 ### Kinetic Energy
 
@@ -774,7 +774,7 @@ Gravity Engine is perfect for:
 
 **High-Speed Evolution:**
 1. Generate random environment (P)
-2. Increase time factor in config (`self.speed = 100_000`)
+2. Increase time factor in config (`self.time_accelerationd = 1e4`)
 3. Watch rapid evolution and mergers
 4. Pause (Space) to examine the result
 
@@ -837,7 +837,7 @@ Gravity Engine is perfect for:
 - Music files must be named `music1.mp3`, `music2.mp3`, `music3.mp3`
 
 **Problem**: Simulation runs too fast/slow
-- **Solution**: Adjust `self.speed` in `Engine.__init__()`
+- **Solution**: Adjust `self.time_acceleration` in `Engine.__init__()`
 - Lower values = slower simulation
 - Higher values = faster simulation
 
@@ -850,7 +850,7 @@ Gravity Engine is perfect for:
 **Problem**: Bodies disappear or behave strangely
 - **Solution**: This can happen with extreme velocities
 - Check for invalid coordinates (debug warnings in console)
-- Reduce time acceleration (`self.speed`)
+- Reduce time acceleration (`self.time_acceleration`)
 - Enable collision detection (`self.fusions = True`)
 
 **Problem**: Can't create bodies
