@@ -648,11 +648,6 @@ class Circle:
             self.printed_force[0] += f[0] / engine.gravity * engine.G
             self.printed_force[1] += f[1] / engine.gravity * engine.G
 
-        # Average the displayed forces
-        if len(self.attract_forces) > 0:
-            self.printed_force[0] /= len(self.attract_forces)
-            self.printed_force[1] /= len(self.attract_forces)
-
         # Initialize body on first update
         if not self.is_born and self in circles:
             # Record birth time
