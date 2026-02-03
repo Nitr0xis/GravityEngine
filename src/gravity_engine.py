@@ -641,12 +641,6 @@ class Circle:
             self.force[0] += f[0]
             self.force[1] += f[1]
 
-        # Average the forces (this seems unusual - typically forces are summed, not averaged)
-        # This might be a bug or intentional design choice
-        if len(self.attract_forces) > 0:
-            self.force[0] /= len(self.attract_forces)
-            self.force[1] /= len(self.attract_forces)
-
         # Calculate force for display (converted to real-world units)
         # Scale from simulation gravity to actual gravitational constant G
         self.printed_force = [0.0, 0.0]
