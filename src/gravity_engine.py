@@ -50,7 +50,7 @@ import pygame
 
 """
 Todo:
-    - finish build process (.bat file)
+    - review claude.md and implement changes
     - fix units and formulas
     - replace pixel display with screen fractions
 
@@ -808,6 +808,7 @@ class Engine:
         """
 
         # ==================== SPLASH SCREEN SETTINGS ====================
+        self.splash_screen_font = resource_path('assets/fonts/toruk.ttf')
         self.splash_screen_enabled = True  # Enable/disable splash screen
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
@@ -840,7 +841,7 @@ class Engine:
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
-        self.used_font = resource_path('assets/font.ttf')
+        self.used_font = resource_path('assets/fonts/main_font.ttf')
         self.txt_size = 30
         self.txt_gap: int = 15
         self.font = pygame.font.Font(self.used_font, self.txt_size)
@@ -1201,9 +1202,9 @@ class Engine:
         start_time = time.time()
         
         # Create a larger font for the splash screen
-        splash_font_large = pygame.font.Font(self.used_font, 60)
-        splash_font_medium = pygame.font.Font(self.used_font, 40)
-        splash_font_small = pygame.font.Font(self.used_font, 30)
+        splash_font_large = pygame.font.Font(self.splash_screen_font, 60)
+        splash_font_medium = pygame.font.Font(self.splash_screen_font, 40)
+        splash_font_small = pygame.font.Font(self.splash_screen_font, 30)
         
         # Main splash screen loop
         running = True
