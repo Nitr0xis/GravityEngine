@@ -99,26 +99,90 @@ def resource_path(relative_path):
     return os.path.join(base_path, os.path.normpath(relative_path))
 
 
-# Test unitaire
-def test_force_summation():
-    """Check if the forces are properly summed, not averaged."""
-    # Create a body
-    body = Circle(x=500, y=500, density=5515, mass=1e20)
+class Tester:
+    # Units test
+    @staticmethod
+    def test_force_summation():
+        """Check if the forces are properly summed, not averaged."""
+        # Create a body
+        body = Circle(x=500, y=500, density=5515, mass=1e20)
+        
+        # Simulate 3 identical forces
+        body.attract_forces = [
+            (10.0, 0.0),
+            (10.0, 0.0),
+            (10.0, 0.0)
+        ]
+        
+        # Calculate the resulting force
+        body.update()
+        
+        # Verify that the force is 30, not 10
+        assert body.force[0] == 30.0, f"Force should be 30, got {body.force[0]}"
+        assert body.force[1] == 0.0
+        print("Test force summation successful")
     
-    # Simulate 3 identical forces
-    body.attract_forces = [
-        (10.0, 0.0),
-        (10.0, 0.0),
-        (10.0, 0.0)
-    ]
-    
-    # Calculate the resulting force
-    body.update()
-    
-    # Verify that the force is 30, not 10
-    assert body.force[0] == 30.0, f"Force should be 30, got {body.force[0]}"
-    assert body.force[1] == 0.0
-    print("Test force summation successful")
+    @staticmethod
+    def test_determinism():
+        """
+        Check if the simulation is determinist.
+        Two same runs.
+        """
+
+        engine1 = Engine()
+        engine2 = Engine()
+        
+        body1_a = Circle(x=500, y=500, density=5515, mass=1e24)
+        body1_b = Circle(x=500, y=500, density=5515, mass=1e24)
+        
+        body2_a = Circle(x=700, y=500, density=5515, mass=1e24)
+        body2_b = Circle(x=700, y=500, density=5515, mass=1e24)
+        
+        # simulate for 1000 steps
+        for _ in range(1000):
+            # Simulation A
+            body1_a.attract_forces = [body1_a.attract(body2_a)]
+            body2_a.attract_forces = [body2_a.attract(body1_a)]
+            body1_a.physics_update(engine1.physics_timestep)
+            body2_a.physics_update(engine1.physics_timestep)
+            
+            # Simulation B
+            body1_b.attract_forces = [body1_b.attract(body2_b)]
+            body2_b.attract_forces = [body2_b.attract(body1_b)]
+            body1_b.physics_update(engine2.physics_timestep)
+            body2_b.physics_update(engine2.physics_timestep)
+        
+        assert abs(body1_a.x - body1_b.x) < 1e-10, "X positions differ!"
+        assert abs(body1_a.y - body1_b.y) < 1e-10, "Y positions differ!"
+        
+        print("✓ Test determinism successful")
+
+    @staticmethod
+    def test_uniform_speed():
+        """
+        Check if it is always the same simulation speed.
+        """
+        # Simulation A : 120 FPS (2 frames)
+        body_a = Circle(x=500, y=500, density=5515, mass=1e24)
+        other_a = Circle(x=700, y=500, density=5515, mass=1e24)
+        
+        dt = 1.0 / 120  # 0.00833 s
+        for _ in range(2):
+            body_a.attract_forces = [body_a.attract(other_a)]
+            body_a.physics_update(dt)
+        
+        # Simulation B : 60 FPS simulated (1 frame, but 2 physics steps)
+        body_b = Circle(x=500, y=500, density=5515, mass=1e24)
+        other_b = Circle(x=700, y=500, density=5515, mass=1e24)
+        
+        # 1 frame of 60 FPS = 16.67 ms = 2× physics timesteps
+        for _ in range(2):  # 2 physics steps
+            body_b.attract_forces = [body_b.attract(other_b)]
+            body_b.physics_update(dt)
+        
+        assert abs(body_a.x - body_b.x) < 1e-10, "Different pos"
+        
+        print("✓ Test uniform speed successful")
 
 
 # -----------------
@@ -218,6 +282,12 @@ class Circle:
         self.x = float(x)
         self.y = float(y)
 
+        # Previous positions for interpolation (rendering with time accumulator)
+        # These store the position from the previous physics step
+        # Used in draw_interpolated() to smooth rendering between physics updates
+        self.prev_x = float(x)
+        self.prev_y = float(y)
+
         # Mass properties
         self.basic_mass = mass  # Original mass (before fusion)
         self.mass = self.basic_mass  # Current mass (may change after fusion)
@@ -259,7 +329,7 @@ class Circle:
         self.vy = 0  # Vertical velocity
 
         # Speed magnitude (total velocity)
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS_TARGET
 
         # Lifecycle flags
         self.suicide: bool = False  # Flag for removal after fusion
@@ -286,97 +356,6 @@ class Circle:
         self.attract_forces: list[tuple[float, float]] = []  # List of force vectors from other bodies
         self.force: list[float] = [0.0, 0.0]  # Net force vector (x, y), in pixel variants
         self.printed_force: list[float] = [0.0, 0.0]  # Force for display (scaled to real units [Newtons])
-
-    def draw(self, screen):
-        """
-        Draw the celestial body on the screen.
-        
-        Includes validation checks to prevent rendering errors from invalid data,
-        and draws selection highlights when the body is selected.
-        
-        Args:
-            screen: Pygame surface to draw on
-        """
-        # --- SECURITY CHECKS ---
-        # Validate x coordinate to prevent rendering errors
-        if not isinstance(self.x, (int, float)):
-            # If list/tuple, take first element
-            if isinstance(self.x, (list, tuple)) and len(self.x) > 0:
-                self.x = float(self.x[0])
-            else:
-                # Otherwise, reset to 0
-                self.x = 0.0
-                print(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
-
-        # Validate y coordinate
-        if not isinstance(self.y, (int, float)):
-            # If list/tuple, take first element
-            if isinstance(self.y, (list, tuple)) and len(self.y) > 0:
-                self.y = float(self.y[0])
-            else:
-                # Otherwise, reset to 0
-                self.y = 0.0
-                print(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
-
-        # Validate radius
-        if not isinstance(self.radius, (int, float)):
-            # If list/tuple, take first element
-            if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
-                self.radius = float(self.radius[0])
-            else:
-                # Otherwise, use default value
-                self.radius = 1.0
-                print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
-        # -----------------------
-
-        # Calculate visible radius (minimum 1 pixel for visibility)
-        visible_radius = max(1, int(self.radius))
-
-        # Selection highlighting logic
-        if self.full_selected_mode:
-            # Full selection mode: change body color when selected
-            if self.is_selected:
-                self.color = DUCKY_GREEN
-            else:
-                # Reset to default color based on screen mode
-                if engine.screen_mode == "dark":
-                    self.color = WHITE
-                elif engine.screen_mode == "light":
-                    self.color = BLACK
-        else:
-            # Partial selection mode: draw outline when selected
-            if self.is_selected:
-                # Draw selection outline (green circle slightly larger than body)
-                # Outline size scales with body radius for visibility
-                if visible_radius <= 4:
-                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
-                                       visible_radius + 1 + 1)
-                elif visible_radius <= 20:
-                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
-                                       visible_radius + visible_radius // 4 + 1)
-                else:
-                    pygame.draw.circle(screen, DUCKY_GREEN, (int(self.x), int(self.y)),
-                                       visible_radius + 4 + 1)
-
-        # Draw shadow/outline for unselected bodies (for depth effect)
-        if not self.is_selected:
-            # Draw dark grey outline behind body for visual depth
-            if visible_radius <= 4:
-                pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)), visible_radius + 1)
-            elif visible_radius <= 20:
-                pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)),
-                                   visible_radius + visible_radius // 5)
-            else:
-                pygame.draw.circle(screen, DARK_GREY, (int(self.x), int(self.y)), visible_radius + 3)
-
-        # Draw the main body circle
-        self.rect = pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), visible_radius)
-
-        """
-        # Debug tool:
-        txt = engine.font.render(f"{self.number}", 1, BLUE)
-        engine.screen.blit(txt, (int(self.x), int(self.y)))
-        """
 
     def kinetic_energy(self):
         """
@@ -628,85 +607,6 @@ class Circle:
 
         return fx, fy
 
-    @staticmethod
-    def correct_latency(speed: float) -> float:
-        """
-        Correct movement speed based on actual frame rate.
-        
-        Adjusts movement to account for frame rate variations, ensuring
-        consistent simulation speed regardless of FPS fluctuations.
-        
-        Args:
-            speed: Base speed value to correct
-        
-        Returns:
-            Corrected speed adjusted for frame rate
-        """
-        # Scale by 100 and inverse frequency to normalize to target FPS
-        final_speed = speed * 100 * (1 / engine.frequency)
-        return final_speed
-
-    def update(self):
-        """
-        Update physical state of the body for one simulation step.
-        
-        This method:
-        - Calculates net force from all gravitational interactions
-        - Updates position based on velocity
-        - Updates geometric properties (surface, volume)
-        - Tracks age and lifecycle state
-        """
-        # Calculate net force from all gravitational interactions
-        # Sum all force vectors from other bodies
-        self.force = [0.0, 0.0]
-        for f in self.attract_forces:
-            self.force[0] += f[0]
-            self.force[1] += f[1]
-
-        # Calculate force for display (converted to real-world units)
-        # Scale from simulation gravity to actual gravitational constant G
-        self.printed_force = [0.0, 0.0]
-        for f in self.attract_forces:
-            self.printed_force[0] += f[0] / engine.gravity * engine.G
-            self.printed_force[1] += f[1] / engine.gravity * engine.G
-
-        # Initialize body on first update
-        if not self.is_born and self in circles:
-            # Record birth time
-            self.birth_time = engine.net_age()
-            
-            # Apply random initial velocity if random mode enabled
-            # Velocity is based on kinetic energy: E = 0.5*m*v², so v = sqrt(2*E/m)
-            if engine.random_mode:
-                max_velocity = sqrt(2 * engine.random_field / self.mass)
-                self.vx = random.uniform(-max_velocity, max_velocity)
-                self.vy = random.uniform(-max_velocity, max_velocity)
-
-            self.is_born = True
-
-        # Update age (time since birth, excluding pause time)
-        if self.birth_time is not None:
-            self.age = engine.net_age() - self.birth_time
-
-        # Update geometric properties based on current radius
-        self.surface = 4 * self.radius ** 2 * pi  # Surface area
-        self.volume = 4 / 3 * pi * self.radius ** 3  # Volume
-
-        # Deselect if body is removed from simulation
-        if not self in circles:
-            self.is_selected = False
-
-        # Calculate speed magnitude (total velocity)
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS
-
-        # Update position based on velocity
-        # Position change = velocity * time_factor, corrected for frame rate
-        self.x += self.correct_latency(self.vx * engine.time_acceleration)
-        self.y += self.correct_latency(self.vy * engine.time_acceleration)
-
-        # Update position tuple
-        self.pos = (self.x, self.y)
-
     def update_fusion(self, other):
         """
         Check and perform fusion with another body if applicable.
@@ -786,6 +686,145 @@ class Circle:
 
         # Collision if distance < sum of radii
         return distance < self.radius + other.radius
+    
+    def physics_update(self, dt):
+        """
+        Physics update with fixed timestep.
+        
+        This method is called by the time accumulator with a fixed dt,
+        ensuring deterministic physics regardless of rendering FPS.
+        
+        Args:
+            dt: Fixed physics timestep (always engine.physics_timestep)
+        """
+        # Store previous position for interpolation
+        self.prev_x = self.x
+        self.prev_y = self.y
+        
+        # Calculate net force from all gravitational interactions
+        self.force = [0.0, 0.0]
+        for f in self.attract_forces:
+            self.force[0] += f[0]
+            self.force[1] += f[1]
+        
+        # Calculate force for display (converted to real-world units)
+        self.printed_force = [0.0, 0.0]
+        for f in self.attract_forces:
+            self.printed_force[0] += f[0] / engine.gravity * engine.G
+            self.printed_force[1] += f[1] / engine.gravity * engine.G
+        
+        # Initialize body on first update
+        if not self.is_born and self in circles:
+            self.birth_time = engine.net_age()
+            
+            # Apply random initial velocity if random mode enabled
+            if engine.random_mode:
+                max_velocity_per_frame = sqrt(2 * engine.random_field / self.mass)  # m/frame
+                max_velocity = max_velocity_per_frame * engine.FPS_TARGET  # m/s
+                self.vx = random.uniform(-max_velocity, max_velocity)  # m/s
+                self.vy = random.uniform(-max_velocity, max_velocity)  # m/s
+            
+            self.is_born = True
+        
+        # Update age (time since birth, excluding pause time)
+        if self.birth_time is not None:
+            self.age = engine.net_age() - self.birth_time
+        
+        # Update geometric properties based on current radius
+        self.surface = 4 * self.radius ** 2 * pi
+        self.volume = 4 / 3 * pi * self.radius ** 3
+        
+        # Deselect if body is removed from simulation
+        if self not in circles:
+            self.is_selected = False
+        
+        # Calculate speed magnitude
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2)  # m/s
+        
+        # Update position based on velocity
+        dt_sim = dt * engine.time_acceleration
+        
+        self.x += self.vx * dt_sim  # m/s × s = m
+        self.y += self.vy * dt_sim  # m/s × s = m
+        
+        # Update position tuple
+        self.pos = (self.x, self.y)
+    
+    def draw_interpolated(self, screen, alpha):
+        """
+        Draw body with interpolated position for smooth rendering.
+        
+        Uses linear interpolation between previous and current positions
+        to provide smooth visual motion even when physics runs at fixed timestep.
+        
+        Args:
+            screen: Pygame screen surface
+            alpha: Interpolation factor (0 = previous state, 1 = current state)
+        """
+        # Interpolate position between previous and current
+        # This makes movement appear smooth even with fixed physics timestep
+        render_x = self.prev_x + (self.x - self.prev_x) * alpha
+        render_y = self.prev_y + (self.y - self.prev_y) * alpha
+        
+        # --- SECURITY CHECKS ---
+        if not isinstance(render_x, (int, float)):
+            if isinstance(render_x, (list, tuple)) and len(render_x) > 0:
+                render_x = float(render_x[0])
+            else:
+                render_x = 0.0
+                print(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
+        
+        if not isinstance(render_y, (int, float)):
+            if isinstance(render_y, (list, tuple)) and len(render_y) > 0:
+                render_y = float(render_y[0])
+            else:
+                render_y = 0.0
+                print(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
+        
+        if not isinstance(self.radius, (int, float)):
+            if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
+                self.radius = float(self.radius[0])
+            else:
+                self.radius = 1.0
+                print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
+        # -----------------------
+        
+        # Calculate visible radius (minimum 1 pixel for visibility)
+        visible_radius = max(1, int(self.radius))
+        
+        # Selection highlighting logic
+        if self.full_selected_mode:
+            if self.is_selected:
+                self.color = DUCKY_GREEN
+            else:
+                if engine.screen_mode == "dark":
+                    self.color = WHITE
+                elif engine.screen_mode == "light":
+                    self.color = BLACK
+        else:
+            if self.is_selected:
+                if visible_radius <= 4:
+                    pygame.draw.circle(screen, DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + 2)
+                elif visible_radius <= 20:
+                    pygame.draw.circle(screen, DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + visible_radius // 4 + 1)
+                else:
+                    pygame.draw.circle(screen, DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + 5)
+        
+        # Draw shadow/outline for unselected bodies
+        if not self.is_selected:
+            if visible_radius <= 4:
+                pygame.draw.circle(screen, DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
+            elif visible_radius <= 20:
+                pygame.draw.circle(screen, DARK_GREY, (int(render_x), int(render_y)),
+                                visible_radius + visible_radius // 5)
+            else:
+                pygame.draw.circle(screen, DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
+        
+        # Draw the main body circle
+        self.rect = pygame.draw.circle(screen, self.color, (int(render_x), int(render_y)), visible_radius)
 
 
 # -----------------
@@ -835,9 +874,26 @@ class Engine:
         
         pygame.display.set_caption(f'Gravity Engine by {self.author_first_name} {self.author_last_name}')
 
+        # ==================== TIMESTEP SETTINGS ====================
+        # FPS number targeted
+        self.FPS_TARGET = 120
+        
+        # Fixed timestep for physics (ensures determinism)
+        self.physics_timestep = 1.0 / self.FPS_TARGET  # 1/120 s = 0.00833 s
+        
+        # Time accumulator - accumulates real time until we can do a physics step
+        self.time_accumulator = 0.0
+        
+        # Max accumulated time (prevents "spiral of death")
+        # If accumulator > max_accumulation, clamp it to prevent infinite loop
+        self.max_accumulation = 0.25  # 250 ms max (30 physics steps)
+        
+        # Previous frame time for delta calculation
+        self.previous_time = time.time()
+
         # ==================== SIMULATION SETTINGS ====================
-        self.FPS = 120
-        self.time_acceleration = 1e4  # Time acceleration factor
+        self.FPS_TARGET = 120
+        self.time_acceleration = 7e5  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -875,7 +931,7 @@ class Engine:
         # Define max random energy in Joules
         max_kinetic_energy_joules = 5e-5  # in J
         # Convert in simulation used units (kg⋅m²/frame²)
-        self.random_field = max_kinetic_energy_joules / (self.FPS ** 2)
+        self.random_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
 
         self.random_environment_number: int = 20
         
@@ -894,8 +950,8 @@ class Engine:
         self.pause_beginning = None
         
         # Performance tracking
-        self.temp_FPS = self.FPS
-        self.frequency = self.FPS
+        self.temp_FPS = self.FPS_TARGET
+        self.frequency = self.FPS_TARGET
         self.latency = None
         self.save_time_1 = 0
         self.save_time_2 = 0
@@ -1187,6 +1243,77 @@ class Engine:
                 # Silently fail if music files don't exist
                 pass
             pygame.mixer.music.play(loop, start, fade_ms)
+    
+    def physics_step(self, dt):
+        """
+        Execute one physics step with fixed timestep.
+        
+        This ensures deterministic physics regardless of rendering FPS.
+        Always called with dt = self.physics_timestep (1/120 s).
+        
+        Args:
+            dt: Fixed timestep duration (always self.physics_timestep)
+        """
+        # Remove bodies marked for deletion (after fusion)
+        circles_to_remove = [circle for circle in circles if circle.suicide]
+        for circle in circles_to_remove:
+            circles.remove(circle)
+        
+        # Calculate gravitational forces between all body pairs
+        for circle in circles:
+            circle.attract_forces = []  # Reset force list
+            for other_circle in circles:
+                if circle != other_circle:
+                    # Calculate and store attraction force
+                    circle.attract_forces.append(circle.attract(other_circle))
+                    # Check for fusion conditions
+                    circle.update_fusion(other_circle)
+        
+        # Update all bodies (position, velocity, age, etc.)
+        for circle in circles:
+            circle.physics_update(dt)
+    
+    def render(self, alpha):
+        """
+        Render the current frame with interpolation for smooth display.
+        
+        Uses interpolation between previous and current physics states
+        to ensure smooth rendering even when physics runs at fixed timestep.
+        
+        Args:
+            alpha: Interpolation factor (0 to 1) between physics states
+                0 = exactly at previous state
+                1 = exactly at current state
+        """
+        # Render vectors if enabled
+        if self.vectors_in_front:
+            # Bodies first, then vectors on top
+            for circle in circles:
+                circle.draw_interpolated(self.screen, alpha)
+            if self.vectors_printed:
+                for circle in circles:
+                    circle.print_global_speed_vector(False)
+                    if self.strength_vectors:
+                        circle.print_strength_vector(False)
+        else:
+            # Vectors first, then bodies on top
+            if self.vectors_printed:
+                for circle in circles:
+                    circle.print_global_speed_vector(False)
+                    if self.strength_vectors:
+                        circle.print_strength_vector(False)
+            for circle in circles:
+                circle.draw_interpolated(self.screen, alpha)
+        
+        # Draw temporary body being created
+        if self.temp_circle:
+            self.temp_circle.draw_interpolated(self.screen, alpha)
+        
+        # Display UI information
+        self.print_global_info(self.info_y)
+        for circle in circles:
+            if circle.is_selected:
+                circle.print_info(circle.info_y)
 
     def show_splash_screen(self):
         """
@@ -1257,7 +1384,7 @@ class Engine:
                 # All other events are ignored
             
             # Maintain FPS
-            clock.tick(self.FPS)
+            clock.tick(self.FPS_TARGET)
         
         # Clear the screen after splash
         if self.screen_mode == "dark":
@@ -1318,165 +1445,143 @@ class Engine:
 
         running = True
 
+        # Initialize time tracking
+        self.previous_time = time.time()
+        self.time_accumulator = 0.0
+
         # Main simulation loop
         while running:
-            # Clear screen with background color
-            if self.screen_mode == "dark":
-                self.screen.fill(BLACK)
-            elif self.screen_mode == "light":
-                self.screen.fill(WHITE)
-
-            # Update and filter expired temporary texts
-            self.temp_texts = [text for text in self.temp_texts if text.update()]
-
+            # ===== TIMING =====
+            current_time = time.time()
+            frame_time = current_time - self.previous_time
+            self.previous_time = current_time
+            
+            # Update performance metrics (for display)
+            self.frequency = 1.0 / frame_time if frame_time > 0 else self.FPS_TARGET
+            self.latency = frame_time
+            
             # Update FPS display at regular intervals
-            if self.counter == 0 or self.counter == int(self.FPS / 2):
+            if self.counter == 0 or self.counter == int(self.FPS_TARGET / 2):
                 self.temp_FPS = self.frequency
-
+            
             # Update frame counter
-            if self.counter + 1 >= self.FPS:
+            if self.counter + 1 >= self.FPS_TARGET:
                 self.counter = 0
             else:
                 self.counter += 1
-
-            # Update performance metrics
-            self.frequency = self.get_frequency()
-            self.latency = self.get_latency()
-
+            
+            # Add to accumulator (only if not paused)
+            if not self.is_paused:
+                self.time_accumulator += frame_time
+            
+            # Limit accumulator to prevent spiral of death
+            if self.time_accumulator > self.max_accumulation:
+                self.time_accumulator = self.max_accumulation
+            
+            # ===== EVENT HANDLING =====
+            for event in pygame.event.get():
+                self.handle_input(event)
+                
+                if event.type == pygame.QUIT:
+                    ActionManager.quit_engine()
+                elif event.type in self.MOUSEBUTTON_MAP:
+                    action = self.MOUSEBUTTON_MAP.get(event.type)
+                    if action:
+                        action(event)
+                elif event.type == pygame.KEYDOWN:
+                    action = self.KEY_MAP.get(event.key)
+                    if action:
+                        action()
+            
+            # ===== SELECTION MANAGEMENT =====
             # Ensure only one body is selected at a time
             for circle in circles:
                 if circle.is_selected:
                     self.circle_selected = True
-                    # Deselect all other bodies
                     for other in circles:
                         if circle != other:
                             other.is_selected = False
                     break
                 else:
                     self.circle_selected = False
-
-            # Handle background music
-            self.handle_music()
-
-            # Process all events in the queue
-            for event in pygame.event.get():
-                self.handle_input(event)
-                
-                # Handle window close event
-                if event.type == pygame.QUIT:
-                    ActionManager.quit_engine()
-                # Handle mouse button events
-                elif event.type in self.MOUSEBUTTON_MAP:
-                    action = self.MOUSEBUTTON_MAP.get(event.type)
-                    if action:
-                        action(event)
-                # Handle keyboard events
-                elif event.type == pygame.KEYDOWN:
-                    action = self.KEY_MAP.get(event.key)
-                    if action:
-                        action()
-
-            # Handle mouse button hold behavior (body creation)
+            
+            # ===== MOUSE HOLD BEHAVIOR (body creation) =====
             if self.mouse_down and self.temp_circle:
-                # Calculate time elapsed since mouse button was pressed
                 if self.mouse_down_start_time is not None:
                     time_held = time.time() - self.mouse_down_start_time
                 else:
                     time_held = 0
                     self.mouse_down_start_time = time.time()
                 
-                # Increase radius linearly for user experience
-                # Accelerate growth speed based on time held (exponential acceleration)
-                # Base speed increases exponentially with time to make large bodies faster to create
-                acceleration_factor = exp(time_held * 0.8)  # True exponential growth that constantly increases
-                radius_increase = self.growing_speed * 100 * (1 / self.frequency) * acceleration_factor
+                # Increase radius with acceleration
+                acceleration_factor = exp(time_held * 0.8)
+                radius_increase = self.growing_speed * 100 * frame_time * acceleration_factor
                 self.temp_circle.radius += radius_increase
                 
-                # Recalculate mass from radius and density to maintain consistency
-                # Volume = (4/3) * π * r³, so mass = density * volume
+                # Recalculate mass from radius and density
                 if self.temp_circle.density > 0:
                     volume = (4 / 3) * pi * (self.temp_circle.radius ** 3)
                     self.temp_circle.mass = self.temp_circle.density * volume
                 else:
-                    # Fallback to default calculation if density is invalid
                     self.temp_circle.mass = self.temp_circle.radius ** 3
                 
-                # Check for collision with existing bodies
+                # Check for collision
                 self.collision_detected = False
                 for circle in circles:
                     if self.temp_circle.is_colliding_with(circle):
                         self.collision_detected = True
                         break
-
-                # If collision detected, finalize body creation
+                
                 if self.collision_detected:
                     circles.append(self.temp_circle)
                     self.temp_circle = None
                     self.mouse_down = False
                     self.mouse_down_start_time = None
-
-            # Remove bodies marked for deletion (after fusion)
-            for circle in circles:
-                if circle.suicide is True:
-                    circles.remove(circle)
-
-            # Physics simulation (only when not paused)
+            
+            # ===== PHYSICS (fixed timestep) =====
+            # Do as many physics steps as needed to catch up
+            physics_steps = 0
+            while self.time_accumulator >= self.physics_timestep and not self.is_paused:
+                # Run one physics step with fixed dt
+                self.physics_step(self.physics_timestep)
+                
+                # Consume time from accumulator
+                self.time_accumulator -= self.physics_timestep
+                
+                # Safety: limit max steps per frame (prevents spiral of death)
+                physics_steps += 1
+                if physics_steps >= 10:
+                    self.time_accumulator = 0
+                    break
+            
+            # Handle pause time tracking
             if self.is_paused:
-                # Update pause time tracking
                 self.refresh_pause()
+            
+            # ===== RENDERING =====
+            # Calculate interpolation alpha for smooth rendering
+            # alpha = how far we are between current and next physics state
+            alpha = self.time_accumulator / self.physics_timestep
+            
+            # Clear screen
+            if self.screen_mode == "dark":
+                self.screen.fill(BLACK)
             else:
-                # Calculate gravitational forces between all body pairs
-                for circle in circles:
-                    for other_circle in circles:
-                        if circle != other_circle:
-                            # Calculate and store attraction force
-                            circle.attract_forces.append(circle.attract(other_circle))
-                            # Check for fusion conditions
-                            circle.update_fusion(other_circle)
-
-                # Update all bodies (position, velocity, age, etc.)
-                for circle in circles:
-                    circle.update()
-
-            # Rendering phase
-            if self.vectors_in_front:
-                # Draw bodies first, then vectors on top
-                for circle in circles:
-                    circle.draw(self.screen)
-                if self.vectors_printed:
-                    for circle in circles:
-                        circle.print_global_speed_vector(False)
-                        if self.strength_vectors:
-                            circle.print_strength_vector(False)
-                        
-            else:
-                # Draw vectors first, then bodies on top
-                if self.vectors_printed:
-                    for circle in circles:
-                        if self.strength_vectors:
-                            circle.print_global_speed_vector(False)
-                            circle.print_strength_vector(False)
-                        
-                for circle in circles:
-                    circle.draw(self.screen)
-
-            # Draw temporary body being created
-            if self.temp_circle:
-                self.temp_circle.draw(self.screen)
-
-            # Display UI information
-            self.print_global_info(self.info_y)
-            for circle in circles:
-                if circle.is_selected:
-                    # Show detailed info for selected body
-                    circle.print_info(circle.info_y)
-                # Clear force list for next frame
-                circle.reset_force_list()
-
-            # Update display and maintain FPS
+                self.screen.fill(WHITE)
+            
+            # Update and filter expired temporary texts
+            self.temp_texts = [text for text in self.temp_texts if text.update()]
+            
+            # Handle background music
+            self.handle_music()
+            
+            # Render with interpolation
+            self.render(alpha)
+            
+            # Update display and maintain target FPS
             pygame.display.flip()
-            clock.tick(self.FPS)
-
+            clock.tick(self.FPS_TARGET)
+        
         # Clean exit
         ActionManager.quit_engine()
 
