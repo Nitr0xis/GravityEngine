@@ -46,12 +46,12 @@ for module in REQUIRED_MODULES:
         subprocess.check_call([sys.executable, "-m", "pip", "install", module])
 
 # Import pygame after ensuring it's installed
+from numpy import square
 import pygame
 
 """
 Todo:
-    - review claude.md and implement changes
-    - fix units and formulas
+    - add Core class for display between pygame and tkinter
     - replace pixel display with screen fractions
 
 Ideas:
@@ -345,7 +345,8 @@ class Circle:
 
         # Vector visualization properties
         self.vector_width = 1  # Line width for velocity vectors
-        self.vector_length = engine.vector_length  # Scaling factor for vector display
+        self.global_speed_vector_scale = 1e6  # in px/m/s
+        self.force_vector_scale = 1e2  # in px/N
 
         # Vector colors
         self.GSV_color = RED  # Global Speed Vector (total velocity)
@@ -415,8 +416,8 @@ class Circle:
 
         # End point calculated from velocity components
         # Scaling factor 17.5 adjusts vector visibility
-        x2 = self.vector_length * (self.x + self.vx * 17.5 * engine.time_acceleration)
-        y2 = self.vector_length * (self.y + self.vy * 17.5 * engine.time_acceleration)
+        x2 = engine.vector_scale * (self.x + self.vx * self.global_speed_vector_scale)
+        y2 = engine.vector_scale * (self.y + self.vy * self.global_speed_vector_scale)
 
         if in_terminal:
             print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
@@ -428,7 +429,7 @@ class Circle:
         if engine.cardinal_vectors:
             self.print_cardinal_speed_vectors()
 
-    def print_strength_vector(self, in_terminal: bool = False):
+    def print_force_vector(self, in_terminal: bool = False):
         """
         Print the force vector (net gravitational force).
         
@@ -444,13 +445,13 @@ class Circle:
         # Calculate scaling coefficient for visualization
         # Uses cube root to compress large force values for display
         if force != 0:
-            coefficient = 1 / force * cbrt(force)
+            coefficient = cbrt(force)
         else:
             coefficient = 0
 
         # Calculate vector end point with scaling
-        vector_x = self.force[0] * coefficient * engine.vector_length * (sqrt(engine.time_acceleration) / 8)
-        vector_y = self.force[1] * coefficient * engine.vector_length * (sqrt(engine.time_acceleration) / 8)
+        vector_x = cbrt(self.force[0]) * coefficient * engine.vector_scale * self.force_vector_scale
+        vector_y = cbrt(self.force[1]) * coefficient * engine.vector_scale * self.force_vector_scale
         end_coordinates = (self.x + vector_x, self.y + vector_y)
 
         if in_terminal:
@@ -471,11 +472,11 @@ class Circle:
         """
         # X component (horizontal velocity)
         x1 = self.x
-        x2 = self.x + self.vx * 7  # Scaled for visibility
+        x2 = self.x + self.vx * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
 
         # Y component (vertical velocity)
         y1 = self.y
-        y2 = self.y + self.vy * 7  # Scaled for visibility
+        y2 = self.y + self.vy * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
 
         if in_terminal:
             print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) " \
@@ -893,7 +894,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 7e5  # Time acceleration factor
+        self.time_acceleration = 1e7  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -920,10 +921,10 @@ class Engine:
         
         # ==================== VISUALIZATION SETTINGS ====================
         self.vectors_printed = False
-        self.strength_vectors = True
+        self.force_vectors = True
         self.cardinal_vectors = False
         self.vectors_in_front = True
-        self.vector_length = 1
+        self.vector_scale = 1
         
         # ==================== RANDOM GENERATION SETTINGS ====================
         self.random_mode = False
@@ -1293,15 +1294,17 @@ class Engine:
             if self.vectors_printed:
                 for circle in circles:
                     circle.print_global_speed_vector(False)
-                    if self.strength_vectors:
-                        circle.print_strength_vector(False)
+                    if self.force_vectors:
+                        circle.print_force_vector(False)
+                    
         else:
             # Vectors first, then bodies on top
             if self.vectors_printed:
                 for circle in circles:
                     circle.print_global_speed_vector(False)
-                    if self.strength_vectors:
-                        circle.print_strength_vector(False)
+                    if self.force_vectors:
+                        circle.print_force_vector(False)
+                    
             for circle in circles:
                 circle.draw_interpolated(self.screen, alpha)
         
@@ -1834,6 +1837,10 @@ class Utils:
         written = engine.font.render(text, 1, color)
         rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
         return rect
+    
+    @staticmethod
+    def root_n(value: float, degree: float) -> float:
+        return fabs(value) ** (1 / degree)
 
 
 # -----------------
