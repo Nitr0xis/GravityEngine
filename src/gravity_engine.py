@@ -36,8 +36,11 @@ import sys  # For system-specific parameters and functions
 # Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
 from math import *
 
+
+DISPLAY_API = "pygame"  # pygame or tkinter (actually, only pygame is avaiable)
+
 # Required external modules for the simulation
-REQUIRED_MODULES: set[str] = {'pygame'}
+REQUIRED_MODULES: set[str] = {DISPLAY_API}
 
 # Automatically install missing required modules
 for module in REQUIRED_MODULES:
@@ -50,8 +53,8 @@ import pygame
 
 """
 Todo:
+    - add Display class for display between pygame and tkinter
     - update interpolation by adding the choice of the realism (N-compute/s)
-    - add Core class for display between pygame and tkinter and core functions like ressource_path()
     - replace pixel display with screen fractions
 
 Ideas:
@@ -65,38 +68,41 @@ Ideas:
 # ==================================================================================
 # ==================================================================================
 
-def resource_path(relative_path):
-    """
-    Get absolute path to resource, works for dev and PyInstaller.
-    
-    This function handles resource path resolution in two scenarios:
-    1. Development mode: resolves paths relative to project root
-    2. PyInstaller mode: resolves paths from the temporary extraction directory
-    
-    Args:
-        relative_path: Path from project root (e.g., 'assets/font.ttf')
 
-    Returns:
-        Absolute path to the resource
+class Core:
+    @staticmethod
+    def resource_path(relative_path):
+        """
+        Get absolute path to resource, works for dev and PyInstaller.
+        
+        This function handles resource path resolution in two scenarios:
+        1. Development mode: resolves paths relative to project root
+        2. PyInstaller mode: resolves paths from the temporary extraction directory
+        
+        Args:
+            relative_path: Path from project root (e.g., 'assets/font.ttf')
 
-    Examples:
-        > resource_path('assets/font.ttf')
-        'C:/Projects/GravityEngine/assets/font.ttf'  # Dev
-        'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
-    """
-    try:
-        # PyInstaller mode: _MEIPASS is the extracted temp folder
-        # This attribute exists when running as a PyInstaller bundle
-        base_path = sys._MEIPASS
-    except AttributeError:
-        # Development mode: go from src/ to project root
-        # __file__ = C:/GravityEngine/src/gravity_engine.py
-        # dirname once = C:/GravityEngine/src
-        # dirname twice = C:/GravityEngine (project root)
-        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        Returns:
+            Absolute path to the resource
 
-    # Normalize path separators and join with base path
-    return os.path.join(base_path, os.path.normpath(relative_path))
+        Examples:
+            > Core.resource_path('assets/font.ttf')
+            'C:/Projects/GravityEngine/assets/font.ttf'  # Dev
+            'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
+        """
+        try:
+            # PyInstaller mode: _MEIPASS is the extracted temp folder
+            # This attribute exists when running as a PyInstaller bundle
+            base_path = sys._MEIPASS
+        except AttributeError:
+            # Development mode: go from src/ to project root
+            # __file__ = C:/GravityEngine/src/gravity_engine.py
+            # dirname once = C:/GravityEngine/src
+            # dirname twice = C:/GravityEngine (project root)
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # Normalize path separators and join with base path
+        return os.path.join(base_path, os.path.normpath(relative_path))
 
 
 class Tester:
@@ -202,7 +208,7 @@ class Tester:
             print("Development mode")
 
         # Test font path resolution
-        test_font = resource_path('assets/font.ttf')
+        test_font = Core.resource_path('assets/font.ttf')
         print(f"Font path: {test_font}")
         print(f"Font exists: {os.path.exists(test_font)}")
         print("=" * 60)
@@ -911,7 +917,7 @@ class Engine:
         """
 
         # ==================== SPLASH SCREEN SETTINGS ====================
-        self.splash_screen_font = resource_path('assets/fonts/toruk.ttf')
+        self.splash_screen_font = Core.resource_path('assets/fonts/toruk.ttf')
         self.splash_screen_enabled = True  # Enable/disable splash screen
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
@@ -961,7 +967,7 @@ class Engine:
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
-        self.used_font = resource_path('assets/fonts/main_font.ttf')
+        self.used_font = Core.resource_path('assets/fonts/main_font.ttf')
         self.txt_size = 30
         self.txt_gap: int = 15
         self.font = pygame.font.Font(self.used_font, self.txt_size)
@@ -1000,7 +1006,7 @@ class Engine:
         self.random_environment_number: int = 20
         
         # ==================== AUDIO SETTINGS ====================
-        self.musics_folder_path = resource_path('assets/musics')
+        self.musics_folder_path = "assets/musics"  # without ressource_path() because it is a folder
         self.music = False
         self.music_volume = 1
         
@@ -1297,12 +1303,12 @@ class Engine:
             start: Starting position in seconds
             fade_ms: Fade-in duration in milliseconds
         """
-        if not pygame.mixer.music.get_busy() and self.music is True:
+        if not pygame.mixer.music.get_busy() and self.music:
             try:
                 # Load and queue music tracks
-                pygame.mixer.music.load(f'{self.musics_folder_path}/music1.mp3')
-                pygame.mixer.music.queue(f'{self.musics_folder_path}/music2.mp3')
-                pygame.mixer.music.queue(f'{self.musics_folder_path}/music3.mp3')
+                pygame.mixer.music.load(Core.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
+                pygame.mixer.music.queue(Core.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
+                pygame.mixer.music.queue(Core.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
             except FileNotFoundError:
                 # Silently fail if music files don't exist
                 pass
