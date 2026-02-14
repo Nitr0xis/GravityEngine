@@ -32,6 +32,7 @@ import subprocess  # For installing missing modules
 import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
+import numpy as np  # For complex computing
 
 # Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
 from math import *
@@ -46,7 +47,6 @@ for module in REQUIRED_MODULES:
         subprocess.check_call([sys.executable, "-m", "pip", "install", module])
 
 # Import pygame after ensuring it's installed
-from numpy import square
 import pygame
 
 """
@@ -400,7 +400,7 @@ class Circle:
         else:
             return None
 
-    def print_global_speed_vector(self, in_terminal: bool = False):
+    def print_global_speed_vector(self, in_terminal: bool = False, alpha: float = 1.0):
         """
         Print Global Speed Vector (total velocity vector).
         
@@ -409,10 +409,14 @@ class Circle:
         
         Args:
             in_terminal: If True, also print vector info to console
+            alpha: Interpolation factor for smooth rendering (0 to 1)
         """
+        # Interpolate position for smooth rendering
+        render_x = self.prev_x + (self.x - self.prev_x) * alpha
+        render_y = self.prev_y + (self.y - self.prev_y) * alpha
+
         # Start point is body center
-        x1 = self.x
-        y1 = self.y
+        x1, y1 = render_x, render_y
 
         # End point calculated from velocity components
         # Scaling factor 17.5 adjusts vector visibility
@@ -429,7 +433,7 @@ class Circle:
         if engine.cardinal_vectors:
             self.print_cardinal_speed_vectors()
 
-    def print_force_vector(self, in_terminal: bool = False):
+    def print_force_vector(self, in_terminal: bool = False, alpha: float = 1.0):
         """
         Print the force vector (net gravitational force).
         
@@ -438,29 +442,46 @@ class Circle:
         
         Args:
             in_terminal: If True, also print vector info to console
+            alpha: Interpolation factor for smooth rendering (0 to 1)
         """
-        # Calculate force magnitude
-        force = sqrt(self.force[0] ** 2 + self.force[1] ** 2)
-        
-        # Calculate scaling coefficient for visualization
-        # Uses cube root to compress large force values for display
-        if force != 0:
-            coefficient = cbrt(force)
-        else:
-            coefficient = 0
+        # Interpolate position for smooth rendering
+        render_x = self.prev_x + (self.x - self.prev_x) * alpha
+        render_y = self.prev_y + (self.y - self.prev_y) * alpha
 
-        # Calculate vector end point with scaling
-        vector_x = cbrt(self.force[0]) * coefficient * engine.vector_scale * self.force_vector_scale
-        vector_y = cbrt(self.force[1]) * coefficient * engine.vector_scale * self.force_vector_scale
-        end_coordinates = (self.x + vector_x, self.y + vector_y)
+        # Calculate force magnitude for scaling
+        force_magnitude = sqrt(self.force[0] ** 2 + self.force[1] ** 2)
+        
+        # Avoid division by zero
+        if force_magnitude == 0:
+            return  # No force, no vector to draw
+        
+        # Calculate unit vector (direction)
+        unit_x = self.force[0] / force_magnitude
+        unit_y = self.force[1] / force_magnitude
+        
+        # Scale the vector for visibility
+        # Use logarithmic scaling for very large/small forces
+        # This compresses the range while preserving direction
+        if force_magnitude > 0:
+            # Logarithmic scaling: log10(force) gives better visibility
+            # Add 1 to avoid log(0), multiply by scale factors
+            visual_length = log10(force_magnitude + 1) * engine.vector_scale * self.force_vector_scale
+        else:
+            visual_length = 0
+        
+        # Calculate end point
+        vector_x = unit_x * visual_length
+        vector_y = unit_y * visual_length
+        end_coordinates = (render_x + vector_x, render_y + vector_y)
 
         if in_terminal:
-            print(f"N{self.number} Start : ({self.x}; {self.y}); End : {end_coordinates}")
+            print(f"N{self.number} Force: {force_magnitude:.2e} N, "
+                f"Start: ({render_x:.1f}; {render_y:.1f}); End: {end_coordinates}")
         
         # Draw force vector in special blue color
-        Utils.draw_line(SP_BLUE, (self.x, self.y), end_coordinates)
+        Utils.draw_line(SP_BLUE, (render_x, render_y), end_coordinates)
 
-    def print_cardinal_speed_vectors(self, in_terminal: bool = False):
+    def print_cardinal_speed_vectors(self, in_terminal: bool = False, alpha: float = 1.0):
         """
         Print Cardinal Speed Vectors (X and Y components separately).
         
@@ -469,14 +490,19 @@ class Circle:
         
         Args:
             in_terminal: If True, also print vector info to console
+            alpha: Interpolation factor for smooth rendering (0 to 1)
         """
-        # X component (horizontal velocity)
-        x1 = self.x
-        x2 = self.x + self.vx * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
+        # Interpolate position for smooth rendering
+        render_x = self.prev_x + (self.x - self.prev_x) * alpha
+        render_y = self.prev_y + (self.y - self.prev_y) * alpha
 
-        # Y component (vertical velocity)
-        y1 = self.y
-        y2 = self.y + self.vy * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
+        # Vector's beginning
+        x1 = render_x
+        y1 = render_y
+        
+        # Vector's end
+        x2 = x1 + self.vx * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility        
+        y2 = y1 + self.vy * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
 
         if in_terminal:
             print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) " \
@@ -1293,17 +1319,17 @@ class Engine:
                 circle.draw_interpolated(self.screen, alpha)
             if self.vectors_printed:
                 for circle in circles:
-                    circle.print_global_speed_vector(False)
+                    circle.print_global_speed_vector(False, alpha)
                     if self.force_vectors:
-                        circle.print_force_vector(False)
+                        circle.print_force_vector(False, alpha)
                     
         else:
             # Vectors first, then bodies on top
             if self.vectors_printed:
                 for circle in circles:
-                    circle.print_global_speed_vector(False)
+                    circle.print_global_speed_vector(False ,alpha)
                     if self.force_vectors:
-                        circle.print_force_vector(False)
+                        circle.print_force_vector(False, alpha)
                     
             for circle in circles:
                 circle.draw_interpolated(self.screen, alpha)
