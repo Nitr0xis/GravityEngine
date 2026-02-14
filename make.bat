@@ -2,7 +2,7 @@
 REM ================================================
 REM   Gravity Engine - Build System
 REM   by Nils DONTOT
-REM   https://github.com/NilsDontot/GravityEngine
+REM   https://github.com/Nitr0xis/GravityEngine
 REM ================================================
 
 title Gravity Engine - Build System
