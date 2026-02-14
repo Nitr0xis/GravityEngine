@@ -183,6 +183,29 @@ class Tester:
         
         print("✓ Test uniform speed successful")
 
+    @staticmethod
+    def default_debug():
+        # DEBUG: Print paths for troubleshooting resource loading
+        # This helps diagnose issues with font and asset loading in different environments
+        print("=" * 60)
+        print("RESOURCE PATH DEBUG")
+        print("=" * 60)
+        print(f"__file__: {os.path.abspath(__file__)}")
+        print(f"Script dir: {os.path.dirname(os.path.abspath(__file__))}")
+        print(f"Project root: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
+
+        # Check if running as PyInstaller bundle or in development mode
+        if hasattr(sys, '_MEIPASS'):
+            print(f"PyInstaller mode: {sys._MEIPASS}")
+        else:
+            print("Development mode")
+
+        # Test font path resolution
+        test_font = resource_path('assets/font.ttf')
+        print(f"Font path: {test_font}")
+        print(f"Font exists: {os.path.exists(test_font)}")
+        print("=" * 60)
+
 
 class Color:
     # Color constants (RGB tuples)
@@ -1895,26 +1918,8 @@ if __name__ == '__main__':
     # Initialize pygame modules
     pygame.init()
 
-    # DEBUG: Print paths for troubleshooting resource loading
-    # This helps diagnose issues with font and asset loading in different environments
-    print("=" * 60)
-    print("RESOURCE PATH DEBUG")
-    print("=" * 60)
-    print(f"__file__: {os.path.abspath(__file__)}")
-    print(f"Script dir: {os.path.dirname(os.path.abspath(__file__))}")
-    print(f"Project root: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
-
-    # Check if running as PyInstaller bundle or in development mode
-    if hasattr(sys, '_MEIPASS'):
-        print(f"PyInstaller mode: {sys._MEIPASS}")
-    else:
-        print("Development mode")
-
-    # Test font path resolution
-    test_font = resource_path('assets/font.ttf')
-    print(f"Font path: {test_font}")
-    print(f"Font exists: {os.path.exists(test_font)}")
-    print("=" * 60)
+    # Minimum debug
+    Tester.default_debug()
 
     # Global list of all celestial bodies in the simulation
     circles: list[Circle] = []
