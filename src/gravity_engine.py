@@ -50,7 +50,8 @@ import pygame
 
 """
 Todo:
-    - add Core class for display between pygame and tkinter
+    - update interpolation by adding the choice of the realism (N-compute/s)
+    - add Core class for display between pygame and tkinter and core functions like ressource_path()
     - replace pixel display with screen fractions
 
 Ideas:

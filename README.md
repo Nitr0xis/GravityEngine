@@ -5,7 +5,7 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 **Created by [Nils DONTOT](https://github.com/Nitr0xis)**
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Pygame](https://img.shields.io/badge/pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-Nitr0xis-181717?logo=github)](https://github.com/Nitr0xis)
 
@@ -30,12 +30,9 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 - [Physics](#-physics)
 - [Performance](#-performance)
 - [Roadmap](#-roadmap)
-- [Screenshots](#-screenshots)
-- [Educational Use](#-educational-use)
 - [Quick Start Guide](#-quick-start-guide)
 - [Troubleshooting](#-troubleshooting)
-- [Additional Resources](#-additional-resources)
-- [Color Scheme Reference](#-color-scheme-reference)
+- [Educational Use](#-educational-use)
 - [Acknowledgments](#-acknowledgments)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -51,7 +48,13 @@ Every previous change is available in [ROADMAP.md](ROADMAP.md).
 
 Gravity Engine is an interactive physics simulation that allows you to create and observe celestial bodies interacting under Newtonian gravity. Watch bodies orbit, collide, and merge in real-time with adjustable parameters and visualization options.
 
-The simulation features accurate Newtonian physics with momentum conservation, customizable gravitational constants, and multiple visualization modes. Whether you want to recreate a solar system, observe chaotic three-body problems, or simply experiment with gravitational interactions, Gravity Engine provides an intuitive interface for exploration.
+The simulation features accurate Newtonian physics with momentum conservation, fixed timestep integration for determinism, smooth rendering with interpolation, and multiple visualization modes. Whether you want to recreate a solar system, observe chaotic three-body problems, or simply experiment with gravitational interactions, Gravity Engine provides an intuitive interface for exploration.
+
+**Key Technical Features:**
+- **Fixed timestep physics** - Deterministic simulation regardless of rendering FPS
+- **Interpolated rendering** - Smooth 120 FPS visuals even with variable frame rates
+- **Time accumulator system** - Precise physics updates with "spiral of death" prevention
+- **Momentum conservation** - Physically accurate collisions and mergers
 
 **Developed by Nils DONTOT** - [GitHub Profile](https://github.com/Nitr0xis)
 
@@ -59,22 +62,35 @@ The simulation features accurate Newtonian physics with momentum conservation, c
 
 ## ✨ Features
 
-### Current Features
+### Current Features (February 2026)
 - ✅ **Real-time N-body simulation** - Accurate gravitational calculations for multiple bodies
-- ✅ **Interactive body creation** - Click and hold to create bodies of any size (with exponential growth acceleration)
+- ✅ **Fixed timestep physics** - Deterministic simulation (1/120s physics steps)
+- ✅ **Smooth interpolated rendering** - 120 FPS display with alpha blending between physics states
+- ✅ **Time accumulator** - Handles variable frame rates while maintaining physics accuracy
+- ✅ **Interactive body creation** - Click and hold to create bodies (exponential growth acceleration)
 - ✅ **Momentum conservation** - Bodies merge realistically, conserving mass and momentum
-- ✅ **Vector visualization** - Display velocity and force vectors in real-time
+- ✅ **Vector visualization** - Display velocity and force vectors in real-time (with interpolation)
 - ✅ **Detailed analytics** - Track mass, velocity, energy, age, and more for each body
 - ✅ **Pause/resume** - Freeze time to analyze your simulation
 - ✅ **Random velocity mode** - Add chaos with randomized initial velocities
 - ✅ **Reversed gravity** - Experiment with repulsive gravity (toggle with G key)
-- ✅ **FPS correction** - Consistent physics regardless of frame rate
 - ✅ **Fullscreen support** - Automatic native resolution detection
 - ✅ **Random environments** - Generate preset configurations instantly (P key)
 - ✅ **Standalone executable** - Build distributable .exe files (Windows)
 - ✅ **Customizable splash screen** - Personalized startup screen with author info
 - ✅ **Dark/Light mode** - Choose your preferred color scheme
-- ✅ **Cardinal vector display** - Show X and Y velocity components separately
+- ✅ **Color class** - Organized color constants for easy customization
+- ✅ **Tester class** - Unit tests for force summation, determinism, and uniform speed
+
+### Recent Improvements (February 2026)
+- ✨ **Fixed timestep integration** - Physics now runs at consistent 1/120s intervals
+- ✨ **Interpolation rendering** - Smooth visuals between physics steps (alpha blending)
+- ✨ **Time accumulator** - Proper handling of variable frame rates
+- ✨ **Interpolated vectors** - Velocity and force vectors now sync with interpolated positions
+- ✨ **Improved force vectors** - Logarithmic scaling preserves direction and magnitude
+- ✨ **Better cardinal vectors** - X/Y components properly interpolated
+- ✨ **Code organization** - Color constants moved to dedicated `Color` class
+- ✨ **Testing framework** - Added `Tester` class with physics validation tests
 
 ### Planned Features
 See [ROADMAP.md](ROADMAP.md) for upcoming features and development timeline.
@@ -93,7 +109,7 @@ See [ROADMAP.md](ROADMAP.md) for upcoming features and development timeline.
 ### Option 2: Run from Source (For Developers)
 
 **Prerequisites:**
-- Python 3.8 or higher
+- Python 3.11 or higher
 - pip (Python package manager)
 
 **Quick Start:**
@@ -145,7 +161,9 @@ GravityEngine/
 │   └── gravity_engine.py          # 🎯 Main program - run this to start
 │
 ├── assets/
-│   ├── font.ttf                   # ✅ UI font (required)
+│   ├── fonts/
+│   │   ├── main_font.ttf          # ✅ UI font (required)
+│   │   └── toruk.ttf              # ✅ Splash screen font (required)
 │   ├── icon.ico                   # 🎨 Executable icon
 │   └── musics/                    # 🎵 Background music folder (optional)
 │       ├── music1.mp3
@@ -160,9 +178,9 @@ GravityEngine/
 ├── make.bat                        # 📋 Interactive build menu
 ├── README.md                       # 📖 This file
 ├── ROADMAP.md                      # 🗺️ Development roadmap
-├── CONTRIBUTING.md                 # 🗺️ How to contribute
-├── SECURITY.md                     # 🗺️ About the security risks of the project
-├── CODE_OF_CONDUCT                 # 🗺️ Code of conduct
+├── CONTRIBUTING.md                 # 🤝 How to contribute
+├── SECURITY.md                     # 🔒 Security information
+├── CODE_OF_CONDUCT.md              # 📜 Code of conduct
 ├── LICENSE                         # ⚖️ License terms (CC BY-NC-SA 4.0)
 ├── .gitignore                      # 🚫 Git ignore rules
 └── .gitattributes                  # 📝 Git attributes
@@ -174,26 +192,15 @@ GravityEngine/
 |------|-------------|----------|
 | `dist/GravityEngine.exe` | Standalone executable (post-build) | 📦 Distributable |
 | `src/gravity_engine.py` | Main Python source code | ✅ Required for dev |
-| `assets/font.ttf` | UI font file | ✅ Required |
+| `assets/fonts/main_font.ttf` | UI font file | ✅ Required |
+| `assets/fonts/toruk.ttf` | Splash screen font | ✅ Required |
 | `assets/icon.ico` | Executable icon | 🎨 Recommended |
 | `assets/musics/` | Background music files | 🎵 Optional |
 | `builders/*.bat` | Build automation scripts | 🔨 For building |
 | `make.bat` | Build system menu | 📋 Build interface |
-| `README.md` | Documentation | 📖 Recommended |
+| `README.md` | Documentation | 📖 You are here |
 | `ROADMAP.md` | Development timeline | 🗺️ Recommended |
 | `LICENSE` | License information | ⚖️ Legal |
-
-### The `dist/` Folder
-
-The `dist/` folder contains built executables created by PyInstaller:
-
-- **Created by**: Running `build.bat` or `build_release.bat`
-- **Contents**: Self-contained `.exe` files with all dependencies embedded
-- **Distribution**: Share `GravityEngine.exe` with users who don't have Python
-- **Size**: Approximately 15-30 MB (includes Python runtime, Pygame, and assets)
-- **Ignored by Git**: Not tracked in version control (too large)
-
-> 💡 **Tip**: Users who download your executable don't need Python, Pygame, or any dependencies installed!
 
 ## 🔨 Building Executables
 
@@ -232,39 +239,11 @@ Simply double-click `make.bat` to access the interactive build menu:
 | **[7] Open dist/** | Open folder in Explorer | - | View executables |
 | **[8] Help** | Show detailed help | - | Learn about options |
 
-### Manual Building
-
-**Development Build (with console for debugging):**
-```bash
-builders\build.bat
-```
-
-**Release Build (no console, for distribution):**
-```bash
-builders\build_release.bat
-```
-
-**Clean build files:**
-```bash
-builders\clean.bat
-```
-
 ### Build Requirements
 
 - **PyInstaller** - Automatically installed on first build
 - **All assets** - Must be present in `assets/` folder
 - **Windows** - Build scripts are Windows batch files (.bat)
-
-> 💡 **Note**: On first build, PyInstaller will be automatically installed if not present.
-
-### Distributing Your Build
-
-After building, share **only** the `dist/GravityEngine.exe` file:
-
-1. Build release version: `make.bat` → Option `[2]`
-2. Find executable in `dist/GravityEngine.exe`
-3. Share this single file - it contains everything!
-4. Users double-click to run - no installation needed
 
 ## 🎮 Controls
 
@@ -302,6 +281,7 @@ You can modify simulation parameters in the `Engine.__init__()` method within `s
 
 ### Splash Screen Settings
 ```python
+self.splash_screen_font = resource_path('assets/fonts/toruk.ttf')
 self.splash_screen_enabled = True       # Enable/disable startup splash screen
 self.splash_screen_duration = 3.0       # Duration in seconds
 self.author_first_name = "Nils"         # Your first name
@@ -315,12 +295,29 @@ self.FULLSCREEN = True                  # Enable fullscreen mode
 self.screen_mode = "dark"               # Color scheme: "dark" or "light"
 ```
 
+### Timestep Settings (NEW)
+```python
+self.FPS_TARGET = 120                   # Target rendering FPS
+self.physics_timestep = 1.0 / self.FPS_TARGET  # Fixed physics timestep (1/120s)
+self.time_accumulator = 0.0             # Accumulator for physics updates
+self.max_accumulation = 0.25            # Max accumulation (250ms = ~30 steps)
+```
+
+**Important**: The physics runs at a fixed timestep (1/120s) while rendering can vary. This ensures deterministic simulation.
+
+### Simulation Settings
+```python
+self.FPS_TARGET = 120                   # Target frames per second
+self.time_acceleration = 1e7            # Time acceleration factor
+self.growing_speed = 0.1                # Base body growth rate when creating
+```
+
 ### UI Settings
 ```python
+self.used_font = resource_path('assets/fonts/main_font.ttf')
 self.txt_size = 30                      # Font size for UI text
 self.txt_gap = 15                       # Spacing between text lines
 self.info_y = 20                        # Y position for info display
-self.used_font = resource_path('assets/font.ttf')  # Font file path
 ```
 
 ### Physics Settings
@@ -330,46 +327,17 @@ self.default_gravity = self.G           # Default gravity value
 self.gravity = self.default_gravity     # Active gravitational constant
 self.fusions = True                     # Enable/disable body fusion on collision
 self.minimum_mass = 1000                # Minimum mass for new bodies (kg)
-```
-
-### Simulation Settings
-```python
-self.FPS = 120                          # Target frames per second
-self.time_acceleration = 50_000                     # Time acceleration factor
-self.growing_speed = 0.1                # Base body growth rate when creating
-```
-
-**Important**: The body growth uses exponential acceleration - the longer you hold the mouse button, the faster the body grows. The acceleration formula is:
-```python
-acceleration_factor = exp(time_held * 0.8)
-```
-
-### Density Settings
-```python
-self.default_density = 5515             # Default density for new bodies (kg/m³)
-                                        # 5515 is Earth's average density
-```
-
-The radius is calculated from mass and density using:
-```python
-volume = mass / density
-radius = ((3 * volume) / (4 * π))^(1/3)
+self.default_density = 5515             # Default density (kg/m³) - Earth density
 ```
 
 ### Visualization Settings
 ```python
 self.vectors_printed = False            # Show velocity vectors by default
-self.strength_vectors = True            # Show force vectors
+self.force_vectors = True               # Show force vectors
 self.cardinal_vectors = False           # Show X/Y velocity components separately
 self.vectors_in_front = True            # Draw vectors on top of bodies
-self.vector_length = 1                  # Vector display scale multiplier
+self.vector_scale = 1                   # Vector display scale multiplier
 ```
-
-**Vector Colors:**
-- **Red (GSV)**: Global Speed Vector - total velocity
-- **Green (CSV_x)**: Cardinal Speed Vector X - horizontal component
-- **Yellow (CSV_y)**: Cardinal Speed Vector Y - vertical component
-- **Special Blue**: Force vectors
 
 ### Random Generation Settings
 ```python
@@ -378,15 +346,7 @@ self.random_environment_number = 20     # Bodies created with 'P' key
 
 # Maximum kinetic energy for random velocities
 max_kinetic_energy_joules = 5e-5        # in Joules
-# Converted to simulation units (kg⋅m²/frame²)
-self.random_field = max_kinetic_energy_joules / (self.FPS ** 2)
-```
-
-When random mode is enabled, new bodies receive random velocities based on:
-```python
-max_velocity = sqrt(2 * random_field / mass)
-vx = random.uniform(-max_velocity, max_velocity)
-vy = random.uniform(-max_velocity, max_velocity)
+self.random_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
 ```
 
 ### Audio Settings
@@ -396,29 +356,13 @@ self.music = False                      # Enable/disable background music
 self.music_volume = 1                   # Music volume (0.0 to 1.0)
 ```
 
-**Music Queue**: The simulation can play up to 3 music files in sequence:
-- `music1.mp3`
-- `music2.mp3`
-- `music3.mp3`
-
-Place these files in `assets/musics/` to enable background music.
-
 ### Quick Configuration Examples
-
-#### Slower, More Visible Simulation
-```python
-self.time_acceleration = 1_000          # Reduce time acceleration dramatically
-self.vectors_printed = True             # Show vectors by default
-self.vector_length = 2                  # Make vectors longer
-self.cardinal_vectors = True            # Show X/Y components
-```
 
 #### High-Performance Mode
 ```python
-self.FPS = 60                           # Lower FPS for better performance
+self.FPS_TARGET = 60                    # Lower FPS for better performance
 self.vectors_printed = False            # Disable vectors
-self.strength_vectors = False           # Disable force vectors
-self.vectors_in_front = False           # Skip vector layer
+self.force_vectors = False              # Disable force vectors
 ```
 
 #### Chaotic System
@@ -431,34 +375,47 @@ self.fusions = False                    # Prevent merging for more chaos
 
 #### Solar System-like Setup
 ```python
-self.time_acceleration = 10_000         # Moderate time acceleration
+self.time_acceleration = 1e4            # Moderate time acceleration
 self.fusions = False                    # Prevent planets from merging
 self.random_mode = False                # Controlled initial conditions
-self.default_density = 5515             # Earth-like density
 ```
-
-#### Fast Body Creation
-```python
-self.growing_speed = 0.5                # Faster base growth
-self.minimum_mass = 100                 # Smaller minimum mass
-```
-
-### Advanced Configuration
-
-For more advanced modifications, you can edit:
-
-- **Body creation behavior** → `Circle.__init__()`
-- **Force calculations** → `Circle.attract()`
-- **Collision & fusion** → `Circle.fusion()` and `Circle.update_fusion()`
-- **Keyboard mappings** → `Engine.run()` → `KEY_MAP`
-- **Mouse actions** → `ActionManager.handle_mouse_button_down()` and `handle_mouse_button_up()`
-- **Growth acceleration** → `Engine.run()` main loop (search for "acceleration_factor")
-
-### Configuration File *(Future Feature)*
-
-> 📋 **Coming Q2 2026**: External configuration file support (JSON/YAML). See [ROADMAP.md](ROADMAP.md).
 
 ## 🔬 Physics
+
+### Fixed Timestep Integration (NEW)
+
+The simulation uses a **fixed timestep** system for deterministic physics:
+
+```python
+physics_timestep = 1.0 / 120  # Always 1/120 second per step
+```
+
+**How it works:**
+1. **Time accumulator** collects real frame time
+2. **Physics steps** execute when accumulator ≥ timestep
+3. **Multiple steps** can run per frame if needed (catching up)
+4. **Rendering interpolates** between physics states for smooth visuals
+
+**Benefits:**
+- ✅ **Deterministic** - Same initial conditions always give same results
+- ✅ **FPS-independent** - Physics accuracy doesn't depend on rendering speed
+- ✅ **Predictable** - No "time dilation" from slow frames
+- ✅ **Smooth** - Interpolation provides fluid 120 FPS visuals
+
+### Interpolated Rendering (NEW)
+
+Rendering uses **linear interpolation** (alpha blending) between physics states:
+
+```python
+# Alpha = progress between current and next physics step
+alpha = time_accumulator / physics_timestep  # 0.0 to 1.0
+
+# Interpolated position
+render_x = prev_x + (x - prev_x) * alpha
+render_y = prev_y + (y - prev_y) * alpha
+```
+
+**Result:** Smooth 120 FPS display even when physics runs at fixed intervals.
 
 ### Gravitational Force
 
@@ -473,91 +430,83 @@ F = G × (m₁ × m₂) / r²
 - `m₁, m₂` = masses of the two bodies (kilograms)
 - `r` = distance between body centers (meters)
 
-**Implementation Details:**
-- Force is decomposed into X and Y components using trigonometry
-- Angle is calculated as: `angle = atan2(dy, dx)`
-- Components: `fx = cos(angle) * force`, `fy = sin(angle) * force`
-- If reversed gravity is enabled, forces are multiplied by -1
+**Implementation:**
+```python
+force = engine.gravity * ((self.mass * other.mass) / (distance ** 2))
+angle = atan2(dy, dx)
+fx = cos(angle) * force
+fy = sin(angle) * force
+```
 
 ### Velocity Updates
 
-Forces are applied to velocity using:
+Forces are applied to velocity each physics step:
 ```python
-vx += fx / mass  # Acceleration = Force / Mass
-vy += fy / mass
+# In attract() method
+self.vx += fx / self.mass  # a = F/m
+self.vy += fy / self.mass
 ```
 
-Position is updated with frame-rate correction:
-```python
-x += correct_latency(vx * speed)
-y += correct_latency(vy * speed)
-```
+### Position Updates
 
-Where `correct_latency()` adjusts for actual FPS:
+Position is updated with time acceleration:
 ```python
-final_speed = speed * 100 * (1 / frequency)
+# In physics_update() method
+dt_sim = dt * engine.time_acceleration
+self.x += self.vx * dt_sim
+self.y += self.vy * dt_sim
 ```
 
 ### Momentum Conservation
 
-All interactions conserve momentum using:
+All interactions conserve momentum:
 ```
 p_total = m₁v₁ + m₂v₂ = constant
 ```
 
-This ensures physically accurate collisions and mergers.
+**Fusion example:**
+```python
+# New velocity after fusion
+v_new = (m₁ × v₁ + m₂ × v₂) / (m₁ + m₂)
+```
 
 ### Body Fusion
 
-When two bodies collide (distance ≤ sum of radii), they merge while conserving:
-
-**Conditions for fusion:**
-- `fusions` must be enabled
-- The calling body must have mass ≥ the other body
-- Distance between centers ≤ radius of larger body
+When two bodies collide (distance ≤ sum of radii):
 
 **Conservation laws:**
 - **Mass**: `m_new = m₁ + m₂`
 - **Position (center of mass)**: `x_new = (m₁x₁ + m₂x₂) / m_total`
-- **Velocity (momentum conservation)**: `v_new = (m₁v₁ + m₂v₂) / m_total`
+- **Velocity (momentum)**: `v_new = (m₁v₁ + m₂v₂) / m_total`
 
-**New radius calculation:**
+**New radius:**
 ```python
-if density > 0:
-    volume = mass / density
-    radius = ((3 * volume) / (4 * π))^(1/3)
-else:
-    radius = mass^(1/3)  # Fallback
+volume = mass / density
+radius = ((3 × volume) / (4π))^(1/3)
 ```
 
-The absorbed body is marked with `suicide = True` and removed in the next frame.
+### Force Vector Visualization (IMPROVED)
 
-### Force Averaging (Important Note)
+Force vectors now use **logarithmic scaling** with **direction preservation**:
 
-⚠️ **Current implementation**: Forces from all bodies are **averaged** rather than summed:
 ```python
-self.force[0] /= len(self.attract_forces)
-self.force[1] /= len(self.attract_forces)
+# Calculate unit vector (preserves direction)
+force_magnitude = sqrt(fx² + fy²)
+unit_x = fx / force_magnitude
+unit_y = fy / force_magnitude
+
+# Logarithmic scaling for visibility
+visual_length = log10(force_magnitude + 1) × scale_factors
+
+# Final vector
+vector_x = unit_x × visual_length
+vector_y = unit_y × visual_length
 ```
 
-This is unusual for physics simulations (forces should typically be summed). This might be an intentional design choice or could be modified for more standard physics.
-
-### Time Acceleration
-
-The simulation includes a configurable time acceleration factor (`self.time_acceleration`):
-- Default: 50,000× real-time
-- Real-time physics calculations
-- FPS-independent updates ensure consistent physics
-- Position updates scaled by: `time_acceleration * 100 * (1 / frequency)`
-
-### Kinetic Energy
-
-Kinetic energy is calculated as:
-```python
-E = 0.5 * mass * velocity²
-```
-
-Where velocity is the magnitude: `sqrt(vx² + vy²) * FPS`
+**Benefits:**
+- ✅ Direction is **always correct** (no sign loss)
+- ✅ Large forces are compressed (logarithmic)
+- ✅ Small forces remain visible
 
 ### Units
 
@@ -565,29 +514,20 @@ Where velocity is the magnitude: `sqrt(vx² + vy²) * FPS`
 |----------|------|--------|-------|
 | Mass | Kilograms | kg | Base unit |
 | Distance | Meters | m | Screen pixels represent meters |
-| Radius | Meters | m | Calculated from mass and density |
-| Time | Seconds | s | Accelerated by `speed` factor |
+| Time | Seconds | s | Accelerated by `time_acceleration` |
 | Force | Newtons | N | F = ma |
-| Energy | Joules | J | E = 0.5mv² |
 | Velocity | Meters/second | m/s | Magnitude of velocity vector |
 | Density | kg/m³ | - | Default: 5515 (Earth) |
-| Age | Seconds → Years | - | Displayed after conversion |
 
-**Age Display Conversion:**
+### Testing Framework (NEW)
+
+The `Tester` class includes unit tests:
+
 ```python
-age_years = age_seconds * speed / 31_557_600
-# 31,557,600 = seconds in a year
+Tester.test_force_summation()    # Verify forces are summed correctly
+Tester.test_determinism()        # Verify same inputs → same outputs
+Tester.test_uniform_speed()      # Verify FPS-independent physics
 ```
-
-> ⚠️ **Note**: The current implementation mixes simulation units and real-world units. A unit system revision is planned. See [ROADMAP.md](ROADMAP.md).
-
-### Known Physics Quirks
-
-1. **Force Averaging**: Forces are averaged instead of summed (see above)
-2. **Displayed Force Scaling**: Display forces are converted with `f_display = f_sim / gravity * G`
-3. **Mixed Units**: Some calculations mix pixels with meters
-
-These will be addressed in future updates (see ROADMAP.md for "Coherent physical units" milestone).
 
 ## 📊 Performance
 
@@ -595,143 +535,73 @@ These will be addressed in future updates (see ROADMAP.md for "Coherent physical
 
 - **Algorithm**: O(n²) brute-force gravitational calculations
 - **Optimal range**: Up to ~50-100 bodies at 120 FPS (depends on hardware)
-- **FPS independence**: Physics accuracy maintained regardless of frame rate
+- **Physics**: Fixed timestep ensures consistent accuracy
+- **Rendering**: Interpolated for smooth 120 FPS
 - **Memory**: ~50-100 MB typical usage
-- **Frame rate correction**: Automatic latency compensation ensures consistent simulation
 
 ### Performance Characteristics
 
-**What affects performance:**
-- **Body count** - Quadratic scaling (O(n²))
-- **Vector rendering** - Each vector is drawn separately
-- **Force calculations** - All pairs calculated every frame
-- **Selection checks** - Distance calculations for mouse clicks
-- **Screen resolution** - Higher resolution = more pixels to render
+**Fixed timestep benefits:**
+- ✅ Consistent physics regardless of rendering FPS
+- ✅ Deterministic simulation (same inputs → same outputs)
+- ✅ No "time dilation" from slow frames
+- ✅ Predictable behavior
 
-**What doesn't affect performance:**
-- Time acceleration (`speed` parameter)
-- Body size (radius)
-- Pause state (no physics updates when paused)
+**Performance factors:**
+- **Body count** - Quadratic scaling (O(n²))
+- **Vector rendering** - Each vector drawn separately (with interpolation)
+- **Force calculations** - All pairs calculated every physics step
+- **Interpolation** - Minimal overhead for smooth rendering
 
 ### Performance Tips
 
 1. **Reduce body count** - Fewer bodies = dramatically faster (O(n²) complexity)
-2. **Disable vectors** - Turn off visualization for better performance (V key)
-3. **Lower FPS** - `self.FPS = 60` instead of 120 is often sufficient
-4. **Disable force vectors** - `self.strength_vectors = False`
-5. **Windowed mode** - Slightly faster than fullscreen on some systems
-6. **Close other applications** - Free up system resources
-
-### Bottlenecks
-
-**Current performance bottlenecks:**
-1. **Nested loops** - Every body calculates force with every other body
-2. **No spatial partitioning** - All distances calculated regardless of proximity
-3. **Single-threaded** - No parallelization of force calculations
-4. **Vector rendering** - Each vector drawn individually
+2. **Disable vectors** - Turn off visualization (V key)
+3. **Lower FPS target** - `self.FPS_TARGET = 60` instead of 120
+4. **Disable force vectors** - `self.force_vectors = False`
+5. **Adjust time acceleration** - Higher values = faster evolution
 
 ### Benchmarks (Approximate)
 
-| Bodies | FPS (120 target) | FPS (60 target) |
-|--------|------------------|-----------------|
-| 10 | 120 | 60 |
-| 50 | 100-120 | 60 |
-| 100 | 60-80 | 50-60 |
-| 200 | 30-40 | 30-40 |
-| 500+ | <20 | <20 |
+| Bodies | FPS (120 target) | Physics Steps/Frame |
+|--------|------------------|---------------------|
+| 10 | 120 | 1 |
+| 50 | 100-120 | 1 |
+| 100 | 60-80 | 1-2 |
+| 200 | 30-40 | 2-3 |
+| 500+ | <20 | 5+ |
 
-> 💡 These are estimates and vary significantly based on hardware (CPU speed, RAM, graphics).
-
-### Planned Optimizations
-
-See [ROADMAP.md](ROADMAP.md) for upcoming performance improvements:
-
-- **QuadTree/Barnes-Hut** - Reduce complexity to O(n log n)
-- **Spatial partitioning** - Only calculate forces for nearby bodies
-- **Multi-threading** - Parallel force calculations
-- **GPU acceleration** - CUDA support for thousands of bodies
-- **Cached calculations** - Store and reuse distance calculations
-- **Collision optimization** - Efficient broad-phase detection
+> 💡 With fixed timestep, slow frames just mean more physics steps per render.
 
 ## 📈 Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
-Previous features and completed milestones are documented in the file.
+
+### Recently Completed (February 2026)
+
+- ✅ Fixed timestep physics integration
+- ✅ Interpolated rendering system
+- ✅ Time accumulator with spiral-of-death prevention
+- ✅ Improved force vector visualization (logarithmic scaling)
+- ✅ Interpolated vector rendering
+- ✅ Color class organization
+- ✅ Testing framework (Tester class)
+- ✅ Multiple font support (main UI + splash screen)
 
 ### Current Development Focus
 
 | Priority | Feature | Status |
 |----------|---------|--------|
-| 1 | Coherent physical units | ⏳ In Progress |
-| 2 | Screen-relative display system | ⏳ In Progress |
+| 1 | Scale factor system (pixel ≠ meter) | 🔄 In Discussion |
+| 2 | Unit system coherence | ⏳ In Progress |
 | 3 | Partial mass transfer on collision | 📋 Planned |
 | 4 | QuadTree optimization | 📋 Planned |
 
 ### Next Milestones
 
-- **February 2026**: Unit system overhaul, screen-relative display
+- **February 2026**: Scale factor implementation, unit system finalization
 - **March 2026**: Partial collisions, QuadTree optimization
 - **Q2 2026**: Save/load system, UI improvements, configuration files
-
-### Recently Completed
-
-- ✅ Exponential growth acceleration for body creation
-- ✅ Splash screen with customization
-- ✅ FPS-independent physics
-- ✅ Detailed body information panel
-- ✅ Vector visualization (velocity + force)
-
-### Inspiration
-
-This project was inspired by:
-- Classical N-body simulations and orbital mechanics
-- Space flight simulators (Kerbal Space Program, Universe Sandbox)
-- Educational physics demonstrations
-- The beauty and complexity of gravitational systems
-- Khan Academy physics videos
-- The three-body problem
-
-### Special Thanks
-
-To everyone who has:
-- Reported bugs and suggested improvements
-- Contributed code or documentation
-- Shared their simulations and creations
-- Provided encouragement and feedback
-
-## 📸 Screenshots
-
-*(Screenshots will be added soon to showcase features)*
-
-**Planned screenshots:**
-- Main simulation window with multiple bodies
-- Vector visualization (velocity and force)
-- Body information panel
-- Chaotic multi-body system
-- Binary orbit system
-- Splash screen
-
-## 🎓 Educational Use
-
-Gravity Engine is perfect for:
-
-- **Physics education** - Demonstrate Newton's laws and gravitational concepts
-- **Programming learning** - Study game physics, Pygame, and Python
-- **Scientific visualization** - Explore N-body problems and chaos theory
-- **Mathematics** - Understand vectors, trigonometry, and calculus
-- **Computational thinking** - Learn about optimization and algorithms
-- **Entertainment** - Create beautiful orbital patterns and experiment
-
-### Educational Topics Demonstrated
-
-1. **Newton's Law of Universal Gravitation** - F = G(m₁m₂)/r²
-2. **Momentum Conservation** - Total momentum before = after
-3. **Center of Mass** - Position weighted by mass
-4. **Kinetic Energy** - E = ½mv²
-5. **Vector Addition** - Force and velocity decomposition
-6. **Numerical Integration** - Euler method for physics
-7. **Chaos Theory** - Sensitivity to initial conditions
-8. **N-body Problem** - Classical unsolved problem in physics
 
 ## 🎯 Quick Start Guide
 
@@ -766,18 +636,6 @@ Gravity Engine is perfect for:
 3. Disable fusion (`self.fusions = False` in config) to prevent merging
 4. Optionally enable random mode for orbital velocities
 
-**Gravity Reversal Experiment:**
-1. Create several bodies
-2. Press G to reverse gravity (bodies repel instead of attract)
-3. Watch them fly apart!
-4. Press G again to return to normal
-
-**High-Speed Evolution:**
-1. Generate random environment (P)
-2. Increase time factor in config (`self.time_accelerationd = 1e4`)
-3. Watch rapid evolution and mergers
-4. Pause (Space) to examine the result
-
 ### Understanding the Display
 
 **Main Info Panel (Top Left):**
@@ -787,12 +645,8 @@ Gravity Engine is perfect for:
 - Oldest body ID and age
 
 **Selected Body Panel (Left Side):**
-- Body ID
-- Age (in simulated years)
-- Mass (kg)
-- Radius (m)
-- Volume (m³)
-- Density (kg/m³)
+- Body ID and age (simulated years)
+- Mass (kg), Radius (m), Volume (m³), Density (kg/m³)
 - Kinetic energy (J)
 - Force applied (N)
 - Velocity (m/s)
@@ -803,130 +657,78 @@ Gravity Engine is perfect for:
 - Reversed gravity status
 - Vectors display status
 - Random mode status
-- Random environment info
+- Random environment info (P key)
 
 **Bottom:**
 - Simulation age (years)
-- Current FPS
+- Current FPS (rendering)
 - Time acceleration factor
 - Pause status
-
-### Tips for Best Results
-
-- **Start small** - Begin with 2-5 bodies to understand the physics
-- **Use pause** - Freeze time to set up specific scenarios
-- **Experiment with settings** - Try different speeds, densities, etc.
-- **Watch long-term** - Some systems take time to develop interesting behavior
-- **Save screenshots** - Capture interesting moments (use OS screenshot tool)
-- **Learn from failures** - Unstable systems teach as much as stable ones
-
----
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
 **Problem**: Font not found / Text doesn't display
-- **Solution**: Ensure `assets/font.ttf` exists
-- Check file path: `resource_path()` should find it automatically
-- In PyInstaller builds, font must be in `assets/` folder
-
-**Problem**: Music doesn't play
-- **Solution**: Check `self.music = True` in config
-- Ensure `assets/musics/` folder exists with MP3 files
-- Music files must be named `music1.mp3`, `music2.mp3`, `music3.mp3`
+- **Solution**: Ensure `assets/fonts/main_font.ttf` and `assets/fonts/toruk.ttf` exist
+- Check file paths are correct
+- In PyInstaller builds, fonts must be in `assets/fonts/` folder
 
 **Problem**: Simulation runs too fast/slow
 - **Solution**: Adjust `self.time_acceleration` in `Engine.__init__()`
-- Lower values = slower simulation
-- Higher values = faster simulation
+- Default: `1e7` (10 million × real time)
+- Lower = slower simulation, Higher = faster simulation
 
 **Problem**: Poor performance with many bodies
-- **Solution**: See [Performance Tips](#performance-tips)
-- Reduce body count
-- Disable vectors (V key)
-- Lower FPS target
+- **Solution**: 
+  - Reduce body count
+  - Disable vectors (V key)
+  - Lower FPS target: `self.FPS_TARGET = 60`
+  - Disable force vectors: `self.force_vectors = False`
 
-**Problem**: Bodies disappear or behave strangely
-- **Solution**: This can happen with extreme velocities
-- Check for invalid coordinates (debug warnings in console)
-- Reduce time acceleration (`self.time_acceleration`)
-- Enable collision detection (`self.fusions = True`)
+**Problem**: Bodies behave strangely or disappear
+- **Solution**: 
+  - Check for extreme velocities
+  - Reduce time acceleration
+  - Enable collision detection (`self.fusions = True`)
 
-**Problem**: Can't create bodies
-- **Solution**: Ensure you're clicking empty space (not on existing body)
-- Try right-click or middle-click instead
-- Check mouse is working properly
+**Problem**: Vectors don't align with bodies
+- **Solution**: This was fixed in February 2026 with interpolated rendering
+- Update to latest version if using older code
 
-**Problem**: Executable won't run
-- **Solution**: Rebuild using `make.bat` → Option [4]
-- Check antivirus isn't blocking it
-- Run from command line to see error messages
+**Problem**: Physics changes with different FPS
+- **Solution**: This was fixed with fixed timestep integration
+- Physics now runs at consistent 1/120s regardless of rendering FPS
 
----
+## 🎓 Educational Use
 
-**⭐ Star this repository if you find it interesting!**
+Gravity Engine is perfect for:
 
-**Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
+- **Physics education** - Demonstrate Newton's laws and gravitational concepts
+- **Programming learning** - Study game physics, Pygame, and Python
+- **Scientific visualization** - Explore N-body problems and chaos theory
+- **Mathematics** - Understand vectors, trigonometry, and numerical integration
+- **Computational thinking** - Learn about optimization and algorithms
 
-*Last updated: February 1, 2026*
-*Version: 1.0.0 (as of code review)*
+### Educational Topics Demonstrated
 
----
-
-## 📚 Additional Resources
-
-### Learning Resources
-
-- **Newton's Laws** - [Khan Academy Physics](https://www.khanacademy.org/science/physics)
-- **N-body Problem** - [Wikipedia](https://en.wikipedia.org/wiki/N-body_problem)
-- **Pygame Documentation** - [pygame.org/docs](https://www.pygame.org/docs/)
-- **Python Tutorial** - [python.org/tutorial](https://docs.python.org/3/tutorial/)
-
-### Similar Projects
-
-- **Universe Sandbox** - Commercial gravity simulator
-- **Powder Game** - Browser-based physics sandbox
-- **Algodoo** - 2D physics simulation educational software
-
-### Further Reading
-
-- "The Three-Body Problem" by Cixin Liu (science fiction)
-- "Chaos: Making a New Science" by James Gleick
-- "Numerical Recipes" by Press et al. (for optimization algorithms)
-
----
-
-## 🎨 Color Scheme Reference
-
-For developers modifying the code:
-
-```python
-# UI and General
-WHITE = (255, 255, 255)      # Default body color (dark mode)
-BLACK = (0, 0, 0)            # Background (dark mode)
-BLUE = (10, 124, 235)        # UI text and info
-DARK_GREY = (100, 100, 100)  # Body shadows/outlines
-
-# Selection
-DUCKY_GREEN = (28, 201, 89)  # Selection highlight
-
-# Vectors
-RED = (255, 0, 0)            # Global velocity vector
-GREEN = (0, 255, 0)          # X-component velocity
-YELLOW = (241, 247, 0)       # Y-component velocity
-SP_BLUE = (130, 130, 220)    # Force vectors
-```
-
----
+1. **Newton's Law of Universal Gravitation** - F = G(m₁m₂)/r²
+2. **Momentum Conservation** - Total momentum before = after
+3. **Fixed Timestep Integration** - Deterministic physics simulation
+4. **Interpolation** - Smooth rendering between discrete states
+5. **Numerical Stability** - Time accumulator and spiral-of-death prevention
+6. **Kinetic Energy** - E = ½mv²
+7. **Vector Mathematics** - Force and velocity decomposition
+8. **N-body Problem** - Classical unsolved problem in physics
 
 ## 🙏 Acknowledgments
 
 - **Pygame** - Amazing game development library ([pygame.org](https://www.pygame.org/))
-- **PyInstaller** - Executable building tool that makes distribution easy
+- **PyInstaller** - Executable building tool
 - **Newton** - For the physics (obviously! 😄)
 - **Python Community** - For excellent documentation and support
-- **You** - For checking out this project and reading this far!
+- **Glenn Fiedler** - For excellent articles on fixed timestep game loops
+- **You** - For checking out this project!
 
 ## 🤝 Contributing
 
@@ -943,68 +745,43 @@ Contributions are welcome! Here's how you can help:
 
 ### Development Workflow
 ```bash
-# 1. Fork and clone your fork
+# 1. Fork and clone
 git clone https://github.com/YOUR_USERNAME/GravityEngine.git
 cd GravityEngine
 
-# 2. Create a feature branch
+# 2. Create feature branch
 git checkout -b feature/your-feature-name
 
-# 3. Make your changes
-# Edit src/gravity_engine.py or other files
+# 3. Make changes
+# Edit src/gravity_engine.py
 
-# 4. Test your changes
+# 4. Test thoroughly
 python src/gravity_engine.py
 
-# 5. Commit with descriptive message
+# 5. Commit and push
 git add .
-git commit -m "Add: detailed description of your changes"
-
-# 6. Push and create pull request
+git commit -m "Add: description of changes"
 git push origin feature/your-feature-name
+
+# 6. Create pull request on GitHub
 ```
 
 ### Code Style Guidelines
 
-- **Follow PEP 8** - Python style guide (with reasonable flexibility)
-- **Add docstrings** - Document classes and methods (see existing examples)
-- **Comment physics** - Explain complex calculations and formulas
-- **Keep functions focused** - Single responsibility principle
-- **Test thoroughly** - Verify physics accuracy and edge cases
-- **Use type hints** - Add type annotations where helpful
-
-**Example documentation style (already used in code):**
-```python
-def fusion(self, other):
-    """
-    Merge two bodies, conserving momentum and mass.
-    
-    The larger body absorbs the smaller one. Position and velocity
-    are calculated using center of mass and momentum conservation.
-    
-    Args:
-        other: The other Circle object to merge with (will be destroyed)
-    """
-```
+- **Follow PEP 8** - Python style guide
+- **Add docstrings** - Document classes and methods
+- **Comment physics** - Explain formulas and calculations
+- **Test thoroughly** - Verify physics accuracy
+- **Use type hints** - Add type annotations
 
 ### Areas Needing Help
 
-- 🐛 **Bug fixes** - Fix force averaging, unit inconsistencies
-- ⚡ **Performance** - Implement QuadTree, spatial partitioning
-- 📊 **Physics** - Add partial mass transfer, improve accuracy
-- 🎨 **UI/UX** - Better selection indicators, info panels
-- 📖 **Documentation** - Tutorials, examples, better comments
-- 🌍 **Features** - Save/load, configuration files, presets
-
-### Specific Contribution Ideas
-
-1. **Fix force averaging bug** - Forces should be summed, not averaged
-2. **Add QuadTree** - Optimize O(n²) to O(n log n)
-3. **Create example scenarios** - Solar system, binary stars, etc.
-4. **Add unit tests** - Test physics calculations
-5. **Improve collision detection** - Broad-phase + narrow-phase
-6. **Add save/load system** - JSON serialization
-7. **Create documentation** - Physics formulas, usage guides
+- 🐛 **Bug fixes** - Physics edge cases, UI issues
+- ⚡ **Performance** - QuadTree, spatial partitioning
+- 📊 **Physics** - Scale factor, unit consistency
+- 🎨 **UI/UX** - Better visualization, settings menu
+- 📖 **Documentation** - Tutorials, examples
+- 🧪 **Testing** - More unit tests, physics validation
 
 ## 📝 License
 
@@ -1016,26 +793,16 @@ This project is licensed under the **Creative Commons Attribution-NonCommercial-
 
 ### You are free to:
 
-- ✅ **Share** - Copy and redistribute the material in any medium or format
-- ✅ **Adapt** - Remix, transform, and build upon the material
+- ✅ **Share** - Copy and redistribute
+- ✅ **Adapt** - Remix, transform, build upon
 
 ### Under the following terms:
 
-- 📛 **Attribution** - Give appropriate credit to **Nils DONTOT**, provide a link to the license, and indicate if changes were made
-- 🚫 **NonCommercial** - You may not use the material for commercial purposes
-- 🔄 **ShareAlike** - If you remix, transform, or build upon the material, you must distribute your contributions under the same license
+- 📛 **Attribution** - Give credit to Nils DONTOT
+- 🚫 **NonCommercial** - No commercial use
+- 🔄 **ShareAlike** - Distribute under same license
 
-### What this means:
-
-- ✅ Use for learning and education
-- ✅ Modify for personal projects
-- ✅ Share with attribution to Nils DONTOT
-- ✅ Fork and improve (with same license)
-- ❌ Sell or commercialize
-- ❌ Use in paid products/services
-- ❌ Remove attribution
-
-See [LICENSE](LICENSE) for the complete legal text.
+See [LICENSE](LICENSE) for complete terms.
 
 ## 📧 Contact
 
@@ -1046,13 +813,14 @@ See [LICENSE](LICENSE) for the complete legal text.
 - 🔗 **Repository**: [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
 - 🌐 **Issues**: [Report bugs or suggest features](https://github.com/Nitr0xis/GravityEngine/issues)
 
-### Get in Touch
+---
 
-- **Questions?** Open an issue or send an email
-- **Ideas?** Share them in the issues section with the "enhancement" label
-- **Collaboration?** Pull requests are welcome! Fork and submit
-- **Bug reports?** Use the issue tracker with detailed reproduction steps
+**⭐ Star this repository if you find it interesting!**
 
+**Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
+
+*Last updated: February 14, 2026*  
+*Version: 2.0.0 - Fixed Timestep Edition*
 
 ---
 
