@@ -1103,7 +1103,6 @@ class Engine:
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
         self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
-        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
         self.FULLSCREEN = True
