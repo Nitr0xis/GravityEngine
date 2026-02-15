@@ -69,6 +69,153 @@ Ideas:
 # ==================================================================================
 
 
+class Color:
+    def __init__(self, *values):
+        if len(values) not in (3, 4):
+            raise ValueError("Color must have 3 (RGB) or 4 (RGBA) values")
+        
+        if not all(isinstance(v, int) and 0 <= v <= 255 for v in values):
+            raise ValueError("All values must be integers between 0 and 255")
+        
+        self._value = tuple[int, ...](values)
+    
+    @property
+    def value(self):
+        return self._value
+    
+    @property
+    def rgb(self):
+        return self._value[:3]
+    
+    @property
+    def alpha(self):
+        return self._value[3] if len(self._value) == 4 else 255
+    
+    @property
+    def average(self):
+        """Returns the mean of the RGB components (average brightness)"""
+        return sum(self.rgb) / 3
+    
+    @property
+    def luminosity(self):
+        """Perceived luminosity (standard formula for comparisons)"""
+        r, g, b = self.rgb
+        return 0.299 * r + 0.587 * g + 0.114 * b
+    
+    def __iter__(self):
+        """Allows: tuple(color), list(color), *color"""
+        return iter(self._value)
+
+    def __getitem__(self, index):
+        """Allows: color[0], color[1], color[2]"""
+        return self._value[index]
+
+    def __len__(self):
+        """Allows: len(color)"""
+        return len(self._value)
+    
+    # ADDITION: color1 + color2
+    def __add__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only add another Color")
+        
+        max_len = max(len(self._value), len(other._value))
+        v1 = self._value + (255,) * (max_len - len(self._value))
+        v2 = other._value + (255,) * (max_len - len(other._value))
+        
+        result = tuple(min(255, a + b) for a, b in zip(v1, v2))
+        return Color(*result)
+    
+    # SUBTRACTION: color1 - color2
+    def __sub__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only subtract another Color")
+        
+        max_len = max(len(self._value), len(other._value))
+        v1 = self._value + (255,) * (max_len - len(self._value))
+        v2 = other._value + (255,) * (max_len - len(other._value))
+        
+        result = tuple(max(0, a - b) for a, b in zip(v1, v2))
+        return Color(*result)
+    
+    # MULTIPLICATION: color * 2 or color * 0.5
+    def __mul__(self, factor):
+        if not isinstance(factor, (int, float)):
+            raise TypeError("Can only multiply by a number")
+        
+        result = tuple(int(min(255, max(0, v * factor))) for v in self._value)
+        return Color(*result)
+    
+    def __rmul__(self, factor):
+        return self.__mul__(factor)
+    
+    # DIVISION: color / 2
+    def __truediv__(self, factor):
+        if not isinstance(factor, (int, float)):
+            raise TypeError("Can only divide by a number")
+        if factor == 0:
+            raise ValueError("Division by zero")
+        
+        result = tuple(int(min(255, max(0, v / factor))) for v in self._value)
+        return Color(*result)
+    
+    # AVERAGE: color1 // color2
+    def __floordiv__(self, other):
+        if not isinstance(other, Color):
+            raise TypeError("Can only average with another Color")
+        
+        max_len = max(len(self._value), len(other._value))
+        v1 = self._value + (255,) * (max_len - len(self._value))
+        v2 = other._value + (255,) * (max_len - len(other._value))
+        
+        result = tuple((a + b) // 2 for a, b in zip(v1, v2))
+        return Color(*result)
+    
+    # EQUALITY: color1 == color2
+    def __eq__(self, other):
+        if not isinstance(other, Color):
+            return False
+        return self._value == other._value
+    
+    # DIFFERENCE: color1 != color2
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    # COMPARISONS (based on perceived luminosity)
+    def __lt__(self, other):
+        """color1 < color2: compares luminosity"""
+        if not isinstance(other, Color):
+            raise TypeError("Can only compare with another Color")
+        return self.luminosity < other.luminosity
+    
+    def __le__(self, other):
+        """color1 <= color2"""
+        if not isinstance(other, Color):
+            raise TypeError("Can only compare with another Color")
+        return self.luminosity <= other.luminosity
+    
+    def __gt__(self, other):
+        """color1 > color2"""
+        if not isinstance(other, Color):
+            raise TypeError("Can only compare with another Color")
+        return self.luminosity > other.luminosity
+    
+    def __ge__(self, other):
+        """color1 >= color2"""
+        if not isinstance(other, Color):
+            raise TypeError("Can only compare with another Color")
+        return self.luminosity >= other.luminosity
+    
+    def __repr__(self):
+        return f"Color{self._value}"
+    
+    def __str__(self):
+        r, g, b = self.rgb
+        if len(self._value) == 4:
+            return f"Color(R:{r}, G:{g}, B:{b}, A:{self.alpha})"
+        return f"Color(R:{r}, G:{g}, B:{b})"
+
+
 class Core:
     @staticmethod
     def resource_path(relative_path):
@@ -103,6 +250,53 @@ class Core:
 
         # Normalize path separators and join with base path
         return os.path.join(base_path, os.path.normpath(relative_path))
+
+
+class Display:
+    # Color constants (RGB tuples)
+    # These define the color palette used throughout the simulation
+    WHITE = Color(255, 255, 255)  # Default body color in dark mode
+    BLUE = Color(10, 124, 235)  # UI text and information color
+    SP_BLUE = Color(130, 130, 220)  # Special blue for force vectors
+    BLACK = Color(0, 0, 0)  # Background in dark mode, default body color in light mode
+    DUCKY_GREEN = Color(28, 201, 89)  # Selection highlight color
+    GREEN = Color(0, 255, 0)  # X-component velocity vector color
+    YELLOW = Color(241, 247, 0)  # Y-component velocity vector color
+    DARK_GREY = Color(100, 100, 100)  # Body shadow/outline color
+    RED = Color(255, 0, 0)  # Global velocity vector color
+
+    @staticmethod
+    def rect():
+        pass
+
+    @staticmethod
+    def circle():
+        pass
+
+    @staticmethod
+    def line():
+        pass
+
+    @staticmethod
+    def write(text: str = "[text]",
+              dest: tuple[int, int] = (0, 0),
+              color: tuple[int, int, int] = Color(255, 255, 255),
+              line: int = 0) -> pygame.Rect | None:
+        """
+        Render and display text on the screen.
+        
+        Args:
+            text: Text string to display
+            dest: Base position (x, y) for text
+            color: RGB color tuple
+            line: Line offset for vertical spacing (0 = first line)
+        
+        Returns:
+            Pygame Rect object representing the text area, or None on error
+        """
+        written = engine.font.render(text, 1, color)
+        rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
+        return rect
 
 
 class Tester:
@@ -214,20 +408,6 @@ class Tester:
         print("=" * 60)
 
 
-class Color:
-    # Color constants (RGB tuples)
-    # These define the color palette used throughout the simulation
-    WHITE = (255, 255, 255)  # Default body color in dark mode
-    BLUE = (10, 124, 235)  # UI text and information color
-    SP_BLUE = (130, 130, 220)  # Special blue for force vectors
-    BLACK = (0, 0, 0)  # Background in dark mode, default body color in light mode
-    DUCKY_GREEN = (28, 201, 89)  # Selection highlight color
-    GREEN = (0, 255, 0)  # X-component velocity vector color
-    YELLOW = (241, 247, 0)  # Y-component velocity vector color
-    DARK_GREY = (100, 100, 100)  # Body shadow/outline color
-    RED = (255, 0, 0)  # Global velocity vector color
-
-
 # -----------------
 # class TempText
 # -----------------
@@ -286,7 +466,7 @@ class TempText:
             return False
         else:
             # Draw the text at its position
-            Utils.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
+            Display.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
                         self.color)
             return True
 
@@ -358,9 +538,9 @@ class Circle:
 
         # Color based on screen mode
         if engine.screen_mode == "dark":
-            self.color = Color.WHITE
+            self.color = Display.WHITE
         elif engine.screen_mode == "light":
-            self.color = Color.BLACK
+            self.color = Display.BLACK
 
         # Selection state
         self.is_selected = False
@@ -392,9 +572,9 @@ class Circle:
         self.force_vector_scale = 1e2  # in px/N
 
         # Vector colors
-        self.GSV_color = Color.RED  # Global Speed Vector (total velocity)
-        self.CSV_x_color = Color.GREEN  # Cardinal Speed Vector X component
-        self.CSV_y_color = Color.YELLOW  # Cardinal Speed Vector Y component
+        self.GSV_color = Display.RED  # Global Speed Vector (total velocity)
+        self.CSV_x_color = Display.GREEN  # Cardinal Speed Vector X component
+        self.CSV_y_color = Display.YELLOW  # Cardinal Speed Vector Y component
 
         # Force tracking
         self.attract_forces: list[tuple[float, float]] = []  # List of force vectors from other bodies
@@ -522,7 +702,7 @@ class Circle:
                 f"Start: ({render_x:.1f}; {render_y:.1f}); End: {end_coordinates}")
         
         # Draw force vector in special blue color
-        Utils.draw_line(Color.SP_BLUE, (render_x, render_y), end_coordinates)
+        Utils.draw_line(Display.SP_BLUE, (render_x, render_y), end_coordinates)
 
     def print_cardinal_speed_vectors(self, in_terminal: bool = False, alpha: float = 1.0):
         """
@@ -567,63 +747,63 @@ class Circle:
             y: Y-coordinate for the info panel top position
         """
         # Draw separator line
-        pygame.draw.rect(engine.screen, Color.BLUE, (20, y, 340, 5))
+        pygame.draw.rect(engine.screen, Display.BLUE, (20, y, 340, 5))
 
         # Body ID
         text = f"ID : {self.number}"
-        Utils.write(text, (20, y - 20), Color.BLUE, 1)
+        Display.write(text, (20, y - 20), Display.BLUE, 1)
 
         # Age display (converted from simulation time to years)
         # 31,557,600 = seconds in a year
         age_years = self.age * engine.time_acceleration / 31_557_600
         if age_years < 2:
             text = f"Age : {round(age_years * 10) / 10} year"
-            Utils.write(text, (20, y - 20), Color.BLUE, 2)
+            Display.write(text, (20, y - 20), Display.BLUE, 2)
         else:
             text = f"Age : {round(age_years * 10) / 10} years"
-            Utils.write(text, (20, y - 20), Color.BLUE, 2)
+            Display.write(text, (20, y - 20), Display.BLUE, 2)
 
         # Mass (in kilograms)
         text = f"Mass : {self.mass:.2e} kg"
-        Utils.write(text, (20, y - 20), Color.BLUE, 3)
+        Display.write(text, (20, y - 20), Display.BLUE, 3)
 
         # Radius (in meters)
         text = f"Radius : {round(self.radius * 10) / 10} m"
-        Utils.write(text, (20, y - 20), Color.BLUE, 4)
+        Display.write(text, (20, y - 20), Display.BLUE, 4)
 
         # Volume (in cubic meters)
         text = f"Volume : {self.volume:.2e} m³"
-        Utils.write(text, (20, y - 20), Color.BLUE, 5)
+        Display.write(text, (20, y - 20), Display.BLUE, 5)
 
         # Density (in kilograms by cubic meters)
         text = f"Density : {self.density:.2e} kg/m³"
-        Utils.write(text, (20, y - 20), Color.BLUE, 6)
+        Display.write(text, (20, y - 20), Display.BLUE, 6)
 
         # Kinetic energy (in joules)
         text = f"Kinetic energy : {self.kinetic_energy():.2e} J"
-        Utils.write(text, (20, y - 20), Color.BLUE, 8)
+        Display.write(text, (20, y - 20), Display.BLUE, 8)
 
         # Net force magnitude (in newtons)
         force_magnitude = sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2)
         text = f"Force applied : {force_magnitude:.2e} N"
-        Utils.write(text, (20, y - 20), Color.BLUE, 9)
+        Display.write(text, (20, y - 20), Display.BLUE, 9)
 
         # Velocity magnitude (in m/s)
         text = f"Velocity : {self.speed:.2e} m/s"
-        Utils.write(text, (20, y - 20), Color.BLUE, 10)
+        Display.write(text, (20, y - 20), Display.BLUE, 10)
 
         # Position coordinates
         text = f"Coordinates : {int(self.x)}; {int(self.y)}"
-        Utils.write(text, (20, y - 20), Color.BLUE, 11)
+        Display.write(text, (20, y - 20), Display.BLUE, 11)
 
         # Nearest body information
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
             text = f"Nearest body : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
-            Utils.write(text, (20, y - 20), Color.BLUE, 12)
+            Display.write(text, (20, y - 20), Display.BLUE, 12)
         else:
             text = f"Nearest body : None"
-            Utils.write(text, (20, y - 20), Color.BLUE, 12)
+            Display.write(text, (20, y - 20), Display.BLUE, 12)
 
     def reset_force_list(self):
         """Clear the list of gravitational forces from other bodies."""
@@ -865,33 +1045,33 @@ class Circle:
         # Selection highlighting logic
         if self.full_selected_mode:
             if self.is_selected:
-                self.color = Color.DUCKY_GREEN
+                self.color = Display.DUCKY_GREEN
             else:
                 if engine.screen_mode == "dark":
-                    self.color = Color.WHITE
+                    self.color = Display.WHITE
                 elif engine.screen_mode == "light":
-                    self.color = Color.BLACK
+                    self.color = Display.BLACK
         else:
             if self.is_selected:
                 if visible_radius <= 4:
-                    pygame.draw.circle(screen, Color.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
                                     visible_radius + 2)
                 elif visible_radius <= 20:
-                    pygame.draw.circle(screen, Color.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
                                     visible_radius + visible_radius // 4 + 1)
                 else:
-                    pygame.draw.circle(screen, Color.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
                                     visible_radius + 5)
         
         # Draw shadow/outline for unselected bodies
         if not self.is_selected:
             if visible_radius <= 4:
-                pygame.draw.circle(screen, Color.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
             elif visible_radius <= 20:
-                pygame.draw.circle(screen, Color.DARK_GREY, (int(render_x), int(render_y)),
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)),
                                 visible_radius + visible_radius // 5)
             else:
-                pygame.draw.circle(screen, Color.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
         
         # Draw the main body circle
         self.rect = pygame.draw.circle(screen, self.color, (int(render_x), int(render_y)), visible_radius)
@@ -999,7 +1179,7 @@ class Engine:
         self.random_mode = False
         
         # Define max random energy in Joules
-        max_kinetic_energy_joules = 5e-5  # in J
+        max_kinetic_energy_joules = 1e-9  # in J
         # Convert in simulation used units (kg⋅m²/frame²)
         self.random_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
 
@@ -1158,62 +1338,62 @@ class Engine:
         heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
             text = f"Heaviest body : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} kg"
-            Utils.write(text, (20, y), Color.BLUE, 2)
+            Display.write(text, (20, y), Display.BLUE, 2)
         else:
             text = f"Heaviest body : None"
-            Utils.write(text, (20, y), Color.BLUE, 2)
+            Display.write(text, (20, y), Display.BLUE, 2)
 
         # Show delete instruction when a body is selected
         if self.circle_selected and len(circles) > 0:
-            Utils.write(f"Delete : Delete key", (
+            Display.write(f"Delete : Delete key", (
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
-                y), Color.BLUE, 0)
+                y), Display.BLUE, 0)
 
         # Display reversed gravity status (top right)
         if self.reversed_gravity:
             text = f"Reversed gravity (G) : Enabled"
         else:
             text = f"Reversed gravity (G) : Disabled"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color.BLUE, 0)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 0)
 
         # Display velocity vectors status (top right)
         if self.vectors_printed:
             text = f"Vectors (V) : Enabled"
         else:
             text = f"Vectors (V) : Disabled"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color.BLUE, 1)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 1)
 
         # Display random mode status (top right)
         if self.random_mode:
             text = f"Random mode (R) : Enabled"
         else:
             text = f"Random mode (R) : Disabled"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color.BLUE, 2)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
 
         # Display random environment generation hint (top right)
         text = f"Random environment ({self.random_environment_number} bodies) : P"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color.BLUE, 4)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 4)
 
         # Display time acceleration factor (bottom right)
         text = f"Time factor : ×{self.time_acceleration:.2e}"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                          self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), Color.BLUE, 0)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+                          self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), Display.BLUE, 0)
 
         # Display pause status (bottom right)
         if self.is_paused:
             text = f"Pause (Space) : Enabled"
         else:
             text = f"Pause (Space) : Disabled"
-        Utils.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
-                          self.screen.get_height() - 20 - self.txt_size), Color.BLUE, 0)
+        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+                          self.screen.get_height() - 20 - self.txt_size), Display.BLUE, 0)
 
         # Display body count (top left)
         text = f"Number of bodies : {len(circles)}"
-        Utils.write(text, (20, y), Color.BLUE, 0)
+        Display.write(text, (20, y), Display.BLUE, 0)
 
         # Display total mass (top left)
         text = f"Total mass : {round(Utils.mass_sum()):.2e} kg"
-        Utils.write(text, (20, y), Color.BLUE, 1)
+        Display.write(text, (20, y), Display.BLUE, 1)
 
         # Display oldest body information (top left)
         oldest_tuple = Utils.oldest()
@@ -1222,27 +1402,27 @@ class Engine:
             oldest_age_years = oldest_tuple[1] * engine.time_acceleration / 31_557_600
             if oldest_age_years < 2:
                 text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} year"
-                Utils.write(text, (20, y), Color.BLUE, 3)
+                Display.write(text, (20, y), Display.BLUE, 3)
             else:
                 text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} years"
-                Utils.write(text, (20, y), Color.BLUE, 3)
+                Display.write(text, (20, y), Display.BLUE, 3)
         else:
             text = f"Oldest body : None"
-            Utils.write(text, (20, y), Color.BLUE, 3)
+            Display.write(text, (20, y), Display.BLUE, 3)
 
         # Display simulation age (bottom left)
         sim_age_years = self.net_age() * engine.time_acceleration / 31_557_600
         if sim_age_years < 2:
             text = f"Simulation age : {int(sim_age_years * 10) / 10} year"
-            Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Color.BLUE, 0)
+            Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
         else:
             text = f"Simulation age : {int(sim_age_years * 10) / 10} years"
-            Utils.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Color.BLUE, 0)
+            Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
 
         # Display FPS (bottom center)
         text = f"FPS : {round(self.temp_FPS)}"
-        Utils.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
-                          int(self.screen.get_height() - 20 - engine.txt_size)), Color.BLUE, 0)
+        Display.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
+                          int(self.screen.get_height() - 20 - engine.txt_size)), Display.BLUE, 0)
 
     def generate_environment(self, count: int = 50):
         """
@@ -1418,9 +1598,9 @@ class Engine:
             
             # Fill screen with background color
             if self.screen_mode == "dark":
-                self.screen.fill(Color.BLACK)
+                self.screen.fill(Display.BLACK)
             else:
-                self.screen.fill(Color.WHITE)
+                self.screen.fill(Display.WHITE)
             
             # Calculate center positions
             screen_width = self.screen.get_width()
@@ -1428,18 +1608,18 @@ class Engine:
             
             # Render author name (first name + last name)
             author_text = f"{self.author_first_name} {self.author_last_name}"
-            author_surface = splash_font_large.render(author_text, True, Color.BLUE)
+            author_surface = splash_font_large.render(author_text, True, Display.BLUE)
             author_rect = author_surface.get_rect(center=(screen_width // 2, screen_height // 2 - 80))
             self.screen.blit(author_surface, author_rect)
             
             # Render project description
-            desc_surface = splash_font_medium.render(self.project_description, True, Color.BLUE)
+            desc_surface = splash_font_medium.render(self.project_description, True, Display.BLUE)
             desc_rect = desc_surface.get_rect(center=(screen_width // 2, screen_height // 2))
             self.screen.blit(desc_surface, desc_rect)
             
             # Render copyright/version info (optional)
             version_text = "Copyright (c) 2026"
-            version_surface = splash_font_small.render(version_text, True, Color.DARK_GREY)
+            version_surface = splash_font_small.render(version_text, True, Display.DARK_GREY)
             version_rect = version_surface.get_rect(center=(screen_width // 2, screen_height // 2 + 60))
             self.screen.blit(version_surface, version_rect)
             
@@ -1460,9 +1640,9 @@ class Engine:
         
         # Clear the screen after splash
         if self.screen_mode == "dark":
-            self.screen.fill(Color.BLACK)
+            self.screen.fill(Display.BLACK)
         else:
-            self.screen.fill(Color.WHITE)
+            self.screen.fill(Display.WHITE)
         pygame.display.flip()
 
     def run(self):
@@ -1637,9 +1817,9 @@ class Engine:
             
             # Clear screen
             if self.screen_mode == "dark":
-                self.screen.fill(Color.BLACK)
+                self.screen.fill(Display.BLACK)
             else:
-                self.screen.fill(Color.WHITE)
+                self.screen.fill(Display.WHITE)
             
             # Update and filter expired temporary texts
             self.temp_texts = [text for text in self.temp_texts if text.update()]
@@ -1885,31 +2065,6 @@ class Utils:
             Average value, or 0 if sequence is empty
         """
         return sum(l) / len(l) if len(l) > 0 else 0
-
-    @staticmethod
-    def write(text: str = "[text]",
-              dest: tuple[int, int] = (0, 0),
-              color: tuple[int, int, int] = (255, 255, 255),
-              line: int = 0) -> pygame.Rect | None:
-        """
-        Render and display text on the screen.
-        
-        Args:
-            text: Text string to display
-            dest: Base position (x, y) for text
-            color: RGB color tuple
-            line: Line offset for vertical spacing (0 = first line)
-        
-        Returns:
-            Pygame Rect object representing the text area, or None on error
-        """
-        written = engine.font.render(text, 1, color)
-        rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
-        return rect
-    
-    @staticmethod
-    def root_n(value: float, degree: float) -> float:
-        return fabs(value) ** (1 / degree)
 
 
 # -----------------
