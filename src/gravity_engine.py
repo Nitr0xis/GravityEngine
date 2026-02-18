@@ -32,6 +32,7 @@ import subprocess  # For installing missing modules
 import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
+import warnings  # Used to display warning messages about deprecated features or potential issues
 
 # Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
 from math import *
@@ -46,7 +47,10 @@ REQUIRED_MODULES: set[str] = {DISPLAY_API}
 for module in REQUIRED_MODULES:
     if importlib.util.find_spec(module) is None:
         # Install module using pip if not found
-        subprocess.check_call([sys.executable, "-m", "pip", "install", module])
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", module])
+        except subprocess.CalledProcessError:
+            warnings.warn(f"WARNING: The pre-installation of the module {module} has failed.")
 
 # Import pygame after ensuring it's installed
 import pygame
@@ -948,8 +952,9 @@ class Circle:
             dt: Fixed physics timestep (always engine.physics_timestep)
         """
         # Store previous position for interpolation
-        self.prev_x = self.x
-        self.prev_y = self.y
+        if not engine.skip_prev_update:
+            self.prev_x = self.x
+            self.prev_y = self.y
         
         # Calculate net force from all gravitational interactions
         self.force = [0.0, 0.0]
@@ -1142,7 +1147,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 1e6  # Time acceleration factor
+        self.time_acceleration = 3e6  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -1165,7 +1170,7 @@ class Engine:
         
         # Default density for new bodies (mass per unit volume)
         # This determines how large a body will be for a given mass
-        self.default_density = 5515  # 1000 <=> 1000 kg/m^3, by default on 5.515 (Earth density)
+        self.default_density = 5514  # 1000 <=> 1000 kg/m^3, by default on 5.514 (Earth density)
 
         self.use_interpolation = True
         
@@ -1175,6 +1180,16 @@ class Engine:
         self.cardinal_vectors = False
         self.vectors_in_front = True
         self.vector_scale = 1
+
+        # ==================== PERFORMANCE MODE ====================
+        self.performance_mode = "precise"  # "precise" or "adaptive", actually on "precise" by default because of some problems with adaptative mode
+        # - "precise": Slows down if CPU is slow (deterministic)
+        # - "adaptive": Compensates with large steps (smooth but imprecise)
+        # Maximum allowed step time in adaptive performance mode (prevents overly large physics steps)
+        self.MAX_ADAPTIVE_STEP_TIME = 0.05  # Max 50ms
+
+        # ==================== RENDERING STATE ====================
+        self.current_alpha = 1.0  # Current interpolation alpha (for selection)
         
         # ==================== RANDOM GENERATION SETTINGS ====================
         self.random_mode = False
@@ -1196,7 +1211,7 @@ class Engine:
         self.reversed_gravity = False
         
         # Performance tracking
-        self.temp_FPS = self.FPS_TARGET
+        self.displayed_FPS = self.FPS_TARGET
         self.frequency = self.FPS_TARGET
         self.latency = None
         self.save_time_1 = 0
@@ -1208,6 +1223,9 @@ class Engine:
         self.simulation_time = 0.0  # Actual simulation time calculated (in seconds)
         self.simulation_time_in_pause = 0.0  # Time spent paused (towards simulation_time)
         self.pause_start_simulation_time = None  # simulation_time at the moment of pause
+
+        # ==================== GESTION VISUELLE DES COLLISIONS ====================
+        self.skip_prev_update = False  # Drapeau pour empêcher la mise à jour de prev_x/prev_y
         
         # ==================== BODY MANAGEMENT ====================
         self.circle_number = 0
@@ -1418,7 +1436,7 @@ class Engine:
             Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
 
         # Display FPS (bottom center)
-        text = f"FPS : {round(self.temp_FPS)}"
+        text = f"FPS : {round(self.displayed_FPS)}"
         Display.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
                           int(self.screen.get_height() - 20 - engine.txt_size)), Display.BLUE, 0)
 
@@ -1536,6 +1554,40 @@ class Engine:
                 0 = exactly at previous state
                 1 = exactly at current state
         """
+        if self.use_interpolation and self._check_visual_collisions(alpha):
+            # Visual collision detected!
+        
+            # STEP 1: Save the current VISUAL positions
+            for circle in circles:
+                # Position where the body is CURRENTLY visually displayed
+                visual_x = circle.prev_x + (circle.x - circle.prev_x) * alpha
+                visual_y = circle.prev_y + (circle.y - circle.prev_y) * alpha
+                
+                # Temporarily store
+                circle._visual_x = visual_x
+                circle._visual_y = visual_y
+            
+            self.skip_prev_update = True
+
+            # STEP 2: Perform the physics calculation
+            if self.time_accumulator > 0:
+                self.physics_step(self.time_accumulator)
+                self.time_accumulator = 0
+            
+            self.skip_prev_update = False
+            
+            # STEP 3: Use the visual positions as new "prev"
+            for circle in circles:
+                if hasattr(circle, '_visual_x'):
+                    circle.prev_x = circle._visual_x
+                    circle.prev_y = circle._visual_y
+                    # Clean up
+                    delattr(circle, '_visual_x')
+                    delattr(circle, '_visual_y')
+        
+            # STEP 4: Reset alpha to 0 (start again from the saved visual position)
+            alpha = 0
+
         # Render vectors if enabled
         if self.vectors_in_front:
             # Bodies first, then vectors on top
@@ -1567,6 +1619,35 @@ class Engine:
         for circle in circles:
             if circle.is_selected:
                 circle.print_info(circle.info_y)
+
+    def _check_visual_collisions(self, alpha):
+        """Check if any bodies collide at interpolated positions."""
+        for i, circle in enumerate(circles):
+            if circle.suicide:
+                continue
+            
+            # Position interpolée
+            x1 = circle.prev_x + (circle.x - circle.prev_x) * alpha
+            y1 = circle.prev_y + (circle.y - circle.prev_y) * alpha
+            
+            for other in circles[i+1:]:
+                if other.suicide:
+                    continue
+                
+                # Position interpolée de l'autre
+                x2 = other.prev_x + (other.x - other.prev_x) * alpha
+                y2 = other.prev_y + (other.y - other.prev_y) * alpha
+                
+                # Distance
+                dx = x2 - x1
+                dy = y2 - y1
+                dist = sqrt(dx*dx + dy*dy)
+                
+                # Collision ?
+                if dist <= circle.radius + other.radius:
+                    return True
+        
+        return False
 
     def show_splash_screen(self):
         """
@@ -1714,11 +1795,14 @@ class Engine:
             self.latency = frame_time
             
             # Update FPS display at regular intervals
-            if self.counter == 0 or self.counter == int(self.FPS_TARGET / 2):
-                self.temp_FPS = self.frequency
+            if self.counter / self.frequency == int(self.counter / self.frequency):
+                if self.frequency < self.FPS_TARGET + 20:
+                    self.displayed_FPS = self.frequency
+                else:
+                    self.displayed_FPS = self.FPS_TARGET
             
             # Update frame counter
-            if self.counter + 1 >= self.FPS_TARGET:
+            if self.counter + 1 >= self.frequency:
                 self.counter = 0
             else:
                 self.counter += 1
@@ -1797,17 +1881,25 @@ class Engine:
             max_steps_per_frame = 2
 
             while self.time_accumulator >= self.physics_timestep and not self.is_paused:
+                if physics_steps >= max_steps_per_frame:
+                    break
                 # Run one physics step with fixed dt
                 self.physics_step(self.physics_timestep)
-                
                 # Consume time from accumulator
                 self.time_accumulator -= self.physics_timestep
-                
                 # Safety: limit max steps per frame (prevents spiral of death)
                 physics_steps += 1
-                if physics_steps >= max_steps_per_frame:
-                    self.time_accumulator = 0
-                    break
+
+            # Adaptive mode: consume the leftover time
+            if self.performance_mode == "adaptive" and self.time_accumulator > 0 and physics_steps >= max_steps_per_frame and not self.is_paused:
+                remaining_time = min(self.time_accumulator, self.MAX_ADAPTIVE_STEP_TIME)
+                self.physics_step(remaining_time)
+                self.time_accumulator -= remaining_time
+
+            # Precise mode: lose the leftover time (current behavior)
+            if self.time_accumulator > 0 and physics_steps >= max_steps_per_frame:
+                if self.performance_mode == "precise":
+                    self.time_accumulator = 0  # Losing time = slowdown
             
             # ===== RENDERING =====
             # Calculate interpolation alpha for smooth rendering
@@ -1816,6 +1908,8 @@ class Engine:
                 alpha = self.time_accumulator / self.physics_timestep
             else:
                 alpha = 1.0
+            
+            self.current_alpha = alpha
             
             # Clear screen
             if self.screen_mode == "dark":
@@ -1897,27 +1991,31 @@ class ActionManager:
         """
         Handle mouse button press events.
         
-        Determines if the click is on an existing body (selection) or
-        on empty space (body creation). Creates a temporary body if creating.
-        
-        Args:
-            event: Pygame mouse button event
+        Uses INTERPOLATED (visual) positions for click detection, not physical positions.
         """
         # Initialize click state
         engine.circle_collided = None
         engine.can_create_circle = False
         engine.mouse_down = True
-        engine.mouse_down_start_time = time.time()  # Record when click started
+        engine.mouse_down_start_time = time.time()
         x, y = pygame.mouse.get_pos()
 
         if len(circles) > 0:
-            # Check if click is on an existing body
+            # Get current interpolation alpha
+            alpha = engine.current_alpha
+            
+            # Check if click is on an existing body (using VISUAL positions)
             for circle in circles:
-                # Calculate distance from click to body center
-                dx = fabs(x - circle.x)
-                dy = fabs(y - circle.y)
+                # Calculate INTERPOLATED position (where the body is visually displayed)
+                visual_x = circle.prev_x + (circle.x - circle.prev_x) * alpha
+                visual_y = circle.prev_y + (circle.y - circle.prev_y) * alpha
+                
+                # Calculate distance from click to VISUAL center
+                dx = fabs(x - visual_x)
+                dy = fabs(y - visual_y)
                 dist = sqrt(dx ** 2 + dy ** 2)
-                # Use visible radius (minimum 1 pixel) for click detection
+                
+                # Use visible radius for click detection
                 visible_radius = max(1, int(circle.radius))
                 click_on_circle: bool = dist <= visible_radius
 
