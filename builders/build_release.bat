@@ -34,8 +34,8 @@ if errorlevel 1 (
 echo.
 echo [2/5] Cleaning previous build...
 if exist build rmdir /s /q build
-if exist dist rmdir /s /q dist
 if exist *.spec del /q *.spec
+if exist dist/GravityEngine.exe del /q dist/GravityEngine.exe
 
 echo.
 echo [3/5] Checking for icon file...
