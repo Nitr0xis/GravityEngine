@@ -561,7 +561,7 @@ class Circle:
         self.is_born = False  # Whether body has been initialized in simulation
         self.birth_time = None  # Timestamp when body was created
         self.age = 0  # Age in simulation time
-        self.time_in_pause = 0  # Time spent in paused state
+        self.simulation_time_in_pause = 0  # Time spent in paused state
 
         # UI positioning
         self.info_y: int = 6 * engine.txt_gap + 4 * engine.txt_size  # Y position for info display
@@ -757,10 +757,10 @@ class Circle:
         # 31,557,600 = seconds in a year
         age_years = self.age * engine.time_acceleration / 31_557_600
         if age_years < 2:
-            text = f"Age : {round(age_years * 10) / 10} year"
+            text = f"Age : {round(age_years * 100) / 100} Earth year"
             Display.write(text, (20, y - 20), Display.BLUE, 2)
         else:
-            text = f"Age : {round(age_years * 10) / 10} years"
+            text = f"Age : {round(age_years * 100) / 100} Earth years"
             Display.write(text, (20, y - 20), Display.BLUE, 2)
 
         # Mass (in kilograms)
@@ -965,7 +965,7 @@ class Circle:
         
         # Initialize body on first update
         if not self.is_born and self in circles:
-            self.birth_time = engine.net_age()
+            self.birth_time = engine.net_simulation_time()
             
             # Apply random initial velocity if random mode enabled
             if engine.random_mode:
@@ -978,7 +978,7 @@ class Circle:
         
         # Update age (time since birth, excluding pause time)
         if self.birth_time is not None:
-            self.age = engine.net_age() - self.birth_time
+            self.age = engine.net_simulation_time() - self.birth_time
         
         # Update geometric properties based on current radius
         self.surface = 4 * self.radius ** 2 * pi
@@ -1142,7 +1142,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 1e7  # Time acceleration factor
+        self.time_acceleration = 1e6  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -1166,6 +1166,8 @@ class Engine:
         # Default density for new bodies (mass per unit volume)
         # This determines how large a body will be for a given mass
         self.default_density = 5515  # 1000 <=> 1000 kg/m^3, by default on 5.515 (Earth density)
+
+        self.use_interpolation = True
         
         # ==================== VISUALIZATION SETTINGS ====================
         self.vectors_printed = False
@@ -1193,11 +1195,6 @@ class Engine:
         self.is_paused = False
         self.reversed_gravity = False
         
-        # Time tracking
-        self.beginning_time = time.time()
-        self.time_in_pause = 0
-        self.pause_beginning = None
-        
         # Performance tracking
         self.temp_FPS = self.FPS_TARGET
         self.frequency = self.FPS_TARGET
@@ -1205,6 +1202,12 @@ class Engine:
         self.save_time_1 = 0
         self.save_time_2 = 0
         self.counter = 0
+
+        # ==================== SIMULATION TIME ====================
+        # time tracking
+        self.simulation_time = 0.0  # Actual simulation time calculated (in seconds)
+        self.simulation_time_in_pause = 0.0  # Time spent paused (towards simulation_time)
+        self.pause_start_simulation_time = None  # simulation_time at the moment of pause
         
         # ==================== BODY MANAGEMENT ====================
         self.circle_number = 0
@@ -1239,14 +1242,14 @@ class Engine:
             self.inputs[event.key] = True
 
     def refresh_pause(self):
-        """
-        Update accumulated pause time.
+        
+        """Update accumulated pause time.
         
         Called continuously while paused to track total time spent in pause state.
-        This ensures accurate time tracking when calculating simulation age.
-        """
-        self.time_in_pause += time.time() - self.pause_beginning
-        self.pause_beginning = time.time()
+        This ensures accurate time tracking when calculating simulation age."""
+        
+        self.simulation_time_in_pause += time.time() - self.pause_start_simulation_time
+        self.pause_start_simulation_time = time.time()
 
     def pause(self):
         """
@@ -1255,7 +1258,8 @@ class Engine:
         Stops physics updates while keeping the display active.
         Records the pause start time for accurate time tracking.
         """
-        self.pause_beginning = time.time()
+        self.pause_start_simulation_time = time.time()
+        self.pause_start_simulation_time = self.net_simulation_time()  # Save simulation_time
         self.is_paused = True
 
     def unpause(self):
@@ -1265,16 +1269,24 @@ class Engine:
         Updates time tracking for all bodies and the engine to account for
         the time spent in pause state. This ensures age calculations remain accurate.
         """
-        # Update pause time for all bodies
-        for circle in circles:
-            circle.time_in_pause += time.time() - self.pause_beginning
-
-        # Update engine pause time
-        self.time_in_pause += time.time() - self.pause_beginning
-
+        # Update pause time for real time
+        self.simulation_time_in_pause += time.time() - self.pause_start_simulation_time
+        
+        # Update pause time for simulation time
+        # (While paused, simulation_time does not change, so there is no need to adjust it)
+        
         # Clear pause state
-        self.pause_beginning = None
+        self.pause_start_simulation_time = None
+        self.pause_start_simulation_time = None
         self.is_paused = False
+
+    def net_simulation_time(self) -> float:
+        """
+        Return simulation time (based on physics steps executed, not real time).
+        
+        This ensures the simulation clock advances at the same rate as physics.
+        """
+        return self.simulation_time
 
     def brut_age(self) -> float:
         """
@@ -1286,19 +1298,6 @@ class Engine:
             Total elapsed time in seconds
         """
         age = time.time() - self.beginning_time
-        return age
-
-    def net_age(self) -> float:
-        """
-        Return net elapsed time excluding pauses.
-        
-        This represents the actual simulation time, excluding periods
-        when the simulation was paused.
-        
-        Returns:
-            Net elapsed time in seconds (excluding pauses)
-        """
-        age = self.brut_age() - self.time_in_pause
         return age
 
     def select_circle(self, number: int) -> None:
@@ -1410,12 +1409,12 @@ class Engine:
             Display.write(text, (20, y), Display.BLUE, 3)
 
         # Display simulation age (bottom left)
-        sim_age_years = self.net_age() * engine.time_acceleration / 31_557_600
+        sim_age_years = self.net_simulation_time() * engine.time_acceleration / 31_557_600
         if sim_age_years < 2:
-            text = f"Simulation age : {int(sim_age_years * 10) / 10} year"
+            text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth year"
             Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
         else:
-            text = f"Simulation age : {int(sim_age_years * 10) / 10} years"
+            text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth years"
             Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
 
         # Display FPS (bottom center)
@@ -1521,6 +1520,9 @@ class Engine:
         # Update all bodies (position, velocity, age, etc.)
         for circle in circles:
             circle.physics_update(dt)
+
+        # IMPORTANT: Increment simulation time
+        self.simulation_time += dt
     
     def render(self, alpha):
         """
@@ -1792,6 +1794,8 @@ class Engine:
             # ===== PHYSICS (fixed timestep) =====
             # Do as many physics steps as needed to catch up
             physics_steps = 0
+            max_steps_per_frame = 2
+
             while self.time_accumulator >= self.physics_timestep and not self.is_paused:
                 # Run one physics step with fixed dt
                 self.physics_step(self.physics_timestep)
@@ -1801,18 +1805,17 @@ class Engine:
                 
                 # Safety: limit max steps per frame (prevents spiral of death)
                 physics_steps += 1
-                if physics_steps >= 10:
+                if physics_steps >= max_steps_per_frame:
                     self.time_accumulator = 0
                     break
-            
-            # Handle pause time tracking
-            if self.is_paused:
-                self.refresh_pause()
             
             # ===== RENDERING =====
             # Calculate interpolation alpha for smooth rendering
             # alpha = how far we are between current and next physics state
-            alpha = self.time_accumulator / self.physics_timestep
+            if self.use_interpolation:
+                alpha = self.time_accumulator / self.physics_timestep
+            else:
+                alpha = 1.0
             
             # Clear screen
             if self.screen_mode == "dark":
