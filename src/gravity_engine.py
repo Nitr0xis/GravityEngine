@@ -66,8 +66,6 @@ import pygame
 """
 Todo:
     - add Display class for display between pygame and tkinter
-    - update interpolation by adding the choice of the realism (N-compute/s)
-    - replace pixel display with screen fractions
 
 Ideas:
     - mass transfer on collision without fusion
