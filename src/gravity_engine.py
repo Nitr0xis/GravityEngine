@@ -10,10 +10,15 @@ LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
 CONTROLS:
-    Space   : Pause/Unpause      V : Toggle vectors    R : Random mode
-    G       : Reverse gravity     P : Generate 20 bodies
-    Delete  : Delete selected     Escape : Exit
-    Mouse   : Click to select/create bodies, hold to increase size
+    Space   : Pause/Unpause      
+    V : Toggle vectors    
+    R : Random mode
+    G : Toggle reversed gravity     
+    P : Generate 20 bodies
+    Delete : Delete selected     
+    Escape : Exit
+    Mouse : Click to select/create bodies, hold to increase size
+    Mouse wheel (optional) : Create the smallest bodies possible
 
 CONFIGURATION (in Engine.__init__()):
     performance_mode      : "precise" (accurate) or "adaptive" (fast)
@@ -46,10 +51,8 @@ import warnings  # Used to display warning messages about deprecated features or
 from math import *
 
 
-DISPLAY_API = "pygame"  # pygame or tkinter (actually, only pygame is avaiable)
-
 # Required external modules for the simulation
-REQUIRED_MODULES: set[str] = {DISPLAY_API}
+REQUIRED_MODULES: set[str] = {"pygame"}
 
 # Automatically install missing required modules
 for module in REQUIRED_MODULES:
@@ -58,20 +61,25 @@ for module in REQUIRED_MODULES:
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", module])
         except subprocess.CalledProcessError:
-            warnings.warn(f"WARNING: The pre-installation of the module {module} has failed.")
+            warnings.warn(f"The pre-installation of the module {module} has failed.")
 
 # Import pygame after ensuring it's installed
-import pygame
+try:
+    import pygame
+except ImportError:
+    raise ImportError("\"pygame\" module is not installed")
 
 """
 Todo:
     - add Display class for display between pygame and tkinter
 
+For my NSI projects:
+    - add a dynamic configure pannel (choice between pygame and tkinter)
+    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib +tkinter in the same window]
+
 Ideas:
     - mass transfer on collision without fusion
     - consider quadtree system for forces
-
-### add rock limit
 """
 
 
