@@ -1,5 +1,5 @@
 """
-Gravity Engine by Nitr0xis (Nils DONTOT)
+Gravity Engine 3.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -9,19 +9,27 @@ GitHub repository: https://github.com/Nitr0xis/GravityEngine/
 LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY-NC-SA 4.0 License
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
-Controls:
-    - Space -> pause/unpause
-    - Mouse wheel (optional) -> create the smallest bodies possible
-    - V -> toggle velocity vectors display
-    - R -> toggle random_mode
-    - G -> toggle reversed gravity
-    - Left/Right/Wheel click -> hold to create bodies
-                             -> select/deselect a body
-    - Delete -> Delete selected body
+CONTROLS:
+    Space   : Pause/Unpause      V : Toggle vectors    R : Random mode
+    G       : Reverse gravity     P : Generate 20 bodies
+    Delete  : Delete selected     Escape : Exit
+    Mouse   : Click to select/create bodies, hold to increase size
 
-Parameters:
-    All parameters can be edit in Engine.__init__().
-    For file paths, consider that you need to write file paths from project's root.
+CONFIGURATION (in Engine.__init__()):
+    performance_mode      : "precise" (accurate) or "adaptive" (fast)
+    time_acceleration     : Simulation speed (default: 4e6)
+    min_physics_interval  : Update rate in adaptive mode (default: 0.025s)
+    FPS_TARGET            : Rendering FPS (default: 120)
+    default_density       : Body density kg/m³ (default: 5514)
+    fusions               : Enable/disable body fusion (default: True)
+
+MODES:
+    PRECISE  : Fixed timestep, deterministic, may slow with many bodies
+    ADAPTIVE (default): Throttled updates, smooth rendering, less accurate
+
+PHYSICS:
+    Newtonian gravity (F = G×m₁×m₂/r²), momentum conservation,
+    fixed/adaptive timestep, visual collision detection
 """
 
 
@@ -1027,21 +1035,21 @@ class Circle:
                 render_x = float(render_x[0])
             else:
                 render_x = 0.0
-                print(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
+                warnings.warn(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
         
         if not isinstance(render_y, (int, float)):
             if isinstance(render_y, (list, tuple)) and len(render_y) > 0:
                 render_y = float(render_y[0])
             else:
                 render_y = 0.0
-                print(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
+                warnings.warn(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
         
         if not isinstance(self.radius, (int, float)):
             if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
                 self.radius = float(self.radius[0])
             else:
                 self.radius = 1.0
-                print(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
+                warnings.warn(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
         # -----------------------
         
         # Calculate visible radius (minimum 1 pixel for visibility)
@@ -1147,7 +1155,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 3e6  # Time acceleration factor
+        self.time_acceleration = 4e6  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -1166,11 +1174,11 @@ class Engine:
         self.gravity: float = self.default_gravity
         self.fusions = True
 
-        self.minimum_mass = 1000  # in kg
+        self.minimum_mass = 1e3  # in kg
         
         # Default density for new bodies (mass per unit volume)
         # This determines how large a body will be for a given mass
-        self.default_density = 5514  # 1000 <=> 1000 kg/m^3, by default on 5.514 (Earth density)
+        self.default_density = 5.514e3  # 1000 <=> 1000 kg/m^3, by default on 5.514 (Earth density)
 
         self.use_interpolation = True
         
@@ -1182,11 +1190,16 @@ class Engine:
         self.vector_scale = 1
 
         # ==================== PERFORMANCE MODE ====================
-        self.performance_mode = "precise"  # "precise" or "adaptive", actually on "precise" by default because of some problems with adaptative mode
+        self.performance_mode = "precise"  # "precise" or "adaptive"
         # - "precise": Slows down if CPU is slow (deterministic)
         # - "adaptive": Compensates with large steps (smooth but imprecise)
         # Maximum allowed step time in adaptive performance mode (prevents overly large physics steps)
-        self.MAX_ADAPTIVE_STEP_TIME = 0.05  # Max 50ms
+        self.MAX_ADAPTIVE_STEP_TIME = 0.050  # Max 50ms
+
+        # Adaptive throttling: limits the frequency of physics calculations
+        self.min_physics_interval = 0.025  # 200ms = max 5 calculations/second
+        self.last_physics_time = 0.0  # Timestamp of the last physics calculation
+        self.physics_time_debt = 0.0  # Time accumulated since the last calculation
 
         # ==================== RENDERING STATE ====================
         self.current_alpha = 1.0  # Current interpolation alpha (for selection)
@@ -1877,35 +1890,83 @@ class Engine:
             
             # ===== PHYSICS (fixed timestep) =====
             # Do as many physics steps as needed to catch up
-            physics_steps = 0
-            max_steps_per_frame = 2
+            if not self.is_paused:
+                current_real_time = time.time()
+        
+                if self.performance_mode == "adaptive":
+                    # ADAPTIVE mode: limit the frequency of physics calculations for performance
 
-            while self.time_accumulator >= self.physics_timestep and not self.is_paused:
-                if physics_steps >= max_steps_per_frame:
-                    break
-                # Run one physics step with fixed dt
-                self.physics_step(self.physics_timestep)
-                # Consume time from accumulator
-                self.time_accumulator -= self.physics_timestep
-                # Safety: limit max steps per frame (prevents spiral of death)
-                physics_steps += 1
+                    time_since_last_physics = current_real_time - self.last_physics_time
 
-            # Adaptive mode: consume the leftover time
-            if self.performance_mode == "adaptive" and self.time_accumulator > 0 and physics_steps >= max_steps_per_frame and not self.is_paused:
-                remaining_time = min(self.time_accumulator, self.MAX_ADAPTIVE_STEP_TIME)
-                self.physics_step(remaining_time)
-                self.time_accumulator -= remaining_time
+                    # Accumulate time since last physics update
+                    self.physics_time_debt += frame_time
 
-            # Precise mode: lose the leftover time (current behavior)
-            if self.time_accumulator > 0 and physics_steps >= max_steps_per_frame:
-                if self.performance_mode == "precise":
-                    self.time_accumulator = 0  # Losing time = slowdown
+                    # Check if enough time has passed to perform a physics update
+                    if time_since_last_physics >= self.min_physics_interval:
+                        # Perform ONLY ONE physics calculation with all the accumulated time
+                        total_dt = self.physics_time_debt
+
+                        # Limit the maximum step size to avoid "physics explosions" (instabilities/bugs from too large time step)
+                        max_single_step = 0.5  # maximum of 500ms per step
+                        if total_dt > max_single_step:
+                            warnings.warn(f"WARNING: Physics step too large ({total_dt*1000:.0f}ms), clamping to {max_single_step*1000:.0f}ms")
+                            total_dt = max_single_step
+
+                        # Execute the physics update
+                        self.physics_step(total_dt)
+
+                        # Reset counters for next calculation and for interpolation rendering
+                        self.last_physics_time = current_real_time
+                        self.physics_time_debt = 0.0
+                        self.time_accumulator = 0.0  # Reset for interpolation
+
+                    else:
+                        # Pas encore temps de calculer, juste accumuler pour l'interpolation
+                        self.time_accumulator += frame_time
+                        
+                        # Limiter l'accumulator pour éviter débordement
+                        if self.time_accumulator > self.min_physics_interval:
+                            self.time_accumulator = self.min_physics_interval
+                
+                elif self.performance_mode == "precise":
+                    # Mode précis : comportement original (calculs réguliers)
+                    self.time_accumulator += frame_time
+                    
+                    # Limiter accumulator
+                    if self.time_accumulator > self.max_accumulation:
+                        self.time_accumulator = self.max_accumulation
+                    
+                    # Faire autant de calculs que nécessaire
+                    physics_steps = 0
+                    max_steps_per_frame = 2
+                    
+                    while self.time_accumulator >= self.physics_timestep:
+                        if physics_steps >= max_steps_per_frame:
+                            break
+                        
+                        self.physics_step(self.physics_timestep)
+                        self.time_accumulator -= self.physics_timestep
+                        physics_steps += 1
+                    
+                    # Perdre le temps restant si limite atteinte
+                    if physics_steps >= max_steps_per_frame:
+                        self.time_accumulator = 0.0
+
+                else:
+                    # when performance_mode is not "precise" or "adaptative"
+                    raise ValueError("Engine.performance_mode must be \"precise\" or \"adaptive\" [can be updated in Engine.__init__()]")
             
             # ===== RENDERING =====
             # Calculate interpolation alpha for smooth rendering
             # alpha = how far we are between current and next physics state
             if self.use_interpolation:
-                alpha = self.time_accumulator / self.physics_timestep
+                if self.performance_mode == "adaptive":
+                    # In adaptive mode, alpha represents the time since the last physics step
+                    time_since_physics = time.time() - self.last_physics_time
+                    alpha = min(1.0, time_since_physics / self.min_physics_interval)
+                else:
+                    # In precise mode: use the normal alpha calculation
+                    alpha = self.time_accumulator / self.physics_timestep
             else:
                 alpha = 1.0
             
