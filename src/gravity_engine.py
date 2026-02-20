@@ -71,7 +71,7 @@ except ImportError:
 
 """
 Todo:
-    - add Display class for display between pygame and tkinter
+    - add .csv export method
 
 For my NSI projects:
     - add a dynamic configure pannel (choice between pygame and tkinter)
@@ -283,39 +283,6 @@ class Display:
     DARK_GREY = Color(100, 100, 100)  # Body shadow/outline color
     RED = Color(255, 0, 0)  # Global velocity vector color
 
-    @staticmethod
-    def rect():
-        pass
-
-    @staticmethod
-    def circle():
-        pass
-
-    @staticmethod
-    def line():
-        pass
-
-    @staticmethod
-    def write(text: str = "[text]",
-              dest: tuple[int, int] = (0, 0),
-              color: tuple[int, int, int] = Color(255, 255, 255),
-              line: int = 0) -> pygame.Rect | None:
-        """
-        Render and display text on the screen.
-        
-        Args:
-            text: Text string to display
-            dest: Base position (x, y) for text
-            color: RGB color tuple
-            line: Line offset for vertical spacing (0 = first line)
-        
-        Returns:
-            Pygame Rect object representing the text area, or None on error
-        """
-        written = engine.font.render(text, 1, color)
-        rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
-        return rect
-
 
 class Tester:
     # Units test
@@ -484,7 +451,7 @@ class TempText:
             return False
         else:
             # Draw the text at its position
-            Display.write(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
+            Utils.write_screen(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
                         self.color)
             return True
 
@@ -769,59 +736,59 @@ class Circle:
 
         # Body ID
         text = f"ID : {self.number}"
-        Display.write(text, (20, y - 20), Display.BLUE, 1)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 1)
 
         # Age display (converted from simulation time to years)
         # 31,557,600 = seconds in a year
         age_years = self.age * engine.time_acceleration / 31_557_600
         if age_years < 2:
             text = f"Age : {round(age_years * 100) / 100} Earth year"
-            Display.write(text, (20, y - 20), Display.BLUE, 2)
+            Utils.write_screen(text, (20, y - 20), Display.BLUE, 2)
         else:
             text = f"Age : {round(age_years * 100) / 100} Earth years"
-            Display.write(text, (20, y - 20), Display.BLUE, 2)
+            Utils.write_screen(text, (20, y - 20), Display.BLUE, 2)
 
         # Mass (in kilograms)
         text = f"Mass : {self.mass:.2e} kg"
-        Display.write(text, (20, y - 20), Display.BLUE, 3)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 3)
 
         # Radius (in meters)
         text = f"Radius : {round(self.radius * 10) / 10} m"
-        Display.write(text, (20, y - 20), Display.BLUE, 4)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 4)
 
         # Volume (in cubic meters)
         text = f"Volume : {self.volume:.2e} m³"
-        Display.write(text, (20, y - 20), Display.BLUE, 5)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 5)
 
         # Density (in kilograms by cubic meters)
         text = f"Density : {self.density:.2e} kg/m³"
-        Display.write(text, (20, y - 20), Display.BLUE, 6)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 6)
 
         # Kinetic energy (in joules)
         text = f"Kinetic energy : {self.kinetic_energy():.2e} J"
-        Display.write(text, (20, y - 20), Display.BLUE, 8)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 8)
 
         # Net force magnitude (in newtons)
         force_magnitude = sqrt(self.printed_force[0] ** 2 + self.printed_force[1] ** 2)
         text = f"Force applied : {force_magnitude:.2e} N"
-        Display.write(text, (20, y - 20), Display.BLUE, 9)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 9)
 
         # Velocity magnitude (in m/s)
         text = f"Velocity : {self.speed:.2e} m/s"
-        Display.write(text, (20, y - 20), Display.BLUE, 10)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 10)
 
         # Position coordinates
         text = f"Coordinates : {int(self.x)}; {int(self.y)}"
-        Display.write(text, (20, y - 20), Display.BLUE, 11)
+        Utils.write_screen(text, (20, y - 20), Display.BLUE, 11)
 
         # Nearest body information
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
             text = f"Nearest body : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
-            Display.write(text, (20, y - 20), Display.BLUE, 12)
+            Utils.write_screen(text, (20, y - 20), Display.BLUE, 12)
         else:
             text = f"Nearest body : None"
-            Display.write(text, (20, y - 20), Display.BLUE, 12)
+            Utils.write_screen(text, (20, y - 20), Display.BLUE, 12)
 
     def reset_force_list(self):
         """Clear the list of gravitational forces from other bodies."""
@@ -1373,14 +1340,14 @@ class Engine:
         heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
             text = f"Heaviest body : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} kg"
-            Display.write(text, (20, y), Display.BLUE, 2)
+            Utils.write_screen(text, (20, y), Display.BLUE, 2)
         else:
             text = f"Heaviest body : None"
-            Display.write(text, (20, y), Display.BLUE, 2)
+            Utils.write_screen(text, (20, y), Display.BLUE, 2)
 
         # Show delete instruction when a body is selected
         if self.circle_selected and len(circles) > 0:
-            Display.write(f"Delete : Delete key", (
+            Utils.write_screen(f"Delete : Delete key", (
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
                 y), Display.BLUE, 0)
 
@@ -1389,29 +1356,29 @@ class Engine:
             text = f"Reversed gravity (G) : Enabled"
         else:
             text = f"Reversed gravity (G) : Disabled"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 0)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 0)
 
         # Display velocity vectors status (top right)
         if self.vectors_printed:
             text = f"Vectors (V) : Enabled"
         else:
             text = f"Vectors (V) : Disabled"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 1)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 1)
 
         # Display random mode status (top right)
         if self.random_mode:
             text = f"Random mode (R) : Enabled"
         else:
             text = f"Random mode (R) : Disabled"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
 
         # Display random environment generation hint (top right)
         text = f"Random environment ({self.random_environment_number} bodies) : P"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 4)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 4)
 
         # Display time acceleration factor (bottom right)
         text = f"Time factor : ×{self.time_acceleration:.2e}"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), Display.BLUE, 0)
 
         # Display pause status (bottom right)
@@ -1419,16 +1386,16 @@ class Engine:
             text = f"Pause (Space) : Enabled"
         else:
             text = f"Pause (Space) : Disabled"
-        Display.write(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - self.txt_size), Display.BLUE, 0)
 
         # Display body count (top left)
         text = f"Number of bodies : {len(circles)}"
-        Display.write(text, (20, y), Display.BLUE, 0)
+        Utils.write_screen(text, (20, y), Display.BLUE, 0)
 
         # Display total mass (top left)
         text = f"Total mass : {round(Utils.mass_sum()):.2e} kg"
-        Display.write(text, (20, y), Display.BLUE, 1)
+        Utils.write_screen(text, (20, y), Display.BLUE, 1)
 
         # Display oldest body information (top left)
         oldest_tuple = Utils.oldest()
@@ -1437,26 +1404,26 @@ class Engine:
             oldest_age_years = oldest_tuple[1] * engine.time_acceleration / 31_557_600
             if oldest_age_years < 2:
                 text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} year"
-                Display.write(text, (20, y), Display.BLUE, 3)
+                Utils.write_screen(text, (20, y), Display.BLUE, 3)
             else:
                 text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} years"
-                Display.write(text, (20, y), Display.BLUE, 3)
+                Utils.write_screen(text, (20, y), Display.BLUE, 3)
         else:
             text = f"Oldest body : None"
-            Display.write(text, (20, y), Display.BLUE, 3)
+            Utils.write_screen(text, (20, y), Display.BLUE, 3)
 
         # Display simulation age (bottom left)
         sim_age_years = self.net_simulation_time() * engine.time_acceleration / 31_557_600
         if sim_age_years < 2:
             text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth year"
-            Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
+            Utils.write_screen(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
         else:
             text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth years"
-            Display.write(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
+            Utils.write_screen(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
 
         # Display FPS (bottom center)
         text = f"FPS : {round(self.displayed_FPS)}"
-        Display.write(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
+        Utils.write_screen(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
                           int(self.screen.get_height() - 20 - engine.txt_size)), Display.BLUE, 0)
 
     def generate_environment(self, count: int = 50):
@@ -2219,6 +2186,27 @@ class Utils:
             width: Line width in pixels
         """
         pygame.draw.line(engine.screen, color, start_pos, end_pos, width)
+    
+    @staticmethod
+    def write_screen(text: str = "[text]",
+              dest: tuple[int, int] = (0, 0),
+              color: tuple[int, int, int] = Color(255, 255, 255),
+              line: int = 0) -> pygame.Rect | None:
+        """
+        Render and display text on the screen.
+        
+        Args:
+            text: Text string to display
+            dest: Base position (x, y) for text
+            color: RGB color tuple
+            line: Line offset for vertical spacing (0 = first line)
+        
+        Returns:
+            Pygame Rect object representing the text area, or None on error
+        """
+        written = engine.font.render(text, 1, color)
+        rect = engine.screen.blit(written, dest=(dest[0], dest[1] + line * (engine.txt_gap + engine.txt_size)))
+        return rect
 
     @staticmethod
     def average(l: list[float] | tuple[float] | set[float]) -> float:
