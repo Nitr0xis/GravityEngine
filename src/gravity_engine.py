@@ -75,7 +75,7 @@ Todo:
 
 For my NSI projects:
     - add a dynamic configure pannel (choice between pygame and tkinter)
-    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib +tkinter in the same window]
+    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
 
 Ideas:
     - mass transfer on collision without fusion
@@ -532,7 +532,7 @@ class Circle:
         if not self in circles:
             self.is_selected = False
 
-        # Velocity components (pixels per frame)
+        # Velocity components (meters per second)
         self.vx = 0  # Horizontal velocity
         self.vy = 0  # Vertical velocity
 
