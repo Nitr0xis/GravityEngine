@@ -745,10 +745,10 @@ class Circle:
         # 31,557,600 = seconds in a year
         age_years = self.age * engine.time_acceleration / 31_557_600
         if age_years < 2:
-            text = f"Age : {round(age_years * 100) / 100} Earth year"
+            text = f"Age : {round(age_years * 1000) / 1000} Earth year"
             Utils.write_screen(text, (20, y - 20), Display.BLUE, 2)
         else:
-            text = f"Age : {round(age_years * 100) / 100} Earth years"
+            text = f"Age : {round(age_years * 1000) / 1000} Earth years"
             Utils.write_screen(text, (20, y - 20), Display.BLUE, 2)
 
         # Mass (in kilograms)
@@ -1166,7 +1166,7 @@ class Engine:
         self.vector_scale = 1
 
         # ==================== PERFORMANCE MODE ====================
-        self.performance_mode = "precise"  # "precise" or "adaptive"
+        self.performance_mode = "precise"  # "precise" or "adaptive", "adaptive" as actually important problems
         # - "precise": Slows down if CPU is slow (deterministic)
         # - "adaptive": Compensates with large steps (smooth but imprecise)
         # Maximum allowed step time in adaptive performance mode (prevents overly large physics steps)
@@ -1418,10 +1418,10 @@ class Engine:
         # Display simulation age (bottom left)
         sim_age_years = self.net_simulation_time() * engine.time_acceleration / 31_557_600
         if sim_age_years < 2:
-            text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth year"
+            text = f"Simulation age : {int(sim_age_years * 1000) / 1000} Earth year"
             Utils.write_screen(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
         else:
-            text = f"Simulation age : {int(sim_age_years * 100) / 100} Earth years"
+            text = f"Simulation age : {int(sim_age_years * 1000) / 1000} Earth years"
             Utils.write_screen(text, (20, self.screen.get_height() - 20 - engine.txt_size), Display.BLUE, 0)
 
         # Display FPS (bottom center)
