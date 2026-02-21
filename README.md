@@ -376,8 +376,8 @@ self.physics_time_debt = 0.0            # Accumulated time since last calculatio
 
 | Mode | Physics Frequency | Rendering | Accuracy | Use Case |
 |------|------------------|-----------|----------|----------|
-| **precise** | Fixed 120 Hz | May slow down | High | Small simulations (<50 bodies) |
-| **adaptive** | Variable (max 40 Hz) | Always smooth | Medium | Large simulations (>50 bodies) |
+| **precise** | Fixed 120 Hz | May slow down | High | Small simulations (<100 bodies) |
+| **adaptive** | Variable (max 40 Hz) | Always smooth | Medium | Large simulations (>200 bodies) |
 
 ### Random Generation Settings
 ```python
@@ -588,7 +588,7 @@ vector_y = unit_y × visual_length
 | Time | Seconds | s | Accelerated by `time_acceleration` |
 | Force | Newtons | N | F = ma |
 | Velocity | Meters/second | m/s | Magnitude of velocity vector |
-| Density | kg/m³ | - | Default: 5514 (Earth) |
+| Density | Kilograms/cubic meter | kg/m³ | Default: 5514 (Earth) |
 
 ### Testing Framework
 
@@ -679,7 +679,7 @@ self.performance_mode = "precise"
 | CPU usage | Low | High |
 | Accuracy | Medium | High |
 | Deterministic | No | Yes |
-| Max bodies (smooth) | 100+ | ~50 |
+| Max bodies (smooth) | ~400 | ~150 |
 | Visual collision | ✅ Yes | ✅ Yes |
 | Best for | Demos, exploration | Science, accuracy |
 
