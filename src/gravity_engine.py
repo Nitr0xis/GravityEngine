@@ -888,7 +888,7 @@ class Circle:
             
             # Apply random initial velocity if random mode enabled
             if engine.random_mode:
-                max_velocity_per_frame = sqrt(2 * engine.random_field / self.mass)  # m/frame
+                max_velocity_per_frame = sqrt(2 * engine.random_energy_field / self.mass)  # m/frame
                 max_velocity = max_velocity_per_frame * engine.FPS_TARGET  # m/s
                 self.vx = random.uniform(-max_velocity, max_velocity)  # m/s
                 self.vy = random.uniform(-max_velocity, max_velocity)  # m/s
@@ -1132,7 +1132,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 3e4  # Time acceleration factor
+        self.time_acceleration = 2e4  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
@@ -1185,9 +1185,10 @@ class Engine:
         self.random_mode = False
         
         # Define max random energy in Joules
-        max_kinetic_energy_joules = 1e-9  # in J
+        max_kinetic_energy_joules = 5e-4  # in J
         # Convert in simulation used units (kg⋅m²/frame²)
-        self.random_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
+        self.random_energy_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
+        self.random_mass_field = 5e5  # in kg, random beteween self.minimum_mass and value
 
         self.random_environment_number: int = 20
         
@@ -1447,7 +1448,7 @@ class Engine:
             new = Circle(x=random.uniform(0, self.screen.get_width()),
                          y=random.uniform(0, self.screen.get_height()),
                          density=self.default_density,
-                         mass=1000)
+                         mass=random.uniform(self.minimum_mass, self.random_mass_field))
             circles.append(new)
 
     def get_frequency(self) -> float:
