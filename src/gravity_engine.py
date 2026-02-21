@@ -1408,10 +1408,10 @@ class Engine:
             # Convert age to years (31,557,600 seconds per year)
             oldest_age_years = oldest_tuple[1] * engine.time_acceleration / 31_557_600
             if oldest_age_years < 2:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} year"
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} year"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
             else:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 10) / 10} years"
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} years"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
         else:
             text = f"Oldest body : None"
