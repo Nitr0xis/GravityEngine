@@ -71,6 +71,7 @@ except ImportError:
 
 """
 Todo:
+    - scale system
     - add .csv export method
 
 For my NSI projects:
