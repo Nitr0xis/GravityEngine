@@ -71,6 +71,7 @@ except ImportError:
 
 """
 Todo:
+    - correct units
     - add .csv export method
 
 For my NSI projects:
