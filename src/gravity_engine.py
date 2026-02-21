@@ -71,7 +71,6 @@ except ImportError:
 
 """
 Todo:
-    - correct units
     - add .csv export method
 
 For my NSI projects:
@@ -534,11 +533,14 @@ class Circle:
             self.is_selected = False
 
         # Velocity components (meters per second)
-        self.vx = 0  # Horizontal velocity
-        self.vy = 0  # Vertical velocity
+        self.vx = 0.0  # Horizontal velocity, m/s
+        self.vy = 0.0  # Vertical velocity, m/s
+
+        self.ax = 0.0  # Horizontal acceleration, m/s²
+        self.ay = 0.0  # Vertical acceleration, m/s²
 
         # Speed magnitude (total velocity)
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2) * engine.FPS_TARGET
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2)  # m/s
 
         # Lifecycle flags
         self.suicide: bool = False  # Flag for removal after fusion
@@ -554,7 +556,7 @@ class Circle:
 
         # Vector visualization properties
         self.vector_width = 1  # Line width for velocity vectors
-        self.global_speed_vector_scale = 1e6  # in px/m/s
+        self.global_speed_vector_scale = 1e4  # in px/m/s
         self.force_vector_scale = 1e2  # in px/N
 
         # Vector colors
@@ -836,12 +838,76 @@ class Circle:
             fx *= -1
             fy *= -1
 
-        # Apply force to velocity if effective (F = ma, so a = F/m, v += a*dt)
-        if effective:
-            self.vx += fx / self.mass
-            self.vy += fy / self.mass
-
         return fx, fy
+
+    def physics_update(self, dt):
+        """
+        Physics update with fixed timestep.
+        
+        This method is called by the time accumulator with a fixed dt,
+        ensuring deterministic physics regardless of rendering FPS.
+        
+        Args:
+            dt: Fixed physics timestep (always engine.physics_timestep)
+        """
+        # Store previous position for interpolation
+        if not engine.skip_prev_update:
+            self.prev_x = self.x
+            self.prev_y = self.y
+        
+        # Calculate net force from all gravitational interactions
+        self.force = [0.0, 0.0]
+        for f in self.attract_forces:
+            self.force[0] += f[0]
+            self.force[1] += f[1]
+        
+        self.ax = self.force[0] / self.mass  # m/s²
+        self.ay = self.force[1] / self.mass
+
+        dt_sim = dt * engine.time_acceleration
+        self.vx += self.ax * dt_sim  # m/s += m/s² × s
+        self.vy += self.ay * dt_sim
+        
+        # Update position based on velocity
+        self.x += self.vx * dt_sim  # m/s × s = m
+        self.y += self.vy * dt_sim  # m/s × s = m
+
+        # Calculate speed magnitude
+        self.speed = sqrt(self.vx ** 2 + self.vy ** 2)  # m/s
+        
+        # Calculate force for display (converted to real-world units)
+        self.printed_force = [0.0, 0.0]
+        for f in self.attract_forces:
+            self.printed_force[0] += f[0] / engine.gravity * engine.G
+            self.printed_force[1] += f[1] / engine.gravity * engine.G
+        
+        # Initialize body on first update
+        if not self.is_born and self in circles:
+            self.birth_time = engine.net_simulation_time()
+            
+            # Apply random initial velocity if random mode enabled
+            if engine.random_mode:
+                max_velocity_per_frame = sqrt(2 * engine.random_field / self.mass)  # m/frame
+                max_velocity = max_velocity_per_frame * engine.FPS_TARGET  # m/s
+                self.vx = random.uniform(-max_velocity, max_velocity)  # m/s
+                self.vy = random.uniform(-max_velocity, max_velocity)  # m/s
+            
+            self.is_born = True
+        
+        # Update age (time since birth, excluding pause time)
+        if self.birth_time is not None:
+            self.age = engine.net_simulation_time() - self.birth_time
+        
+        # Update geometric properties based on current radius
+        self.surface = 4 * self.radius ** 2 * pi
+        self.volume = 4 / 3 * pi * self.radius ** 3
+        
+        # Deselect if body is removed from simulation
+        if self not in circles:
+            self.is_selected = False
+        
+        # Update position tuple
+        self.pos = (self.x, self.y)
 
     def update_fusion(self, other):
         """
@@ -922,70 +988,6 @@ class Circle:
 
         # Collision if distance < sum of radii
         return distance < self.radius + other.radius
-    
-    def physics_update(self, dt):
-        """
-        Physics update with fixed timestep.
-        
-        This method is called by the time accumulator with a fixed dt,
-        ensuring deterministic physics regardless of rendering FPS.
-        
-        Args:
-            dt: Fixed physics timestep (always engine.physics_timestep)
-        """
-        # Store previous position for interpolation
-        if not engine.skip_prev_update:
-            self.prev_x = self.x
-            self.prev_y = self.y
-        
-        # Calculate net force from all gravitational interactions
-        self.force = [0.0, 0.0]
-        for f in self.attract_forces:
-            self.force[0] += f[0]
-            self.force[1] += f[1]
-        
-        # Calculate force for display (converted to real-world units)
-        self.printed_force = [0.0, 0.0]
-        for f in self.attract_forces:
-            self.printed_force[0] += f[0] / engine.gravity * engine.G
-            self.printed_force[1] += f[1] / engine.gravity * engine.G
-        
-        # Initialize body on first update
-        if not self.is_born and self in circles:
-            self.birth_time = engine.net_simulation_time()
-            
-            # Apply random initial velocity if random mode enabled
-            if engine.random_mode:
-                max_velocity_per_frame = sqrt(2 * engine.random_field / self.mass)  # m/frame
-                max_velocity = max_velocity_per_frame * engine.FPS_TARGET  # m/s
-                self.vx = random.uniform(-max_velocity, max_velocity)  # m/s
-                self.vy = random.uniform(-max_velocity, max_velocity)  # m/s
-            
-            self.is_born = True
-        
-        # Update age (time since birth, excluding pause time)
-        if self.birth_time is not None:
-            self.age = engine.net_simulation_time() - self.birth_time
-        
-        # Update geometric properties based on current radius
-        self.surface = 4 * self.radius ** 2 * pi
-        self.volume = 4 / 3 * pi * self.radius ** 3
-        
-        # Deselect if body is removed from simulation
-        if self not in circles:
-            self.is_selected = False
-        
-        # Calculate speed magnitude
-        self.speed = sqrt(self.vx ** 2 + self.vy ** 2)  # m/s
-        
-        # Update position based on velocity
-        dt_sim = dt * engine.time_acceleration
-        
-        self.x += self.vx * dt_sim  # m/s × s = m
-        self.y += self.vy * dt_sim  # m/s × s = m
-        
-        # Update position tuple
-        self.pos = (self.x, self.y)
     
     def draw_interpolated(self, screen, alpha):
         """
@@ -1129,7 +1131,7 @@ class Engine:
 
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
-        self.time_acceleration = 4e6  # Time acceleration factor
+        self.time_acceleration = 3e4  # Time acceleration factor
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
