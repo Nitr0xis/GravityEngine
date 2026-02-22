@@ -19,7 +19,7 @@ A real-time N-body gravitational simulation built with Python and Pygame.
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Before We Begin](#-before-we-begin)
 - [Overview](#-overview)
@@ -46,7 +46,7 @@ Hello, I am 15 years old and I am passionate about programming and physics. That
 
 Every previous change is available in [ROADMAP.md](ROADMAP.md).
 
-## 🌌 Overview
+## Overview
 
 Gravity Engine is an interactive physics simulation that allows you to create and observe celestial bodies interacting under Newtonian gravity. Watch bodies orbit, collide, and merge in real-time with adjustable parameters and visualization options.
 
@@ -64,7 +64,7 @@ The simulation features accurate Newtonian physics with momentum conservation, f
 
 ![Gravity Engine Demo](assets/demo.gif) *(A demo gif will soon be added)*
 
-## ✨ Features
+## Features
 
 ### Current Features (February 2026 - v3.0.0)
 -  **Adaptive performance mode** - Throttles physics calculations for smooth 120 FPS rendering
@@ -114,7 +114,7 @@ The simulation features accurate Newtonian physics with momentum conservation, f
 ### Planned Features
 See [ROADMAP.md](ROADMAP.md) for upcoming features and development timeline.
 
-## 🚀 Installation
+## Installation
 
 ### Option 1: Use Pre-built Executable (Easiest)
 
@@ -169,7 +169,7 @@ pip install pygame
 python src/gravity_engine.py
 ```
 
-## 📁 Project Structure
+## Project Structure
 ```
 GravityEngine/
 │
@@ -221,7 +221,7 @@ GravityEngine/
 | `ROADMAP.md` | Development timeline | Recommended |
 | `LICENSE` | License information | Legal |
 
-## 🔨 Building Executables
+## Building Executables
 
 ### Using the Build Menu (Recommended)
 
@@ -264,7 +264,7 @@ Simply double-click `make.bat` to access the interactive build menu:
 - **All assets** - Must be present in `assets/` folder
 - **Windows** - Build scripts are Windows batch files (.bat)
 
-## 🎮 Controls
+## Controls
 
 ### Mouse Controls
 - **Left Click** - Select a body / Create a new body (click on empty space)
@@ -295,7 +295,7 @@ Simply double-click `make.bat` to access the interactive build menu:
 - **Only one body can be selected at a time** - selecting a new body deselects the previous one
 - **Click detection uses visual positions** - you can select bodies exactly where you see them
 
-## ⚙️ Configuration
+## Configuration
 
 You can modify simulation parameters in the `Engine.__init__()` method within `src/gravity_engine.py`. Parameters are organized into logical sections:
 
@@ -717,7 +717,7 @@ self.min_physics_interval = 0.010  # 10ms between updates
 
 **Rule of thumb:** Higher frequency = more accurate but more CPU intensive.
 
-## 📊 Performance
+## Performance
 
 ### Current Performance
 
@@ -775,7 +775,7 @@ self.min_physics_interval = 0.010  # 10ms between updates
 
 > 💡 Adaptive mode maintains smooth rendering regardless of body count.
 
-## 📈 Roadmap
+## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
 
@@ -808,7 +808,7 @@ See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
 - **March 2026**: Partial collisions, QuadTree optimization
 - **Q2 2026**: Save/load system, UI improvements, configuration files
 
-## 🎯 Quick Start Guide
+## Quick Start Guide
 
 ### First Launch
 
@@ -876,7 +876,7 @@ See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
 - Time acceleration factor
 - Pause status
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -942,7 +942,7 @@ Gravity Engine is perfect for:
 9. **N-body Problem** - Classical unsolved problem in physics
 10. **Visual Collision Detection** - Detecting collisions on interpolated positions
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Pygame** - Amazing game development library ([pygame.org](https://www.pygame.org/))
 - **PyInstaller** - Executable building tool
@@ -951,7 +951,7 @@ Gravity Engine is perfect for:
 - **Glenn Fiedler** - For excellent articles on fixed timestep game loops
 - **You** - For checking out this project!
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -1004,7 +1004,7 @@ git push origin feature/your-feature-name
 - **Documentation** - Tutorials, examples
 - **Testing** - More unit tests, physics validation
 
-## 📝 License
+## License
 
 This project is licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License**.
 
@@ -1025,7 +1025,7 @@ This project is licensed under the **Creative Commons Attribution-NonCommercial-
 
 See [LICENSE](LICENSE) for complete terms.
 
-## 📧 Contact
+## Contact
 
 **Nils DONTOT**
 
