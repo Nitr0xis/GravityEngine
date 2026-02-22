@@ -102,14 +102,14 @@ The simulation features accurate Newtonian physics with momentum conservation, f
   - Click detection uses visual positions, not physical positions
   - More intuitive user experience
   - Works perfectly with interpolation
-- ✨ **Fixed timestep integration** - Physics now runs at consistent 1/120s intervals
-- ✨ **Interpolation rendering** - Smooth visuals between physics steps (alpha blending)
-- ✨ **Time accumulator** - Proper handling of variable frame rates
-- ✨ **Interpolated vectors** - Velocity and force vectors now sync with interpolated positions
-- ✨ **Improved force vectors** - Logarithmic scaling preserves direction and magnitude
-- ✨ **Better cardinal vectors** - X/Y components properly interpolated
-- ✨ **Code organization** - Color constants moved to dedicated `Color` class
-- ✨ **Testing framework** - Added `Tester` class with physics validation tests
+-  **Fixed timestep integration** - Physics now runs at consistent 1/120s intervals
+-  **Interpolation rendering** - Smooth visuals between physics steps (alpha blending)
+-  **Time accumulator** - Proper handling of variable frame rates
+-  **Interpolated vectors** - Velocity and force vectors now sync with interpolated positions
+-  **Improved force vectors** - Logarithmic scaling preserves direction and magnitude
+-  **Better cardinal vectors** - X/Y components properly interpolated
+-  **Code organization** - Color constants moved to dedicated `Color` class
+-  **Testing framework** - Added `Tester` class with physics validation tests
 
 ### Planned Features
 See [ROADMAP.md](ROADMAP.md) for upcoming features and development timeline.
@@ -177,14 +177,14 @@ GravityEngine/
 │   └── GravityEngine.exe          # Standalone executable (Windows)
 │
 ├── src/
-│   └── gravity_engine.py          # 🎯 Main program - run this to start
+│   └── gravity_engine.py          # Main program - run this to start
 │
 ├── assets/
 │   ├── fonts/
-│   │   ├── main_font.ttf          # ✅ UI font (required)
-│   │   └── toruk.ttf              # ✅ Splash screen font (required)
-│   ├── icon.ico                   # 🎨 Executable icon
-│   └── musics/                    # 🎵 Background music folder (optional)
+│   │   ├── main_font.ttf          # UI font (required)
+│   │   └── toruk.ttf              # Splash screen font (required)
+│   ├── icon.ico                   # Executable icon
+│   └── musics/                    # Background music folder (optional)
 │       ├── music1.mp3
 │       ├── music2.mp3
 │       └── music3.mp3
@@ -194,15 +194,15 @@ GravityEngine/
 │   ├── build_release.bat          # Release build (no console)
 │   └── clean.bat                  # Clean build files
 │
-├── make.bat                        # 📋 Interactive build menu
-├── README.md                       # 📖 This file
-├── ROADMAP.md                      # 🗺️ Development roadmap
-├── CONTRIBUTING.md                 # 🤝 How to contribute
-├── SECURITY.md                     # 🔒 Security information
-├── CODE_OF_CONDUCT.md              # 📜 Code of conduct
+├── make.bat                        # Interactive build menu
+├── README.md                       # This file
+├── ROADMAP.md                      # Development roadmap
+├── CONTRIBUTING.md                 # How to contribute
+├── SECURITY.md                     # Security information
+├── CODE_OF_CONDUCT.md              # Code of conduct
 ├── LICENSE                         # ⚖️ License terms (CC BY-NC-SA 4.0)
-├── .gitignore                      # 🚫 Git ignore rules
-└── .gitattributes                  # 📝 Git attributes
+├── .gitignore                      # Git ignore rules
+└── .gitattributes                  # Git attributes
 ```
 
 ### Important Files
@@ -210,16 +210,16 @@ GravityEngine/
 | File | Description | Required |
 |------|-------------|----------|
 | `dist/GravityEngine.exe` | Standalone executable (post-build) | 📦 Distributable |
-| `src/gravity_engine.py` | Main Python source code | ✅ Required for dev |
-| `assets/fonts/main_font.ttf` | UI font file | ✅ Required |
-| `assets/fonts/toruk.ttf` | Splash screen font | ✅ Required |
-| `assets/icon.ico` | Executable icon | 🎨 Recommended |
-| `assets/musics/` | Background music files | 🎵 Optional |
+| `src/gravity_engine.py` | Main Python source code | Required for dev |
+| `assets/fonts/main_font.ttf` | UI font file | Required |
+| `assets/fonts/toruk.ttf` | Splash screen font | Required |
+| `assets/icon.ico` | Executable icon | Recommended |
+| `assets/musics/` | Background music files | Optional |
 | `builders/*.bat` | Build automation scripts | 🔨 For building |
-| `make.bat` | Build system menu | 📋 Build interface |
-| `README.md` | Documentation | 📖 You are here |
-| `ROADMAP.md` | Development timeline | 🗺️ Recommended |
-| `LICENSE` | License information | ⚖️ Legal |
+| `make.bat` | Build system menu | Build interface |
+| `README.md` | Documentation | You are here |
+| `ROADMAP.md` | Development timeline | Recommended |
+| `LICENSE` | License information | Legal |
 
 ## 🔨 Building Executables
 
@@ -446,10 +446,10 @@ physics_timestep = 1.0 / 120  # Always 1/120 second per step
 4. **Rendering interpolates** between physics states for smooth visuals
 
 **Benefits:**
-- ✅ **Deterministic** - Same initial conditions always give same results
-- ✅ **FPS-independent** - Physics accuracy doesn't depend on rendering speed
-- ✅ **Predictable** - No "time dilation" from slow frames
-- ✅ **Smooth** - Interpolation provides fluid 120 FPS visuals
+- **Deterministic** - Same initial conditions always give same results
+- **FPS-independent** - Physics accuracy doesn't depend on rendering speed
+- **Predictable** - No "time dilation" from slow frames
+- **Smooth** - Interpolation provides fluid 120 FPS visuals
 
 ### Interpolated Rendering
 
@@ -484,9 +484,9 @@ if visual_collision_detected:
 ```
 
 **Benefits:**
-- ✅ No more bodies visually passing through each other
-- ✅ Instant fusion when bodies appear to touch
-- ✅ Seamless with interpolation system
+- No more bodies visually passing through each other
+- Instant fusion when bodies appear to touch
+- Seamless with interpolation system
 
 ### Gravitational Force
 
@@ -575,9 +575,9 @@ vector_y = unit_y × visual_length
 ```
 
 **Benefits:**
-- ✅ Direction is **always correct** (no sign loss)
-- ✅ Large forces are compressed (logarithmic)
-- ✅ Small forces remain visible
+- Direction is **always correct** (no sign loss)
+- Large forces are compressed (logarithmic)
+- Small forces remain visible
 
 ### Units
 
@@ -600,9 +600,9 @@ Tester.test_determinism()        # Verify same inputs → same outputs
 Tester.test_uniform_speed()      # Verify FPS-independent physics
 ```
 
-## 🎯 Performance Modes
+## Performance Modes
 
-### Adaptive Mode (NEW in v3.0.0) - Default
+### Adaptive Mode (NEW in v3.0.0)
 
 **How it works:**
 - Physics calculations are **throttled** to a maximum frequency
@@ -643,7 +643,7 @@ Frame 5 (t=33ms):   Skip physics, render interpolated
 - Low-end hardware
 - Visual exploration
 
-### Precise Mode
+### Precise Mode - Default
 
 **How it works:**
 - Fixed timestep: exactly 1/120 second per physics step
@@ -656,13 +656,13 @@ self.performance_mode = "precise"
 ```
 
 **Benefits:**
-- ✅ **High accuracy** - Small timesteps (8.3ms)
-- ✅ **Deterministic** - Same results every run
-- ✅ **Predictable** - Consistent physics behavior
+- **High accuracy** - Small timesteps (8.3ms)
+- **Deterministic** - Same results every run
+- **Predictable** - Consistent physics behavior
 
 **Trade-offs:**
-- ⚠️ **May slow down** - Visual slowdown with many bodies
-- ⚠️ **CPU intensive** - 120 calculations/second
+- **May slow down** - Visual slowdown with many bodies
+- **CPU intensive** - 120 calculations/second
 
 **Best for:**
 - Scientific accuracy
@@ -680,7 +680,7 @@ self.performance_mode = "precise"
 | Accuracy | Medium | High |
 | Deterministic | No | Yes |
 | Max bodies (smooth) | ~400 | ~150 |
-| Visual collision | ✅ Yes | ✅ Yes |
+| Visual collision | Yes | Yes |
 | Best for | Demos, exploration | Science, accuracy |
 
 ### Choosing the Right Mode
@@ -730,15 +730,15 @@ self.min_physics_interval = 0.010  # 10ms between updates
 ### Performance Characteristics
 
 **Adaptive mode characteristics:**
-- ✅ Smooth 120 FPS with 100+ bodies
-- ✅ Automatic CPU load management
-- ✅ Visual collision detection prevents tunneling
+- Smooth 120 FPS with 100+ bodies
+- Automatic CPU load management
+- Visual collision detection prevents tunneling
 - ⚠️ Reduced physics accuracy with large timesteps
 
 **Precise mode characteristics:**
-- ✅ Consistent physics regardless of rendering FPS
-- ✅ Deterministic simulation (same inputs → same outputs)
-- ✅ No "time dilation" from slow frames
+- Consistent physics regardless of rendering FPS
+- Deterministic simulation (same inputs → same outputs)
+- No "time dilation" from slow frames
 - ⚠️ May slow down visually with many bodies
 
 ### Performance Tips
@@ -757,11 +757,11 @@ self.min_physics_interval = 0.010  # 10ms between updates
 
 | Bodies | Visual FPS | Physics Hz | Smooth? |
 |--------|-----------|------------|---------|
-| 10 | 120 | 40 | ✅ Yes |
-| 50 | 120 | 40 | ✅ Yes |
-| 100 | 90 | 40 | ✅ Yes |
-| 200 | 70 | 30-40 | ✅ Yes |
-| 500+ | 20-40 | 20-30 | ⚠️ Mostly |
+| 10 | 120 | 40 | Yes |
+| 50 | 120 | 40 | Yes |
+| 100 | 90 | 40 | Yes |
+| 200 | 70 | 30-40 | Yes |
+| 500+ | 20-40 | 20-30 | Mostly |
 
 **Precise Mode (physics_timestep = 1/120s):**
 
@@ -781,17 +781,17 @@ See [ROADMAP.md](ROADMAP.md) for detailed development plans and timelines.
 
 ### Recently Completed (February 2026 - v3.0.0)
 
-- ✅ Adaptive performance mode with throttling
-- ✅ Visual collision detection on interpolated positions
-- ✅ Interpolated click detection for body selection
-- ✅ Fixed timestep physics integration
-- ✅ Interpolated rendering system
-- ✅ Time accumulator with spiral-of-death prevention
-- ✅ Improved force vector visualization (logarithmic scaling)
-- ✅ Interpolated vector rendering
-- ✅ Color class organization
-- ✅ Testing framework (Tester class)
-- ✅ Multiple font support (main UI + splash screen)
+- Adaptive performance mode with throttling
+- Visual collision detection on interpolated positions
+- Interpolated click detection for body selection
+- Fixed timestep physics integration
+- Interpolated rendering system
+- Time accumulator with spiral-of-death prevention
+- Improved force vector visualization (logarithmic scaling)
+- Interpolated vector rendering
+- Color class organization
+- Testing framework (Tester class)
+- Multiple font support (main UI + splash screen)
 
 ### Current Development Focus
 
