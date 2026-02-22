@@ -67,27 +67,27 @@ The simulation features accurate Newtonian physics with momentum conservation, f
 ## ✨ Features
 
 ### Current Features (February 2026 - v3.0.0)
-- ✅ **Adaptive performance mode** - Throttles physics calculations for smooth 120 FPS rendering
-- ✅ **Visual collision detection** - Detects collisions on what you see (interpolated positions)
-- ✅ **Smart click detection** - Select bodies based on their visual position, not physical
-- ✅ **Real-time N-body simulation** - Accurate gravitational calculations for multiple bodies
-- ✅ **Fixed timestep physics** - Deterministic simulation (1/120s physics steps)
-- ✅ **Smooth interpolated rendering** - 120 FPS display with alpha blending between physics states
-- ✅ **Time accumulator** - Handles variable frame rates while maintaining physics accuracy
-- ✅ **Interactive body creation** - Click and hold to create bodies (exponential growth acceleration)
-- ✅ **Momentum conservation** - Bodies merge realistically, conserving mass and momentum
-- ✅ **Vector visualization** - Display velocity and force vectors in real-time (with interpolation)
-- ✅ **Detailed analytics** - Track mass, velocity, energy, age, and more for each body
-- ✅ **Pause/resume** - Freeze time to analyze your simulation
-- ✅ **Random velocity mode** - Add chaos with randomized initial velocities
-- ✅ **Reversed gravity** - Experiment with repulsive gravity (toggle with G key)
-- ✅ **Fullscreen support** - Automatic native resolution detection
-- ✅ **Random environments** - Generate preset configurations instantly (P key)
-- ✅ **Standalone executable** - Build distributable .exe files (Windows)
-- ✅ **Customizable splash screen** - Personalized startup screen with author info
-- ✅ **Dark/Light mode** - Choose your preferred color scheme
-- ✅ **Color class** - Organized color constants for easy customization
-- ✅ **Tester class** - Unit tests for force summation, determinism, and uniform speed
+-  **Adaptive performance mode** - Throttles physics calculations for smooth 120 FPS rendering
+-  **Visual collision detection** - Detects collisions on what you see (interpolated positions)
+-  **Smart click detection** - Select bodies based on their visual position, not physical
+-  **Real-time N-body simulation** - Accurate gravitational calculations for multiple bodies
+-  **Fixed timestep physics** - Deterministic simulation (1/120s physics steps)
+-  **Smooth interpolated rendering** - 120 FPS display with alpha blending between physics states
+-  **Time accumulator** - Handles variable frame rates while maintaining physics accuracy
+-  **Interactive body creation** - Click and hold to create bodies (exponential growth acceleration)
+-  **Momentum conservation** - Bodies merge realistically, conserving mass and momentum
+-  **Vector visualization** - Display velocity and force vectors in real-time (with interpolation)
+-  **Detailed analytics** - Track mass, velocity, energy, age, and more for each body
+-  **Pause/resume** - Freeze time to analyze your simulation
+-  **Random velocity mode** - Add chaos with randomized initial velocities
+-  **Reversed gravity** - Experiment with repulsive gravity (toggle with G key)
+-  **Fullscreen support** - Automatic native resolution detection
+-  **Random environments** - Generate preset configurations instantly (P key)
+-  **Standalone executable** - Build distributable .exe files (Windows)
+-  **Customizable splash screen** - Personalized startup screen with author info
+-  **Dark/Light mode** - Choose your preferred color scheme
+-  **Color class** - Organized color constants for easy customization
+-  **Tester class** - Unit tests for force summation, determinism, and uniform speed
 
 ### Recent Improvements (February 2026 - v3.0.0)
 - 🔥 **NEW: Adaptive performance mode** - Physics throttled to max 40 Hz (configurable)
