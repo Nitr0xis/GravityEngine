@@ -627,15 +627,15 @@ Frame 5 (t=33ms):   Skip physics, render interpolated
 ```
 
 **Benefits:**
-- ✅ **Always smooth rendering** - 120 FPS regardless of body count
-- ✅ **CPU efficient** - Max 40 physics calculations/second
-- ✅ **Scalable** - Handle 100+ bodies smoothly
-- ✅ **Configurable** - Adjust min_physics_interval
+- **Always smooth rendering** - 120 FPS regardless of body count
+- **CPU efficient** - Max 40 physics calculations/second
+- **Scalable** - Handle 100+ bodies smoothly
+- **Configurable** - Adjust min_physics_interval
 
 **Trade-offs:**
-- ⚠️ **Lower accuracy** - Large timesteps (25ms vs 8.3ms)
-- ⚠️ **Non-deterministic** - Results vary slightly on different hardware
-- ⚠️ **May miss fast collisions** - Rare with visual collision detection
+- **Lower accuracy** - Large timesteps (25ms vs 8.3ms)
+- **Non-deterministic** - Results vary slightly on different hardware
+- **May miss fast collisions** - Rare with visual collision detection
 
 **Best for:**
 - Large simulations (>50 bodies)
@@ -997,12 +997,12 @@ git push origin feature/your-feature-name
 
 ### Areas Needing Help
 
-- 🐛 **Bug fixes** - Physics edge cases, UI issues
-- ⚡ **Performance** - QuadTree, spatial partitioning
-- 📊 **Physics** - Scale factor, unit consistency
-- 🎨 **UI/UX** - Better visualization, settings menu
-- 📖 **Documentation** - Tutorials, examples
-- 🧪 **Testing** - More unit tests, physics validation
+- **Bug fixes** - Physics edge cases, UI issues
+- **Performance** - QuadTree, spatial partitioning
+- **Physics** - Scale factor, unit consistency
+- **UI/UX** - Better visualization, settings menu
+- **Documentation** - Tutorials, examples
+- **Testing** - More unit tests, physics validation
 
 ## 📝 License
 
@@ -1014,14 +1014,14 @@ This project is licensed under the **Creative Commons Attribution-NonCommercial-
 
 ### You are free to:
 
-- ✅ **Share** - Copy and redistribute
-- ✅ **Adapt** - Remix, transform, build upon
+- **Share** - Copy and redistribute
+- **Adapt** - Remix, transform, build upon
 
 ### Under the following terms:
 
-- 📛 **Attribution** - Give credit to Nils DONTOT
-- 🚫 **NonCommercial** - No commercial use
-- 🔄 **ShareAlike** - Distribute under same license
+- **Attribution** - Give credit to Nils DONTOT
+- **NonCommercial** - No commercial use
+- **ShareAlike** - Distribute under same license
 
 See [LICENSE](LICENSE) for complete terms.
 
@@ -1029,10 +1029,10 @@ See [LICENSE](LICENSE) for complete terms.
 
 **Nils DONTOT**
 
-- 📧 **Email**: [nils.dontot.pro@gmail.com](mailto:nils.dontot.pro@gmail.com)
-- 🐙 **GitHub**: [@Nitr0xis](https://github.com/Nitr0xis)
-- 🔗 **Repository**: [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
-- 🌐 **Issues**: [Report bugs or suggest features](https://github.com/Nitr0xis/GravityEngine/issues)
+- **Email**: [nils.dontot.pro@gmail.com](mailto:nils.dontot.pro@gmail.com)
+- **GitHub**: [@Nitr0xis](https://github.com/Nitr0xis)
+- **Repository**: [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
+- **Issues**: [Report bugs or suggest features](https://github.com/Nitr0xis/GravityEngine/issues)
 
 ---
 
