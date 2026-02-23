@@ -1,6 +1,6 @@
 # Gravity Engine
 
-## Version 3.1.2 - Advanced Interpolation Edition
+## Version 3.1.3 - Advanced Interpolation Edition
 
 A real-time N-body gravitational simulation with deterministic physics and complete interpolation system.
 
@@ -484,7 +484,7 @@ Benefits:
 
 ## Performance Modes
 
-### Adaptive Mode (Default)
+### Adaptive Mode
 
 **Configuration:**
 ```python
@@ -514,7 +514,7 @@ self.min_physics_interval = 0.025  # 40 Hz physics
 - Low-end hardware
 - Smooth visual experience
 
-### Precise Mode
+### Precise Mode (Default)
 
 **Configuration:**
 ```python
@@ -588,7 +588,7 @@ self.performance_mode = "precise"
 4. Optional: Enable random mode for orbits
 
 **Large Simulation (100+ bodies):**
-1. Use adaptive mode (default)
+1. Use adaptive mode
 2. Press P repeatedly (20 bodies each time)
 3. Enjoy smooth 120 FPS
 4. Watch the chaos!
@@ -614,7 +614,7 @@ self.performance_mode = "precise"
 - Lower FPS: `self.FPS_TARGET = 60`
 
 **Bodies pass through each other:**
-- Fixed in v3.0.0 with visual collision detection
+- Patch in progress for 3.+ version
 - Update to latest version
 - Ensure `self.use_interpolation = True`
 
@@ -775,7 +775,7 @@ See [LICENSE](LICENSE) for complete terms.
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
 *Last updated: February 23, 2026*  
-*Version: 3.1.2 - Advanced Interpolation Edition*
+*Version: 3.1.3 - Advanced Interpolation Edition*
 
 ---
 
