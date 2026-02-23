@@ -1,6 +1,6 @@
 # Gravity Engine
 
-## Version 3.1.0 - Advanced Interpolation Edition
+## Version 3.1.1 - Advanced Interpolation Edition
 
 A real-time N-body gravitational simulation with deterministic physics and complete interpolation system.
 

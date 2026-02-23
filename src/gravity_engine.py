@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.1.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.1.1 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -1295,12 +1295,14 @@ class Engine:
         """
 
         # ==================== SPLASH SCREEN SETTINGS ====================
-        self.splash_screen_font = Core.resource_path('assets/fonts/toruk.ttf')
+        self.splash_screen_font = Core.resource_path('assets/fonts/main_font.ttf')
         self.splash_screen_enabled = True  # Enable/disable splash screen
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_description = "Gravity Engine - A celestial body simulation"  # Project description
+        self.project_version = "3.1.1"
+        self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
+        
         
         # ==================== DISPLAY SETTINGS ====================
         self.FULLSCREEN = True
