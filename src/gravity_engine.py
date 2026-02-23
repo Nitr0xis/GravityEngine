@@ -29,8 +29,8 @@ CONFIGURATION (in Engine.__init__()):
     fusions               : Enable/disable body fusion (default: True)
 
 MODES:
-    PRECISE  : Fixed timestep, deterministic, may slow with many bodies
-    ADAPTIVE (default): Throttled updates, smooth rendering, less accurate
+    PRECISE (default) : Fixed timestep, deterministic, may slow with many bodies
+    ADAPTIVE : Throttled updates, smooth rendering, less accurate
 
 PHYSICS:
     Newtonian gravity (F = G×m₁×m₂/r²), momentum conservation,
