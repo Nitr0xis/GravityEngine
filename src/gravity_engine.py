@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.1.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -286,7 +286,29 @@ class Display:
 
 
 class Tester:
-    # Units test
+    @staticmethod
+    def default_debug():
+        # DEBUG: Print paths for troubleshooting resource loading
+        # This helps diagnose issues with font and asset loading in different environments
+        print("=" * 60)
+        print("RESOURCE PATH DEBUG")
+        print("=" * 60)
+        print(f"__file__: {os.path.abspath(__file__)}")
+        print(f"Script dir: {os.path.dirname(os.path.abspath(__file__))}")
+        print(f"Project root: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
+
+        # Check if running as PyInstaller bundle or in development mode
+        if hasattr(sys, '_MEIPASS'):
+            print(f"PyInstaller mode: {sys._MEIPASS}")
+        else:
+            print("Development mode")
+
+        # Test font path resolution
+        test_font = Core.resource_path('assets/font.ttf')
+        print(f"Font path: {test_font}")
+        print(f"Font exists: {os.path.exists(test_font)}")
+        print("=" * 60)
+
     @staticmethod
     def test_force_summation():
         """Check if the forces are properly summed, not averaged."""
@@ -371,27 +393,82 @@ class Tester:
         print("✓ Test uniform speed successful")
 
     @staticmethod
-    def default_debug():
-        # DEBUG: Print paths for troubleshooting resource loading
-        # This helps diagnose issues with font and asset loading in different environments
-        print("=" * 60)
-        print("RESOURCE PATH DEBUG")
-        print("=" * 60)
-        print(f"__file__: {os.path.abspath(__file__)}")
-        print(f"Script dir: {os.path.dirname(os.path.abspath(__file__))}")
-        print(f"Project root: {os.path.dirname(os.path.dirname(os.path.abspath(__file__)))}")
+    def test_position_interpolation():
+        """Test that position interpolation works correctly."""
+        body = Circle(x=0, y=0, density=5515, mass=1e20)
+        body.prev_x = 0.0
+        body.prev_y = 0.0
+        body.x = 100.0
+        body.y = 100.0
+        
+        # Test alpha = 0.0 (should be at previous position)
+        state = body.get_interpolated_state(0.0)
+        assert abs(state['x'] - 0.0) < 1e-6, "Alpha=0 should give prev_x"
+        assert abs(state['y'] - 0.0) < 1e-6, "Alpha=0 should give prev_y"
+        
+        # Test alpha = 1.0 (should be at current position)
+        state = body.get_interpolated_state(1.0)
+        assert abs(state['x'] - 100.0) < 1e-6, "Alpha=1 should give x"
+        assert abs(state['y'] - 100.0) < 1e-6, "Alpha=1 should give y"
+        
+        # Test alpha = 0.5 (should be at midpoint)
+        state = body.get_interpolated_state(0.5)
+        assert abs(state['x'] - 50.0) < 1e-6, "Alpha=0.5 should give midpoint"
+        assert abs(state['y'] - 50.0) < 1e-6, "Alpha=0.5 should give midpoint"
+        
+        print("✓ Test position interpolation successful")
 
-        # Check if running as PyInstaller bundle or in development mode
-        if hasattr(sys, '_MEIPASS'):
-            print(f"PyInstaller mode: {sys._MEIPASS}")
-        else:
-            print("Development mode")
+    @staticmethod
+    def test_velocity_interpolation():
+        """Test that velocity interpolation works correctly."""
+        body = Circle(x=0, y=0, density=5515, mass=1e20)
+        body.prev_vx = 0.0
+        body.prev_vy = 0.0
+        body.vx = 10.0
+        body.vy = 10.0
+        
+        # Test alpha = 0.5
+        state = body.get_interpolated_state(0.5)
+        assert abs(state['vx'] - 5.0) < 1e-6, "Velocity should interpolate"
+        assert abs(state['vy'] - 5.0) < 1e-6, "Velocity should interpolate"
+        
+        print("✓ Test velocity interpolation successful")
 
-        # Test font path resolution
-        test_font = Core.resource_path('assets/font.ttf')
-        print(f"Font path: {test_font}")
-        print(f"Font exists: {os.path.exists(test_font)}")
-        print("=" * 60)
+    @staticmethod
+    def test_force_interpolation():
+        """Test that force interpolation works correctly."""
+        body = Circle(x=0, y=0, density=5515, mass=1e20)
+        body.prev_force = [0.0, 0.0]
+        body.force = [1000.0, 1000.0]
+        
+        # Test alpha = 0.25
+        state = body.get_interpolated_state(0.25)
+        assert abs(state['fx'] - 250.0) < 1e-6, "Force should interpolate"
+        assert abs(state['fy'] - 250.0) < 1e-6, "Force should interpolate"
+        
+        print("✓ Test force interpolation successful")
+
+    @staticmethod
+    def test_interpolation_cache():
+        """Test that interpolation cache works correctly."""
+        body = Circle(x=0, y=0, density=5515, mass=1e20)
+        body.x = 100.0
+        body.prev_x = 0.0
+        
+        # First call should compute
+        state1 = body.get_interpolated_state(0.5)
+        
+        # Second call with same alpha should use cache
+        state2 = body.get_interpolated_state(0.5)
+        
+        # Should be same object (cache hit)
+        assert state1 is state2, "Cache should return same object"
+        
+        # Different alpha should recompute
+        state3 = body.get_interpolated_state(0.6)
+        assert state1 is not state3, "Different alpha should recompute"
+        
+        print("✓ Test interpolation cache successful")
 
 
 # -----------------
@@ -491,12 +568,6 @@ class Circle:
         self.x = float(x)
         self.y = float(y)
 
-        # Previous positions for interpolation (rendering with time accumulator)
-        # These store the position from the previous physics step
-        # Used in draw_interpolated() to smooth rendering between physics updates
-        self.prev_x = float(x)
-        self.prev_y = float(y)
-
         # Mass properties
         self.basic_mass = mass  # Original mass (before fusion)
         self.mass = self.basic_mass  # Current mass (may change after fusion)
@@ -545,6 +616,36 @@ class Circle:
 
         # Lifecycle flags
         self.suicide: bool = False  # Flag for removal after fusion
+
+        # Previous positions for interpolation (rendering with time accumulator)
+        # These store the position from the previous physics step
+        # Used in draw_interpolated() to smooth rendering between physics updates
+        # ==================== INTERPOLATION STATE ====================
+        # Previous position
+        self.prev_x = float(x)
+        self.prev_y = float(y)
+        
+        # Previous velocities
+        self.prev_vx = 0.0
+        self.prev_vy = 0.0
+        
+        # Previous forces
+        self.prev_force = [0.0, 0.0]
+        
+        # Previous radius
+        self.prev_radius = self.radius
+
+        # Cache for interpolated values (for recalculation avoidance)
+        self._interpolated_cache = {
+            'x': self.x,
+            'y': self.y,
+            'vx': 0.0,
+            'vy': 0.0,
+            'fx': 0.0,
+            'fy': 0.0,
+            'radius': self.radius,
+            'alpha': -1.0  # -1 = invalid
+        }
 
         # Age tracking
         self.is_born = False  # Whether body has been initialized in simulation
@@ -618,32 +719,44 @@ class Circle:
         
         Draws a line from the body's center showing the direction and magnitude
         of its total velocity. The length is scaled by velocity and time factor.
+
+        Uses interpolated position AND velocity for smooth vector rendering.
         
         Args:
             in_terminal: If True, also print vector info to console
             alpha: Interpolation factor for smooth rendering (0 to 1)
         """
-        # Interpolate position for smooth rendering
-        render_x = self.prev_x + (self.x - self.prev_x) * alpha
-        render_y = self.prev_y + (self.y - self.prev_y) * alpha
-
-        # Start point is body center
+        # ===== GET INTERPOLATED STATE =====
+        state = self.get_interpolated_state(alpha)
+        
+        render_x = state['x']
+        render_y = state['y']
+        render_vx = state['vx']  # <- Interpolated Speed
+        render_vy = state['vy']  # <- Interpolated Speed
+        
+        # ===== CALCULATE VECTOR START AND END =====
+        # Start point is interpolated body center
         x1, y1 = render_x, render_y
-
-        # End point calculated from velocity components
-        # Scaling factor 17.5 adjusts vector visibility
-        x2 = engine.vector_scale * (self.x + self.vx * self.global_speed_vector_scale)
-        y2 = engine.vector_scale * (self.y + self.vy * self.global_speed_vector_scale)
-
+        
+        # End point uses INTERPOLATED velocity
+        x2 = render_x + render_vx * self.global_speed_vector_scale * engine.vector_scale
+        y2 = render_y + render_vy * self.global_speed_vector_scale * engine.vector_scale
+        
         if in_terminal:
-            print(f"N{self.number} Start : ({x1}; {y1}); End : ({x2}; {y2})")
-
-        # Draw the velocity vector in red
+            speed_magnitude = sqrt(render_vx**2 + render_vy**2)
+            print(f"N{self.number} Vector at alpha={alpha:.3f}:")
+            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
+            print(f"  Velocity: ({render_vx:.2f}, {render_vy:.2f}) m/s")
+            print(f"  Speed: {speed_magnitude:.2f} m/s")
+            print(f"  Start: ({x1:.1f}, {y1:.1f})")
+            print(f"  End: ({x2:.1f}, {y2:.1f})")
+        
+        # ===== DRAW VELOCITY VECTOR =====
         Utils.draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
         
-        # Optionally draw cardinal components (X and Y separately)
+        # ===== OPTIONALLY DRAW CARDINAL COMPONENTS =====
         if engine.cardinal_vectors:
-            self.print_cardinal_speed_vectors()
+            self.print_cardinal_speed_vectors(in_terminal, alpha)
 
     def print_force_vector(self, in_terminal: bool = False, alpha: float = 1.0):
         """
@@ -651,47 +764,57 @@ class Circle:
         
         Draws a line showing the direction and magnitude of the net force
         acting on the body from all other bodies.
+
+        Uses interpolated position AND force for smooth vector rendering.
         
         Args:
             in_terminal: If True, also print vector info to console
             alpha: Interpolation factor for smooth rendering (0 to 1)
         """
-        # Interpolate position for smooth rendering
-        render_x = self.prev_x + (self.x - self.prev_x) * alpha
-        render_y = self.prev_y + (self.y - self.prev_y) * alpha
+        # ===== GET INTERPOLATED STATE =====
+        state = self.get_interpolated_state(alpha)
+        
+        render_x = state['x']
+        render_y = state['y']
+        render_fx = state['fx']  # <- Interpolated Force
+        render_fy = state['fy']  # <- Interpolated Force
 
-        # Calculate force magnitude for scaling
+        # ===== CALCULATE FORCE MAGNITUDE =====
         force_magnitude = sqrt(self.force[0] ** 2 + self.force[1] ** 2)
         
-        # Avoid division by zero
-        if force_magnitude == 0:
-            return  # No force, no vector to draw
+        # Early exit if no force
+        if force_magnitude < 1e-10:
+            return
         
-        # Calculate unit vector (direction)
-        unit_x = self.force[0] / force_magnitude
-        unit_y = self.force[1] / force_magnitude
+        # ===== CALCULATE UNIT VECTOR (DIRECTION) =====
+        unit_x = render_fx / force_magnitude
+        unit_y = render_fy / force_magnitude
         
-        # Scale the vector for visibility
+        # ===== SCALE VECTOR FOR VISIBILITY =====
         # Use logarithmic scaling for very large/small forces
         # This compresses the range while preserving direction
-        if force_magnitude > 0:
-            # Logarithmic scaling: log10(force) gives better visibility
-            # Add 1 to avoid log(0), multiply by scale factors
-            visual_length = log10(force_magnitude + 1) * engine.vector_scale * self.force_vector_scale
-        else:
-            visual_length = 0
         
-        # Calculate end point
+        # Logarithmic scaling: log10(force) gives better visibility
+        # Add 1 to avoid log(0), multiply by scale factors
+        visual_length = log10(force_magnitude + 1) * engine.vector_scale * self.force_vector_scale
+        
+        # ===== CALCULATE END POINT =====
         vector_x = unit_x * visual_length
         vector_y = unit_y * visual_length
-        end_coordinates = (render_x + vector_x, render_y + vector_y)
+        end_x = render_x + vector_x
+        end_y = render_y + vector_y
 
         if in_terminal:
-            print(f"N{self.number} Force: {force_magnitude:.2e} N, "
-                f"Start: ({render_x:.1f}; {render_y:.1f}); End: {end_coordinates}")
+            angle_deg = atan2(render_fy, render_fx) * 180 / pi
+            print(f"N{self.number} Force at alpha={alpha:.3f}:")
+            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
+            print(f"  Force: ({render_fx:.2e}, {render_fy:.2e}) N")
+            print(f"  Magnitude: {force_magnitude:.2e} N")
+            print(f"  Angle: {angle_deg:.1f}°")
+            print(f"  Visual length: {visual_length:.1f} px")
         
-        # Draw force vector in special blue color
-        Utils.draw_line(Display.SP_BLUE, (render_x, render_y), end_coordinates)
+        # ===== DRAW FORCE VECTOR =====
+        Utils.draw_line(Display.SP_BLUE, (render_x, render_y), (end_x, end_y))
 
     def print_cardinal_speed_vectors(self, in_terminal: bool = False, alpha: float = 1.0):
         """
@@ -699,30 +822,39 @@ class Circle:
         
         Draws two lines showing horizontal (X) and vertical (Y) velocity
         components independently. X component in green, Y component in yellow.
+
+        Uses interpolated position and velocity.
         
         Args:
             in_terminal: If True, also print vector info to console
             alpha: Interpolation factor for smooth rendering (0 to 1)
         """
-        # Interpolate position for smooth rendering
-        render_x = self.prev_x + (self.x - self.prev_x) * alpha
-        render_y = self.prev_y + (self.y - self.prev_y) * alpha
-
-        # Vector's beginning
-        x1 = render_x
-        y1 = render_y
+        # ===== GET INTERPOLATED STATE =====
+        state = self.get_interpolated_state(alpha)
         
-        # Vector's end
-        x2 = x1 + self.vx * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility        
-        y2 = y1 + self.vy * self.global_speed_vector_scale * engine.vector_scale  # Scaled for visibility
+        render_x = state['x']
+        render_y = state['y']
+        render_vx = state['vx']  # <- Interpolated X Speed
+        render_vy = state['vy']  # <- Interpolated Y Speed
+
+        # ===== CALCULATE VECTOR ENDPOINTS =====
+        # X component (horizontal)
+        x1 = render_x
+        x2 = render_x + render_vx * self.global_speed_vector_scale * engine.vector_scale
+        
+        # Y component (vertical)
+        y1 = render_y
+        y2 = render_y + render_vy * self.global_speed_vector_scale * engine.vector_scale
 
         if in_terminal:
-            print(f"N{self.number} Start x : ({x1}; {self.y}); End x : ({x2}; {self.y}) " \
-                  f"Start y : ({y1}; {self.x}); End y : ({y2}; {self.x})")
+            print(f"N{self.number} Cardinal vectors at alpha={alpha:.3f}:")
+            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
+            print(f"  Vx: {render_vx:.2f} m/s → X vector: ({x1:.1f}, {render_y:.1f}) to ({x2:.1f}, {render_y:.1f})")
+            print(f"  Vy: {render_vy:.2f} m/s → Y vector: ({render_x:.1f}, {y1:.1f}) to ({render_x:.1f}, {y2:.1f})")
 
-        # Draw X component (green horizontal line)
+        # ===== DRAW X COMPONENT (GREEN HORIZONTAL LINE) =====
         Utils.draw_line(self.CSV_x_color, (x1, self.y), (x2, self.y), self.vector_width)
-        # Draw Y component (yellow vertical line)
+        # ===== DRAW Y COMPONENT (YELLOW VERTICAL LINE) =====
         Utils.draw_line(self.CSV_y_color, (self.x, y1), (self.x, y2), self.vector_width)
 
     def print_info(self, y: int):
@@ -798,6 +930,53 @@ class Circle:
         """Clear the list of gravitational forces from other bodies."""
         self.attract_forces = []
 
+    def get_interpolated_state(self, alpha):
+        """
+        Calculate interpolated state for smooth rendering.
+        
+        Uses linear interpolation (PRECISE mode) for all properties.
+        Results are cached to avoid recalculation within the same frame.
+        
+        Args:
+            alpha: Interpolation factor (0.0 to 1.0)
+                0.0 = exactly at previous physics state
+                1.0 = exactly at current physics state
+        
+        Returns:
+            dict: Interpolated state with keys:
+                'x', 'y', 'vx', 'vy', 'fx', 'fy'
+        """
+        # Check cache validity
+        if abs(self._interpolated_cache['alpha'] - alpha) < 1e-6:
+            # Cache is valid for this alpha, return it
+            return self._interpolated_cache
+        
+        # Calculate interpolated state (linear interpolation)
+        state = {
+            # Position interpolation
+            'x': self.prev_x + (self.x - self.prev_x) * alpha,
+            'y': self.prev_y + (self.y - self.prev_y) * alpha,
+            
+            # Velocity interpolation
+            'vx': self.prev_vx + (self.vx - self.prev_vx) * alpha,
+            'vy': self.prev_vy + (self.vy - self.prev_vy) * alpha,
+            
+            # Force interpolation
+            'fx': self.prev_force[0] + (self.force[0] - self.prev_force[0]) * alpha,
+            'fy': self.prev_force[1] + (self.force[1] - self.prev_force[1]) * alpha,
+            
+            # Radius interpolation
+            'radius': self.prev_radius + (self.radius - self.prev_radius) * alpha,
+
+            # Store alpha for cache validation
+            'alpha': alpha
+        }
+        
+        # Update cache
+        self._interpolated_cache = state
+        
+        return state
+
     def attract(self, other, effective: bool = True) -> tuple[float, float]:
         """
         Calculate gravitational attraction force with another body.
@@ -845,23 +1024,32 @@ class Circle:
         """
         Physics update with fixed timestep.
         
-        This method is called by the time accumulator with a fixed dt,
-        ensuring deterministic physics regardless of rendering FPS.
+        CRITICAL: Save previous state BEFORE any modifications
+        for interpolation in rendering.
         
         Args:
             dt: Fixed physics timestep (always engine.physics_timestep)
         """
-        # Store previous position for interpolation
-        if not engine.skip_prev_update:
-            self.prev_x = self.x
-            self.prev_y = self.y
+        # ===== SAVE PREVIOUS STATE FOR INTERPOLATION =====
+        # This MUST be done BEFORE any state changes
+        self.prev_x = self.x
+        self.prev_y = self.y
+        self.prev_vx = self.vx
+        self.prev_vy = self.vy
+        self.prev_force = self.force.copy()  # .copy() important!
+        self.prev_radius = self.radius
         
+        # Invalidate interpolation cache
+        self._interpolated_cache['alpha'] = -1.0
+        
+        # ===== CALCULATE NET FORCE =====
         # Calculate net force from all gravitational interactions
         self.force = [0.0, 0.0]
         for f in self.attract_forces:
             self.force[0] += f[0]
             self.force[1] += f[1]
         
+        # ===== UPDATE PHYSICS =====
         self.ax = self.force[0] / self.mass  # m/s²
         self.ay = self.force[1] / self.mass
 
@@ -882,6 +1070,7 @@ class Circle:
             self.printed_force[0] += f[0] / engine.gravity * engine.G
             self.printed_force[1] += f[1] / engine.gravity * engine.G
         
+        # ===== INITIALIZATION =====
         # Initialize body on first update
         if not self.is_born and self in circles:
             self.birth_time = engine.net_simulation_time()
@@ -899,7 +1088,7 @@ class Circle:
         if self.birth_time is not None:
             self.age = engine.net_simulation_time() - self.birth_time
         
-        # Update geometric properties based on current radius
+        # ===== UPDATE GEOMETRIC PROPERTIES =====
         self.surface = 4 * self.radius ** 2 * pi
         self.volume = 4 / 3 * pi * self.radius ** 3
         
@@ -909,6 +1098,88 @@ class Circle:
         
         # Update position tuple
         self.pos = (self.x, self.y)
+
+    def draw_interpolated(self, screen, alpha):
+        """
+        Draw body with interpolated position for smooth rendering.
+        
+        Uses linear interpolation between previous and current states
+        for all visual properties (position, radius).
+        
+        Args:
+            screen: Pygame screen surface
+            alpha: Interpolation factor (0 = previous state, 1 = current state)
+        """
+        # Interpolate position between previous and current
+        # This makes movement appear smooth even with fixed physics timestep
+        # ===== GET INTERPOLATED STATE =====
+        state = self.get_interpolated_state(alpha)
+        
+        render_x = state['x']
+        render_y = state['y']
+        render_radius = state['radius']
+        
+        # ===== SECURITY CHECKS =====
+        if not isinstance(render_x, (int, float)):
+            if isinstance(render_x, (list, tuple)) and len(render_x) > 0:
+                render_x = float(render_x[0])
+            else:
+                render_x = 0.0
+                warnings.warn(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
+        
+        if not isinstance(render_y, (int, float)):
+            if isinstance(render_y, (list, tuple)) and len(render_y) > 0:
+                render_y = float(render_y[0])
+            else:
+                render_y = 0.0
+                warnings.warn(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
+        
+        if not isinstance(self.radius, (int, float)):
+            if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
+                self.radius = float(self.radius[0])
+            else:
+                self.radius = 1.0
+                warnings.warn(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
+        # ===========================
+        
+        # # ===== CALCULATE VISIBLE RADIUS ===== 
+        # (minimum 1 pixel for visibility)
+        visible_radius = max(1, int(self.radius))
+        
+        # ===== SELECTION HIGHLIGHTING =====
+        if self.full_selected_mode:
+            if self.is_selected:
+                self.color = Display.DUCKY_GREEN
+            else:
+                if engine.screen_mode == "dark":
+                    self.color = Display.WHITE
+                elif engine.screen_mode == "light":
+                    self.color = Display.BLACK
+        else:
+            if self.is_selected:
+                if visible_radius <= 4:
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + 2)
+                elif visible_radius <= 20:
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + visible_radius // 4 + 1)
+                else:
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                                    visible_radius + 5)
+        
+        # ===== DRAW SHADOW/OUTLINE =====
+        # for unselected bodies
+        if not self.is_selected:
+            if visible_radius <= 4:
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
+            elif visible_radius <= 20:
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)),
+                                visible_radius + visible_radius // 5)
+            else:
+                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
+        
+        # ===== DRAW MAIN BODY CIRCLE =====
+        self.rect = pygame.draw.circle(screen, self.color, (int(render_x), int(render_y)), visible_radius)
 
     def update_fusion(self, other):
         """
@@ -940,34 +1211,47 @@ class Circle:
         The larger body absorbs the smaller one. Position and velocity
         are calculated using center of mass and momentum conservation.
         
+        IMPORTANT: Saves radius BEFORE fusion for smooth interpolation.
+        
         Args:
             other: The other Circle object to merge with (will be destroyed)
         """
-        # Calculate total mass
+        # ===== SAVE CURRENT RADIUS BEFORE FUSION =====
+        # This ensures smooth interpolation when radius suddenly increases
+        self.prev_radius = self.radius
+
+        # ===== CALCULATE TOTAL MASS =====
         total_mass = self.mass + other.mass
         
-        # Calculate new position using center of mass formula
+        # ===== CALCULATE NEW POSITION (CENTER OF MASS) =====
         # COM = (m1*r1 + m2*r2) / (m1 + m2)
         self.x = (self.x * self.mass + other.x * other.mass) / total_mass
         self.y = (self.y * self.mass + other.y * other.mass) / total_mass
 
-        # Calculate new velocity using momentum conservation
+        # ===== CALCULATE NEW VELOCITY (MOMENTUM CONSERVATION) =====
         # p = m*v, so v_new = (p1 + p2) / (m1 + m2)
         self.vx = (self.vx * self.mass + other.vx * other.mass) / total_mass
         self.vy = (self.vy * self.mass + other.vy * other.mass) / total_mass
 
-        # Update mass and recalculate radius from density
+        # ===== UPDATE MASS =====
         self.mass = total_mass
-        # Recalculate radius from new mass and density
+
+        # ===== RECALCULATE RADIUS FROM NEW MASS (using density) =====
         if self.density > 0:
             volume = self.mass / self.density
             self.radius = ((3 * volume) / (4 * pi)) ** (1 / 3)
         else:
             # Fallback to default calculation if density is invalid
             self.radius = self.mass ** (1 / 3)
+        
+        # Note: prev_radius is already saved, so interpolation will smoothly
+        # transition from old radius to new radius over next few frames
 
-        # Mark other body for removal
+        # ===== MARK OTHER BODY FOR REMOVAL =====
         other.suicide = True
+
+        # ===== INVALIDATE INTERPOLATION CACHE =====
+        self._interpolated_cache['alpha'] = -1.0
 
     def is_colliding_with(self, other) -> bool:
         """
@@ -989,82 +1273,6 @@ class Circle:
 
         # Collision if distance < sum of radii
         return distance < self.radius + other.radius
-    
-    def draw_interpolated(self, screen, alpha):
-        """
-        Draw body with interpolated position for smooth rendering.
-        
-        Uses linear interpolation between previous and current positions
-        to provide smooth visual motion even when physics runs at fixed timestep.
-        
-        Args:
-            screen: Pygame screen surface
-            alpha: Interpolation factor (0 = previous state, 1 = current state)
-        """
-        # Interpolate position between previous and current
-        # This makes movement appear smooth even with fixed physics timestep
-        render_x = self.prev_x + (self.x - self.prev_x) * alpha
-        render_y = self.prev_y + (self.y - self.prev_y) * alpha
-        
-        # --- SECURITY CHECKS ---
-        if not isinstance(render_x, (int, float)):
-            if isinstance(render_x, (list, tuple)) and len(render_x) > 0:
-                render_x = float(render_x[0])
-            else:
-                render_x = 0.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
-        
-        if not isinstance(render_y, (int, float)):
-            if isinstance(render_y, (list, tuple)) and len(render_y) > 0:
-                render_y = float(render_y[0])
-            else:
-                render_y = 0.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
-        
-        if not isinstance(self.radius, (int, float)):
-            if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
-                self.radius = float(self.radius[0])
-            else:
-                self.radius = 1.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
-        # -----------------------
-        
-        # Calculate visible radius (minimum 1 pixel for visibility)
-        visible_radius = max(1, int(self.radius))
-        
-        # Selection highlighting logic
-        if self.full_selected_mode:
-            if self.is_selected:
-                self.color = Display.DUCKY_GREEN
-            else:
-                if engine.screen_mode == "dark":
-                    self.color = Display.WHITE
-                elif engine.screen_mode == "light":
-                    self.color = Display.BLACK
-        else:
-            if self.is_selected:
-                if visible_radius <= 4:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
-                                    visible_radius + 2)
-                elif visible_radius <= 20:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
-                                    visible_radius + visible_radius // 4 + 1)
-                else:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
-                                    visible_radius + 5)
-        
-        # Draw shadow/outline for unselected bodies
-        if not self.is_selected:
-            if visible_radius <= 4:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
-            elif visible_radius <= 20:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)),
-                                visible_radius + visible_radius // 5)
-            else:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
-        
-        # Draw the main body circle
-        self.rect = pygame.draw.circle(screen, self.color, (int(render_x), int(render_y)), visible_radius)
 
 
 # -----------------
