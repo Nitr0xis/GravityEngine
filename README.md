@@ -1,6 +1,6 @@
 # Gravity Engine
 
-## Version 3.3.1 - Camera and Random Generation Edition
+## Version 3.3.2 - Camera and Random Generation Edition
 
 A real-time N-body gravitational simulation with camera system, zoom-adaptive generation, and interactive help overlay.
 
@@ -533,7 +533,7 @@ Perfect for:
 
 See [ROADMAP.md](ROADMAP.md) for complete development plans.
 
-### Recently Completed (v3.3.0 - April 2026)
+### Recently Completed (v3.3.0 - February 2026)
 
 **Interactive Help System:**
 - Real-time help overlay (hold H or I)
@@ -541,8 +541,6 @@ See [ROADMAP.md](ROADMAP.md) for complete development plans.
 - Organized controls by category
 - Visual availability indicator
 - Smooth integration with simulation
-
-### Recently Completed (v3.2.0 - March 2026)
 
 **Camera System:**
 - Complete pan, zoom, reset functionality
@@ -567,21 +565,6 @@ See [ROADMAP.md](ROADMAP.md) for complete development plans.
 - Heavy bodies move realistically
 - Proportional kinetic energy distribution
 
-### Current Focus (May 2026)
-
-| Priority | Feature | Status |
-|----------|---------|--------|
-| 1 | Save/load system (JSON) | Planned |
-| 2 | Predefined scenarios | Planned |
-| 3 | Enhanced camera (follow mode) | Planned |
-| 4 | Performance profiling | Planned |
-
-### Next Milestones
-
-- **May 2026**: Save/load, scenario presets
-- **June 2026**: Performance optimization, config system
-- **Q3 2026**: Visual effects, analysis tools, documentation
-
 ---
 
 ## Contributing
@@ -601,7 +584,7 @@ Contributions are welcome! Here's how:
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/YOUR_USERNAME/GravityEngine.git
+git clone https://github.com/Nitr0xis/GravityEngine.git
 
 # 2. Create feature branch
 git checkout -b feature/your-feature
@@ -664,7 +647,7 @@ See [LICENSE](LICENSE) for complete terms.
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
 *Last updated: February 25, 2026*
-*Version: 3.3.1 - Camera and Random Generation Edition*
+*Version: 3.3.2 - Camera and Random Generation Edition*
 
 ---
 
