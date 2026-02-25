@@ -76,6 +76,8 @@ except ImportError:
 
 """
 Todo:
+    - Use my own module for file managing
+    - Add screenshots
     - add the holding of camera keys
     - add a focus mode
     - add a "define as referential button"
