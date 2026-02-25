@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.3.3 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.3.4 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -50,6 +50,7 @@ import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
 import warnings  # Used to display warning messages about deprecated features or potential issues
+import datetime  # for file naming
 
 # Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
 from math import *
@@ -96,6 +97,42 @@ Ideas:
 
 # ==================================================================================
 # ==================================================================================
+
+
+class FileManager:
+    @staticmethod
+    def resource_path(relative_path):
+        """
+        Get absolute path to resource, works for dev and PyInstaller.
+        
+        This function handles resource path resolution in two scenarios:
+        1. Development mode: resolves paths relative to project root
+        2. PyInstaller mode: resolves paths from the temporary extraction directory
+        
+        Args:
+            relative_path: Path from project root (e.g., 'assets/font.ttf')
+
+        Returns:
+            Absolute path to the resource
+
+        Examples:
+            > FileManager.resource_path('assets/font.ttf')
+            'C:/Projects/GravityEngine/assets/font.ttf'  # Dev
+            'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
+        """
+        try:
+            # PyInstaller mode: _MEIPASS is the extracted temp folder
+            # This attribute exists when running as a PyInstaller bundle
+            base_path = sys._MEIPASS
+        except AttributeError:
+            # Development mode: go from src/ to project root
+            # __file__ = C:/GravityEngine/src/gravity_engine.py
+            # dirname once = C:/GravityEngine/src
+            # dirname twice = C:/GravityEngine (project root)
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # Normalize path separators and join with base path
+        return os.path.join(base_path, os.path.normpath(relative_path))
 
 
 # -----------------
@@ -249,45 +286,6 @@ class Color:
 
 
 # -----------------
-# class Core
-# -----------------
-class Core:
-    @staticmethod
-    def resource_path(relative_path):
-        """
-        Get absolute path to resource, works for dev and PyInstaller.
-        
-        This function handles resource path resolution in two scenarios:
-        1. Development mode: resolves paths relative to project root
-        2. PyInstaller mode: resolves paths from the temporary extraction directory
-        
-        Args:
-            relative_path: Path from project root (e.g., 'assets/font.ttf')
-
-        Returns:
-            Absolute path to the resource
-
-        Examples:
-            > Core.resource_path('assets/font.ttf')
-            'C:/Projects/GravityEngine/assets/font.ttf'  # Dev
-            'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
-        """
-        try:
-            # PyInstaller mode: _MEIPASS is the extracted temp folder
-            # This attribute exists when running as a PyInstaller bundle
-            base_path = sys._MEIPASS
-        except AttributeError:
-            # Development mode: go from src/ to project root
-            # __file__ = C:/GravityEngine/src/gravity_engine.py
-            # dirname once = C:/GravityEngine/src
-            # dirname twice = C:/GravityEngine (project root)
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-        # Normalize path separators and join with base path
-        return os.path.join(base_path, os.path.normpath(relative_path))
-
-
-# -----------------
 # class Display
 # -----------------
 class Display:
@@ -326,7 +324,7 @@ class Tester:
             print("Development mode")
 
         # Test font path resolution
-        test_font = Core.resource_path('assets/font.ttf')
+        test_font = FileManager.resource_path('assets/font.ttf')
         print(f"Font path: {test_font}")
         print(f"Font exists: {os.path.exists(test_font)}")
         print("=" * 60)
@@ -1488,12 +1486,12 @@ class Engine:
         """
 
         # ==================== SPLASH SCREEN SETTINGS ====================
-        self.splash_screen_font = Core.resource_path('assets/fonts/main_font.ttf')
+        self.splash_screen_font = FileManager.resource_path('assets/fonts/main_font.ttf')
         self.splash_screen_enabled = True  # Enable/disable splash screen
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.3.3"
+        self.project_version = "3.3.4"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         
@@ -1539,7 +1537,7 @@ class Engine:
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
-        self.used_font = Core.resource_path('assets/fonts/main_font.ttf')
+        self.used_font = FileManager.resource_path('assets/fonts/main_font.ttf')
         self.txt_size = 30
         self.txt_gap: int = 15
         self.font = pygame.font.Font(self.used_font, self.txt_size)
