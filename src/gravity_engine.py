@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.3.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.3.3 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -1493,7 +1493,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.3.0"
+        self.project_version = "3.3.3"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         
@@ -1771,7 +1771,7 @@ class Engine:
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
                 y), Display.BLUE, 0)
 
-        text = "Hold H or I to display help"
+        text = "Hold H or I to display the help box"
         Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 0)
 
         # Display reversed gravity status (top right)
@@ -1903,27 +1903,19 @@ class Engine:
                 ]
             },
             {
-                "title": "KEYBOARD CONTROLS - Camera",
+                "title": "KEYBOARD CONTROLS",
                 "controls": [
                     ("T", "Reset camera to default position and zoom"),
                     ("A", "Zoom in (screen-centered)"),
                     ("E", "Zoom out (screen-centered)"),
                     ("↑ ← ↓ →", "Pan camera with arrow keys"),
-                ]
-            },
-            {
-                "title": "KEYBOARD CONTROLS - Simulation",
-                "controls": [
+                    ("", ""),
                     ("Space", "Pause / Unpause simulation"),
                     ("V", "Toggle velocity vectors display"),
                     ("R", "Toggle random velocity mode (mass-proportional)"),
                     ("G", "Toggle reversed gravity (repulsion)"),
                     ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
-                ]
-            },
-            {
-                "title": "KEYBOARD CONTROLS - Other",
-                "controls": [
+                    ("", ""),
                     ("Delete", "Delete selected body"),
                     ("H / I", "Toggle this help overlay"),
                     ("Escape", "Exit program"),
@@ -1948,6 +1940,9 @@ class Engine:
             
             # Section controls
             for key, description in section["controls"]:
+                if (key, description) == ("", ""):
+                    continue
+
                 y_pos = base_y + current_line * (self.txt_gap + self.txt_size)
                 
                 # Key (green, left column)

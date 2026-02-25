@@ -1,6 +1,6 @@
 # Gravity Engine
 
-## Version 3.3.2 - Camera and Random Generation Edition
+## Version 3.3.3 - Camera and Random Generation Edition
 
 A real-time N-body gravitational simulation with camera system, zoom-adaptive generation, and interactive help overlay.
 
