@@ -1,6 +1,6 @@
 # Gravity Engine
 
-## Version 3.3.0 - Camera and Random Generation Edition
+## Version 3.3.1 - Camera and Random Generation Edition
 
 A real-time N-body gravitational simulation with camera system, zoom-adaptive generation, and interactive help overlay.
 
@@ -69,9 +69,9 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ## What's New in v3.3.0
 
-### Interactive Help System (April 2026)
+### Interactive Complete Camera and Help System (February 2026 (was previous for April))
 
-**Major Feature:** Real-time help overlay accessible anytime during simulation.
+**Major Feature:** Advanced camera system with a new random generation mode Real-time help overlay accessible anytime during simulation.
 
 #### Interactive Advanced Camera System
 **Camera navigation (pan, zoom, reset)**
@@ -193,6 +193,8 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ### Recent Improvements (v3.3.0)
 
+- **Complete camera system** - Pan, zoom, reset with coordinate conversion
+- **Zoom-adaptive generation** - Body masses scale with zoom level
 - **Interactive help overlay** - Hold H/I for instant control reference
 - **Visual help indicator** - Top-right corner reminder
 - **Smooth help integration** - No simulation interruption
@@ -201,8 +203,6 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ### Recent Improvements (v3.2.0)
 
-- **Complete camera system** - Pan, zoom, reset with coordinate conversion
-- **Zoom-adaptive generation** - Body masses scale with zoom level
 - **Screen-constant growth** - Visual growth rate independent of zoom
 - **Mass-proportional energy** - Heavy bodies move realistically (E ∝ mass)
 - **Radius interpolation fix** - No more flicker during body creation
@@ -664,7 +664,7 @@ See [LICENSE](LICENSE) for complete terms.
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
 *Last updated: February 25, 2026*
-*Version: 3.3.0 - Camera and Random Generation Edition*
+*Version: 3.3.1 - Camera and Random Generation Edition*
 
 ---
 
