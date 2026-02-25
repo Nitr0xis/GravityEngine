@@ -1,8 +1,8 @@
 # Gravity Engine
 
-## Version 3.1.3 - Advanced Interpolation Edition
+## Version 3.3.0 - Camera and Random Generation Edition
 
-A real-time N-body gravitational simulation with deterministic physics and complete interpolation system.
+A real-time N-body gravitational simulation with camera system, zoom-adaptive generation, and interactive help overlay.
 
 **Created by Nils DONTOT**
 
@@ -23,7 +23,7 @@ A real-time N-body gravitational simulation with deterministic physics and compl
 
 - [Before We Begin](#before-we-begin)
 - [Overview](#overview)
-- [What's New in v3.1.0](#whats-new-in-v310)
+- [What's New in v3.3.0](#whats-new-in-v330)
 - [Features](#features)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
@@ -55,47 +55,107 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ### Key Technical Features
 
+- **Interactive help overlay** - Hold H or I for instant control reference
+- **Complete camera system** - Pan, zoom, reset with smooth transitions
+- **Zoom-adaptive generation** - Body masses scale with zoom level
+- **Screen-constant growth** - Bodies grow at constant visual rate
+- **Mass-proportional energy** - Heavy bodies move realistically
 - **Fixed timestep physics** - Deterministic simulation (1/120s per step)
 - **Complete interpolation** - Position, velocity, force, and radius smoothly interpolated
-- **Adaptive performance mode** - Maintains 120 FPS even with 100+ bodies
 - **Visual collision detection** - Detects collisions on what you see
-- **Momentum conservation** - Physically accurate collisions and mergers
-- **Time accumulator** - Handles variable frame rates with "spiral of death" prevention
+- **Adaptive performance mode** - Maintains 120 FPS even with 100+ bodies
 
 ---
 
-## What's New in v3.1.0
+## What's New in v3.3.0
 
-### Complete Mode PRECISE Interpolation (February 23, 2026)
+### Interactive Help System (April 2026)
 
-**Major Feature:** All physical properties are now smoothly interpolated for perfect visual accuracy.
+**Major Feature:** Real-time help overlay accessible anytime during simulation.
 
-#### Interpolated Properties
+#### Interactive Advanced Camera System
+**Camera navigation (pan, zoom, reset)**
+- Press A or E to zoom in or zoom out
+- Use the arrows or the right button to move the camera
+- Use T to reset mouse zoom and position
 
-1. **Position** (prev_x, prev_y) - Bodies move smoothly
-2. **Velocity** (prev_vx, prev_vy) - Velocity vectors transition smoothly
-3. **Force** (prev_force) - Force vectors change progressively
-4. **Radius** (prev_radius) - Fusions appear smooth and natural
+#### Interactive Help Overlay
 
-#### Technical Improvements
+**Instant Access:**
+- Hold **H** or **I** to display complete controls guide
+- Release to return to simulation immediately
+- No interruption to physics simulation
 
-- **Interpolation cache** - Prevents redundant calculations per frame
-- **get_interpolated_state()** - Centralized interpolation method
-- **Cache invalidation** - Automatic on physics updates
-- **7 unit tests** - Complete validation (3 physics + 4 interpolation)
+**Professional Design:**
+- Semi-transparent dark overlay
+- Organized sections (Mouse, Camera, Simulation, Other)
+- Color-coded controls (green keys, white descriptions)
+- Centered layout with clear separation
 
-#### Visual Benefits
+**Comprehensive Coverage:**
+- All mouse controls (click, drag, zoom)
+- Camera navigation (pan, zoom, reset)
+- Simulation controls (pause, vectors, random mode)
+- System commands (delete, exit)
 
-- **Smooth velocity vectors** - No more sudden jumps
-- **Progressive force vectors** - Forces change gradually
-- **Natural fusions** - Radius grows smoothly when bodies merge
-- **Perfect synchronization** - All visuals match interpolated state
+#### User Experience Improvements
+
+**Visual Indicator:**
+- "Hold H or I to display help" shown in top-right corner
+- Subtle red text to indicate availability
+- Always visible but unobtrusive
+
+**Smooth Integration:**
+- Help overlay pauses interactions but not physics
+- Information remains accessible during simulation
+- No need to exit or pause to view controls
+
+**Design Philosophy:**
+- Hold to display = temporary reference
+- Release to dismiss = fluid workflow
+- No toggle state = intuitive behavior
 
 ---
 
 ## Features
 
-### Current Features (February 2026 - v3.1.0)
+### Current Features (April 2026 - v3.3.0)
+
+**Interactive Help:**
+- Real-time help overlay (hold H or I)
+- Comprehensive controls reference
+- Professional semi-transparent design
+- Organized by category (Mouse, Camera, Simulation)
+- Always accessible without interrupting simulation
+
+**Camera System:**
+- Pan view with right-click drag
+- Zoom with mouse wheel (cursor-centered)
+- Keyboard zoom A/E (screen-centered)
+- Arrow keys for camera movement
+- Reset camera with T key
+- Smooth camera transitions
+- World ↔ screen coordinate conversion
+
+**Random Generation:**
+- Zoom-adaptive body masses (mass ∝ 1/scale²)
+- Logarithmic mass distribution
+- World-coordinate generation
+- Bodies always fill visible screen
+- Realistic body size variety
+
+**Body Creation:**
+- Screen-constant growth rate
+- Visual growth independent of zoom
+- Smooth radius interpolation
+- Exponential acceleration while holding
+- Mass calculated from radius and density
+
+**Random Mode:**
+- Mass-proportional energy (E ∝ mass)
+- Heavy bodies move realistically
+- Proportional kinetic energy distribution
+- Adjustable energy per kilogram
 
 **Physics Engine:**
 - Real-time N-body gravitational simulation with O(n²) calculations
@@ -110,18 +170,20 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 - Vector visualization (velocity in red, forces in blue)
 - Cardinal velocity components (X in green, Y in yellow)
 - Dark/light color schemes
+- Culling optimization (off-screen bodies not rendered)
 
 **Interaction:**
 - Interactive body creation (click and hold, exponential growth)
 - Body selection with detailed information panel
 - Visual collision detection on interpolated positions
 - Interpolated click detection (select bodies where you see them)
+- Camera navigation (pan, zoom, reset)
 - Pause/resume for analysis
 
 **Modes:**
 - **Precise mode** - Fixed 120 Hz physics, high accuracy
 - **Adaptive mode** - Throttled physics (default 40 Hz), smooth rendering
-- **Random velocity mode** - Chaotic initial conditions
+- **Random velocity mode** - Mass-proportional chaotic initial conditions
 - **Reversed gravity** - Repulsion instead of attraction
 
 **Testing:**
@@ -129,15 +191,21 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 - Physics validation (force summation, determinism, uniform speed)
 - Interpolation validation (position, velocity, force, cache)
 
-### Recent Improvements (v3.1.0)
+### Recent Improvements (v3.3.0)
 
-- **Complete interpolation** - All properties smoothly interpolated
-- **Velocity interpolation** - Velocity vectors perfectly smooth
-- **Force interpolation** - Force vectors transition progressively
-- **Radius interpolation** - Fusions visually smooth
-- **Interpolation cache** - Performance optimization
-- **4 new unit tests** - Interpolation validation
-- **Comprehensive documentation** - All methods documented
+- **Interactive help overlay** - Hold H/I for instant control reference
+- **Visual help indicator** - Top-right corner reminder
+- **Smooth help integration** - No simulation interruption
+- **Professional help design** - Semi-transparent, organized, color-coded
+- **Comprehensive coverage** - All controls documented in-app
+
+### Recent Improvements (v3.2.0)
+
+- **Complete camera system** - Pan, zoom, reset with coordinate conversion
+- **Zoom-adaptive generation** - Body masses scale with zoom level
+- **Screen-constant growth** - Visual growth rate independent of zoom
+- **Mass-proportional energy** - Heavy bodies move realistically (E ∝ mass)
+- **Radius interpolation fix** - No more flicker during body creation
 
 ---
 
@@ -149,6 +217,7 @@ For Windows users:
 
 1. Download `GravityEngine.exe` from [Releases](https://github.com/Nitr0xis/GravityEngine/releases)
 2. Double-click to run - no installation needed
+3. Press **H** or **I** in-app for controls guide
 
 Note: The executable is self-contained with all dependencies included.
 
@@ -170,6 +239,8 @@ pip install pygame
 
 # Run simulation
 python src/gravity_engine.py
+
+# Press H or I in-app for controls
 ```
 
 ### Option 3: Virtual Environment (Recommended)
@@ -188,6 +259,7 @@ source venv/bin/activate
 pip install pygame
 python src/gravity_engine.py
 ```
+
 ## Building Executables
 
 ### Using the Build Menu (Recommended)
@@ -225,70 +297,21 @@ Double-click `make.bat` to access the interactive build system:
 | **[6] Test Executable** | Run last built .exe | - | Verify build |
 | **[7] Open dist/** | Open folder in Explorer | - | View executables |
 
-### Manual Building
-
-If you prefer command line:
-
-```bash
-# Development build (with console)
-cd builders
-build.bat
-
-# Release build (no console window)
-cd builders
-build_release.bat
-
-# Clean build files
-cd builders
-clean.bat
-```
-
-### Build Requirements
-
-- **PyInstaller** - Automatically installed on first build
-- **All assets** - Must be present in `assets/` folder:
-  - `assets/fonts/main_font.ttf` (required)
-  - `assets/fonts/toruk.ttf` (required)
-  - `assets/icon.ico` (recommended)
-  - `assets/musics/*.mp3` (optional)
-- **Windows** - Build scripts are Windows batch files (.bat)
-
-### Build Output
-
-After building, executables are located in:
-```
-dist/
-├── GravityEngine.exe          # Release build (distribute this)
-└── GravityEngine_Dev.exe      # Development build (with console)
-```
-
-### Distribution
-
-To distribute your build:
-
-1. Run **Clean + Build Release** (option 4)
-2. Navigate to `dist/` folder
-3. Distribute `GravityEngine.exe` (self-contained, ~20-30 MB)
-4. Optional: Include `README.md` for users
-
-The executable includes:
-- Python interpreter
-- All dependencies (Pygame)
-- All assets (fonts, icon)
-- No installation required for end users
 ---
 
 ## Controls
+
+**💡 TIP: Press and hold H or I during simulation for complete controls guide!**
 
 ### Mouse Controls
 
 | Action | Effect |
 |--------|--------|
-| Left Click | Select body / Create body (on empty space) |
-| Right Click | Create body (hold to grow) |
-| Middle Click | Create body (hold to grow) |
-| Mouse Wheel | Create smallest bodies possible
-| Hold Button | Increase body size exponentially |
+| **Left Click** | Select body / Create body (on empty space) |
+| **Left Hold** | Increase body size exponentially (screen-constant growth) |
+| **Right Click + Drag** | Pan camera view |
+| **Mouse Wheel Up** | Zoom in (centered on cursor) |
+| **Mouse Wheel Down** | Zoom out (centered on cursor) |
 
 Note: Click detection uses visual positions (interpolated), not physical positions.
 
@@ -296,13 +319,18 @@ Note: Click detection uses visual positions (interpolated), not physical positio
 
 | Key | Action |
 |-----|--------|
-| Space | Pause/unpause simulation |
-| V | Toggle velocity vectors |
-| R | Toggle random velocity mode |
-| G | Toggle reversed gravity |
-| P | Generate random environment (20 bodies) |
-| Delete | Delete selected body |
-| Escape | Exit program |
+| **H / I** | **Display help overlay (hold to show, release to hide)** |
+| **Space** | Pause/unpause simulation |
+| **V** | Toggle velocity vectors |
+| **R** | Toggle random velocity mode (mass-proportional) |
+| **G** | Toggle reversed gravity |
+| **P** | Generate random environment (20 bodies, zoom-adaptive) |
+| **T** | Reset camera to default position and zoom |
+| **A** | Zoom in (screen-centered) |
+| **E** | Zoom out (screen-centered) |
+| **↑ ← ↓ →** | Pan camera with arrow keys |
+| **Delete** | Delete selected body |
+| **Escape** | Exit program |
 
 ---
 
@@ -312,246 +340,44 @@ Modify parameters in `Engine.__init__()` within `src/gravity_engine.py`.
 
 ### Key Configuration Sections
 
-**Performance Mode:**
+**Camera Settings:**
 ```python
-self.performance_mode = "precise"  # or "adaptive"
-# - "precise": Fixed 120 Hz, deterministic, may slow with many bodies
-# - "adaptive": Throttled updates (40 Hz), smooth, less accurate
-
-self.min_physics_interval = 0.025   # 25ms = 40 Hz (adaptive mode)
-```
-
-**Physics Settings:**
-```python
-self.G = 6.6743e-11                 # Gravitational constant
-self.time_acceleration = 2e4         # Time speed factor
-self.fusions = True                  # Enable body fusion
-self.minimum_mass = 1e3              # Minimum body mass (kg)
-self.default_density = 5.514e3       # Default density (kg/m³)
-```
-
-**Display Settings:**
-```python
-self.FPS_TARGET = 120                # Target rendering FPS
-self.FULLSCREEN = True               # Fullscreen mode
-self.screen_mode = "dark"            # "dark" or "light"
-```
-
-**Interpolation:**
-```python
-self.use_interpolation = True        # Enable smooth interpolation
-```
-
-**Visualization:**
-```python
-self.vectors_printed = False         # Show vectors by default
-self.force_vectors = True            # Show force vectors
-self.cardinal_vectors = False        # Show X/Y components
-self.vector_scale = 1                # Vector size multiplier
+self.camera_basic_scale = 1.0        # Default zoom level
+self.camera_scale_factor = 1.1       # Zoom step multiplier
+self.camera.min_scale = 0.001        # Minimum zoom (max zoom out)
+self.camera.max_scale = 100.0        # Maximum zoom (max zoom in)
+self.camera_speed = 10               # Arrow key pan speed (pixels/frame)
 ```
 
 **Random Generation:**
 ```python
-self.random_mode = False             # Random initial velocities
+self.random_energy_per_kg = 1e-8     # Energy per kilogram (J/kg)
+self.random_mass_field = 1e7         # Max mass at zoom 1.0 (kg)
 self.random_environment_number = 20  # Bodies created with P key
-max_kinetic_energy_joules = 5e-4     # Max random energy (J)
 ```
 
----
-
-## Physics
-
-### Fixed Timestep Integration
-
-Physics runs at fixed intervals regardless of rendering FPS:
-
+**Body Creation:**
 ```python
-physics_timestep = 1.0 / 120  # Always 1/120 second (8.33 ms)
+self.growing_speed = 0.1             # Growth rate (pixels/frame base)
+self.minimum_mass = 1e3              # Minimum body mass (kg)
+self.default_density = 5.514e3       # Default density (kg/m³, Earth)
 ```
 
-**How it works:**
-1. Time accumulator collects real frame time
-2. Physics steps execute when accumulator >= timestep
-3. Multiple steps per frame if needed (catching up)
-4. Rendering interpolates between states
-
-**Benefits:**
-- Deterministic (same inputs = same outputs)
-- FPS-independent physics accuracy
-- No "time dilation" from slow frames
-- Predictable behavior
-
-### Complete Interpolation System (v3.1.0)
-
-All properties are interpolated for smooth rendering:
-
+**Performance Mode:**
 ```python
-# Get interpolated state
-state = self.get_interpolated_state(alpha)
+self.performance_mode = "precise"    # or "adaptive"
+# - "precise": Fixed 120 Hz, deterministic, may slow with many bodies
+# - "adaptive": Throttled updates (40 Hz), smooth, less accurate
 
-# Interpolated properties
-render_x = state['x']      # Position
-render_y = state['y']
-render_vx = state['vx']    # Velocity
-render_vy = state['vy']
-render_fx = state['fx']    # Force
-render_fy = state['fy']
-render_radius = state['radius']  # Radius
+self.min_physics_interval = 0.025    # 25ms = 40 Hz (adaptive mode)
 ```
 
-**Formula (linear interpolation):**
+**Physics Settings:**
 ```python
-alpha = time_accumulator / physics_timestep  # 0.0 to 1.0
-interpolated = previous + (current - previous) * alpha
+self.G = 6.6743e-11                  # Gravitational constant
+self.time_acceleration = 2e4         # Time speed factor
+self.fusions = True                  # Enable body fusion
 ```
-
-**Interpolation cache:**
-- Prevents redundant calculations per frame
-- Validated by alpha value
-- Invalidated on physics update
-
-### Gravitational Force
-
-Newton's law of universal gravitation:
-
-```
-F = G × (m₁ × m₂) / r²
-```
-
-Where:
-- F = gravitational force (Newtons)
-- G = 6.6743 × 10⁻¹¹ m³ kg⁻¹ s⁻²
-- m₁, m₂ = masses (kilograms)
-- r = distance between centers (meters)
-
-### Momentum Conservation
-
-All interactions conserve momentum:
-
-```
-p_total = m₁v₁ + m₂v₂ = constant
-```
-
-**Fusion example:**
-```python
-# New velocity after merger
-v_new = (m₁ × v₁ + m₂ × v₂) / (m₁ + m₂)
-
-# New position (center of mass)
-x_new = (m₁ × x₁ + m₂ × x₂) / (m₁ + m₂)
-
-# New radius from density
-volume = mass / density
-radius = ((3 × volume) / (4π))^(1/3)
-```
-
-### Force Vector Visualization
-
-Force vectors use logarithmic scaling with direction preservation:
-
-```python
-# Unit vector (direction)
-force_magnitude = sqrt(fx² + fy²)
-unit_x = fx / force_magnitude
-unit_y = fy / force_magnitude
-
-# Logarithmic scaling (visibility)
-visual_length = log10(force_magnitude + 1) × scale
-
-# Final vector
-vector_x = unit_x × visual_length
-vector_y = unit_y × visual_length
-```
-
-Benefits:
-- Direction always correct (no sign loss)
-- Large forces compressed
-- Small forces visible
-
-### Units Reference
-
-| Property | Unit | Symbol | Notes |
-|----------|------|--------|-------|
-| Mass | Kilograms | kg | Base unit |
-| Distance | Meters | m | 1 pixel = 1 meter (needs scale factor) |
-| Time | Seconds | s | Accelerated by time_acceleration |
-| Force | Newtons | N | F = ma |
-| Velocity | Meters/second | m/s | Vector magnitude |
-| Density | kg/m³ | kg/m³ | Default: 5514 (Earth) |
-| Energy | Joules | J | E = ½mv² |
-
----
-
-## Performance Modes
-
-### Adaptive Mode
-
-**Configuration:**
-```python
-self.performance_mode = "adaptive"
-self.min_physics_interval = 0.025  # 40 Hz physics
-```
-
-**How it works:**
-- Physics throttled to maximum frequency (default 40 Hz)
-- Rendering stays at 120 FPS via interpolation
-- Automatically adapts to CPU load
-
-**Benefits:**
-- Always smooth rendering (120 FPS)
-- CPU efficient (max 40 calculations/second)
-- Scalable (100+ bodies smoothly)
-- Configurable update frequency
-
-**Trade-offs:**
-- Lower accuracy (large timesteps: 25ms vs 8.3ms)
-- Non-deterministic (varies slightly per hardware)
-- May miss fast collisions (rare with visual detection)
-
-**Best for:**
-- Large simulations (>50 bodies)
-- Demonstrations
-- Low-end hardware
-- Smooth visual experience
-
-### Precise Mode (Default)
-
-**Configuration:**
-```python
-self.performance_mode = "precise"
-```
-
-**How it works:**
-- Fixed timestep: exactly 1/120 second per step
-- May do multiple steps per frame
-- Slows down visually if CPU can't keep up
-
-**Benefits:**
-- High accuracy (small timesteps: 8.3ms)
-- Deterministic (reproducible results)
-- Predictable physics behavior
-
-**Trade-offs:**
-- May slow down with many bodies
-- CPU intensive (120 calculations/second)
-
-**Best for:**
-- Scientific accuracy (<50 bodies)
-- Benchmarking
-- Reproducible results
-- Small simulations
-
-### Comparison Table
-
-| Feature | Adaptive | Precise |
-|---------|----------|---------|
-| Physics frequency | Variable (max 40 Hz) | Fixed (120 Hz) |
-| Rendering FPS | Always 120 | May drop |
-| CPU usage | Low | High |
-| Accuracy | Medium | High |
-| Deterministic | No | Yes |
-| Max bodies (smooth) | ~400 | ~150 |
-| Best for | Demos, exploration | Science, accuracy |
 
 ---
 
@@ -561,11 +387,48 @@ self.performance_mode = "precise"
 
 1. Run `src/gravity_engine.py` or `dist/GravityEngine.exe`
 2. Wait for splash screen (3 seconds)
-3. Click and hold to create a body (hold longer = larger)
-4. Press P to generate random system (20 bodies)
-5. Click a body to see detailed information
-6. Press V to see vectors (red = velocity, blue = force)
-7. Press Space to pause and analyze
+3. **Press and hold H or I to see complete controls guide**
+4. Click and hold to create a body (growth is screen-constant)
+5. Press P to generate random system (20 bodies, zoom-adaptive)
+6. Use mouse wheel to zoom in/out
+7. Right-click drag to pan the view
+8. Click a body to see detailed information
+9. Press V to see vectors (red = velocity, blue = force)
+10. Press Space to pause and analyze
+11. Press T to reset camera view
+
+### Using the Help System
+
+**Access Help:**
+- Press and **hold** H or I key
+- Complete controls guide appears instantly
+- Organized by category for easy reference
+
+**Navigate Help:**
+- Read all controls without leaving simulation
+- Physics continues running in background
+- No need to memorize all keys
+
+**Return to Simulation:**
+- Simply **release** H or I
+- Help disappears immediately
+- Resume normal interaction
+
+### Camera Navigation
+
+**Exploring Large Simulations:**
+1. Generate 100+ bodies (press P five times)
+2. Zoom out (mouse wheel down) to see overview
+3. Pan to interesting region (right-click drag)
+4. Zoom in (mouse wheel up) on specific bodies
+5. Press T to return to default view
+
+**Creating at Different Scales:**
+1. Zoom out (bodies will be heavier automatically)
+2. Create large bodies (hold 3-5 seconds)
+3. Zoom in (bodies will be lighter automatically)
+4. Create small bodies (hold 1-2 seconds)
+5. All bodies appear similar size visually!
 
 ### Creating Systems
 
@@ -574,58 +437,29 @@ self.performance_mode = "precise"
 2. Place close but not touching
 3. Watch them orbit
 4. Enable vectors (V) to see motion
+5. Zoom out to see full orbits
 
 **Chaotic Three-Body:**
 1. Create three similar-sized bodies
 2. Arrange in triangle
 3. Press R for random mode
 4. Add more bodies for chaos
+5. Use camera to follow the action
 
 **Central Star:**
-1. Create one large central body (hold 5+ seconds)
-2. Add smaller bodies around it
-3. Disable fusion in config to prevent merging
-4. Optional: Enable random mode for orbits
+1. Zoom out 10× (mouse wheel down)
+2. Create one large central body (hold 5+ seconds)
+3. Zoom back in (mouse wheel up)
+4. Add smaller bodies around it
+5. Disable fusion in config to prevent merging
+6. Enable random mode for orbits
 
 **Large Simulation (100+ bodies):**
-1. Use adaptive mode
+1. Switch to adaptive mode in config
 2. Press P repeatedly (20 bodies each time)
-3. Enjoy smooth 120 FPS
-4. Watch the chaos!
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-**Font not found:**
-- Ensure `assets/fonts/main_font.ttf` and `toruk.ttf` exist
-- Check file paths are correct
-
-**Simulation too fast/slow:**
-- Adjust `self.time_acceleration` in config
-- Default: 2e4 (20,000× real time)
-
-**Poor performance:**
-- Switch to adaptive mode
-- Reduce physics frequency: `self.min_physics_interval = 0.050`
-- Disable vectors (V key)
-- Lower FPS: `self.FPS_TARGET = 60`
-
-**Bodies pass through each other:**
-- Patch in progress for 3.+ version
-- Update to latest version
-- Ensure `self.use_interpolation = True`
-
-**Can't select bodies accurately:**
-- Fixed in v3.0.0 with interpolated click detection
-- Update to latest version
-
-**Choppy vectors:**
-- Fixed in v3.1.0 with complete interpolation
-- Update to latest version
-- Vectors now perfectly smooth
+3. Zoom out to see overview
+4. Enjoy smooth 120 FPS
+5. Pan to explore different regions
 
 ---
 
@@ -637,59 +471,115 @@ Gravity Engine demonstrates:
 2. **Momentum Conservation** - Total momentum before = after
 3. **Fixed Timestep Integration** - Deterministic physics
 4. **Linear Interpolation** - Smooth rendering between states
-5. **Adaptive Performance** - Throttling for user experience
-6. **Kinetic Energy** - E = ½mv²
-7. **Vector Mathematics** - Force and velocity decomposition
-8. **N-body Problem** - Classical unsolved problem
-9. **Visual Collision Detection** - Interpolated collision checking
-10. **Numerical Stability** - Time accumulator, spiral prevention
+5. **Coordinate Transformation** - World ↔ screen conversion
+6. **Zoom-Adaptive Scaling** - Mass scales with view scale
+7. **Mass-Energy Relationship** - E = ½mv², E ∝ mass for fair dynamics
+8. **Vector Mathematics** - Force and velocity decomposition
+9. **N-body Problem** - Classical unsolved problem
+10. **Visual Collision Detection** - Interpolated collision checking
+11. **Interactive UI Design** - Help overlay, real-time feedback
+12. **User Experience** - Intuitive controls, smooth interactions
 
 Perfect for:
-- Physics education (Newton's laws, gravity)
-- Programming learning (game physics, Pygame, Python)
-- Mathematics (vectors, trigonometry, integration)
-- Computational thinking (optimization, algorithms)
-- Performance optimization (adaptive systems)
+- Physics education (Newton's laws, gravity, coordinate systems)
+- Programming learning (game physics, Pygame, Python, UI design)
+- Mathematics (vectors, trigonometry, integration, logarithms)
+- Computational thinking (optimization, algorithms, spatial transformations)
+- User interface design (help systems, overlays, visual feedback)
 
 ---
 
-## Roadmap
+## Troubleshooting
+
+### Common Issues
+
+**Font not found:**
+- Ensure `assets/fonts/main_font.ttf` exists
+- Check file paths are correct
+
+**Help overlay not showing:**
+- Make sure you're **holding** H or I (not just pressing)
+- Release key to dismiss
+- Check that fonts are properly loaded
+
+**Simulation too fast/slow:**
+- Adjust `self.time_acceleration` in config
+- Default: 2e4 (20,000× real time)
+
+**Poor performance:**
+- Switch to adaptive mode
+- Reduce physics frequency: `self.min_physics_interval = 0.050`
+- Disable vectors (V key)
+- Lower FPS: `self.FPS_TARGET = 60`
+
+**Bodies too small after zooming out:**
+- Fixed in v3.2.0 with zoom-adaptive generation
+- Press P after zooming to generate appropriate bodies
+- Body masses now scale with zoom²
+
+**Body growth invisible when zoomed out:**
+- Fixed in v3.2.0 with screen-constant growth
+- Growth rate now adapts to zoom level
+- Visual growth speed is constant
+
+**Heavy bodies don't move in random mode:**
+- Fixed in v3.2.0 with mass-proportional energy
+- Energy now scales with mass (E ∝ mass)
+- Heavy bodies move realistically
+
+---
+
+## Roadmap (Can release sooner)
 
 See [ROADMAP.md](ROADMAP.md) for complete development plans.
 
-### Recently Completed (v3.1.0 - February 23, 2026)
+### Recently Completed (v3.3.0 - April 2026)
 
-- Complete Mode PRECISE interpolation (position, velocity, force, radius)
-- Interpolation cache system
-- 4 new unit tests for interpolation
-- Perfectly smooth velocity and force vectors
-- Progressive radius growth during fusions
-- Comprehensive get_interpolated_state() method
+**Interactive Help System:**
+- Real-time help overlay (hold H or I)
+- Professional semi-transparent design
+- Organized controls by category
+- Visual availability indicator
+- Smooth integration with simulation
 
-### Recently Completed (v3.0.0 - February 19, 2026)
+### Recently Completed (v3.2.0 - March 2026)
 
-- Adaptive performance mode with throttling (40 Hz default)
-- Visual collision detection on interpolated positions
-- Interpolated click detection for selection
-- Fixed timestep physics (1/120s)
-- Time accumulator with spiral prevention
-- Improved force vectors (logarithmic scaling)
-- Testing framework (Tester class)
+**Camera System:**
+- Complete pan, zoom, reset functionality
+- World ↔ screen coordinate conversion
+- Cursor-centered mouse wheel zoom
+- Screen-centered keyboard zoom (A/E)
+- Arrow key camera movement
 
-### Current Focus (March 2026)
+**Random Generation:**
+- Zoom-adaptive body masses (mass ∝ 1/scale²)
+- Logarithmic mass distribution
+- World-coordinate generation
+- Bodies always fill visible screen
+
+**Body Creation:**
+- Screen-constant growth rate
+- Visual growth independent of zoom
+- Smooth radius interpolation fix
+
+**Random Mode:**
+- Mass-proportional energy (E ∝ mass)
+- Heavy bodies move realistically
+- Proportional kinetic energy distribution
+
+### Current Focus (May 2026)
 
 | Priority | Feature | Status |
 |----------|---------|--------|
-| 1 | Scale factor system (pixel ≠ meter) | In Discussion |
-| 2 | Unit system documentation (UNITS.md) | Planned |
-| 3 | Adaptive interpolation (Hermite) | Planned |
-| 4 | Partial mass transfer | Planned |
-| 5 | QuadTree optimization | Planned |
+| 1 | Save/load system (JSON) | Planned |
+| 2 | Predefined scenarios | Planned |
+| 3 | Enhanced camera (follow mode) | Planned |
+| 4 | Performance profiling | Planned |
 
 ### Next Milestones
 
-- **March 2026**: Scale factor, adaptive interpolation, QuadTree
-- **Q2 2026**: Save/load, UI improvements, camera system
+- **May 2026**: Save/load, scenario presets
+- **June 2026**: Performance optimization, config system
 - **Q3 2026**: Visual effects, analysis tools, documentation
 
 ---
@@ -728,10 +618,9 @@ git push origin feature/your-feature
 
 ### Priority Areas
 
-- HIGH: Scale factor system (March 2026)
-- MEDIUM: Adaptive interpolation (March 2026)
-- MEDIUM: QuadTree optimization (March 2026)
-- MEDIUM: Save/load system (May 2026)
+- HIGH: Save/load system (May 2026)
+- MEDIUM: Enhanced camera features (May 2026)
+- MEDIUM: Scenario presets (May 2026)
 - LOW: Visual effects (July 2026)
 
 ---
@@ -774,8 +663,8 @@ See [LICENSE](LICENSE) for complete terms.
 
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
-*Last updated: February 23, 2026*  
-*Version: 3.1.3 - Advanced Interpolation Edition*
+*Last updated: February 25, 2026*
+*Version: 3.3.0 - Camera and Random Generation Edition*
 
 ---
 

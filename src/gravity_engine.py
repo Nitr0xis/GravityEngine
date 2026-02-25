@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.1.3 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.3.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -10,17 +10,21 @@ LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
 CONTROLS:
-    Space   : Pause/Unpause      
+    H/I : Display info
+    A/E : Zoom in/Zoom out
+    Space : Pause/Unpause      
     V : Toggle vectors    
     R : Random mode
     G : Toggle reversed gravity     
     P : Generate 20 bodies
+    T : Reset camera zoom
     Delete : Delete selected     
     Escape : Exit
-    Mouse : Click to select/create bodies, hold to increase size
-    Mouse wheel (optional) : Create the smallest bodies possible
+    Left click : Click to select/create bodies, hold to increase size
+    Right click : Move the camera
+    Mouse wheel (optional) : Zoom in and Zoom out
 
-CONFIGURATION (in Engine.__init__()):
+CONFIGURATION (in Engine.__init__()) (Main parameters):
     performance_mode      : "precise" (accurate) or "adaptive" (fast)
     time_acceleration     : Simulation speed (default: 4e6)
     min_physics_interval  : Update rate in adaptive mode (default: 0.025s)
@@ -71,7 +75,14 @@ except ImportError:
 
 """
 Todo:
-    - scale system
+    - add the holding of camera keys
+    - add a focus mode
+    - add a "define as referential button"
+    - add collision epsilon
+    - add a color field which shows the attract field of the selected body
+    - consider quadtree system for forces
+    - mass transfer on collision without fusion
+    - add senarios in json
     - add .csv export method
 
 For my NSI projects:
@@ -79,8 +90,7 @@ For my NSI projects:
     - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
 
 Ideas:
-    - mass transfer on collision without fusion
-    - consider quadtree system for forces
+    -=-=-=-=-
 """
 
 
@@ -88,6 +98,9 @@ Ideas:
 # ==================================================================================
 
 
+# -----------------
+# class Color
+# -----------------
 class Color:
     def __init__(self, *values):
         if len(values) not in (3, 4):
@@ -235,6 +248,9 @@ class Color:
         return f"Color(R:{r}, G:{g}, B:{b})"
 
 
+# -----------------
+# class Core
+# -----------------
 class Core:
     @staticmethod
     def resource_path(relative_path):
@@ -271,6 +287,9 @@ class Core:
         return os.path.join(base_path, os.path.normpath(relative_path))
 
 
+# -----------------
+# class Display
+# -----------------
 class Display:
     # Color constants (RGB tuples)
     # These define the color palette used throughout the simulation
@@ -285,6 +304,9 @@ class Display:
     RED = Color(255, 0, 0)  # Global velocity vector color
 
 
+# -----------------
+# class Tester
+# -----------------
 class Tester:
     @staticmethod
     def default_debug():
@@ -535,6 +557,114 @@ class TempText:
 
 
 # -----------------
+# class Camera
+# -----------------
+class Camera:
+    def __init__(self, x: float = 0.0, y: float = 0.0, scale: float = 1.0, scale_step: float = 1.1):
+        # ===== CAMERA POSITION =====
+        self.cam_x = x  # Camera X offset (in screen pixels)
+        self.cam_y = y  # Camera Y offset (in screen pixels)
+        
+        # ===== ZOOM =====
+        self.scale = scale  # Zoom factor (1.0 = normal, 2.0 = 2x zoom)
+        self.scale_step = scale_step  # Zoom multiplier (1.1 = +10% per step)
+        
+        # ===== LIMITS =====
+        self.min_scale = 0.001  # Minimum zoom (very zoomed out)
+        self.max_scale = 100.0  # Maximum zoom (very zoomed in)
+        
+        # ===== PANNING =====
+        self.pan_speed = 5.0  # Panning speed (pixels per frame)
+        self.is_panning = False  # Whether we are currently panning the view
+        self.pan_start_x = 0  # Pan start position X
+        self.pan_start_y = 0
+
+    def zoom_at_mouse(self, zoom_in: bool):
+        """
+        Zoom centered on the mouse position.
+        
+        Args:
+            zoom_in: True to zoom in, False to zoom out
+        """
+        mx, my = pygame.mouse.get_pos()
+
+        # World position BEFORE zoom
+        wx, wy = self.screen_to_world(mx, my)
+
+        # Apply zoom
+        if zoom_in:
+            self.scale *= self.scale_step
+        else:
+            self.scale /= self.scale_step
+
+        # Clamp to allowed range
+        self.scale = max(self.min_scale, min(self.scale, self.max_scale))
+
+        # Recalculate offset to keep (wx, wy) under the mouse
+        self.cam_x = mx - wx * self.scale
+        self.cam_y = my - wy * self.scale
+    
+    def screen_to_world(self, sx, sy):
+        """
+        Convert screen coordinates → world coordinates.
+        
+        Args:
+            sx, sy: Screen coordinates (pixels)
+        
+        Returns:
+            wx, wy: World coordinates (meters)
+        """
+        wx = (sx - self.cam_x) / self.scale
+        wy = (sy - self.cam_y) / self.scale
+        return wx, wy
+
+    def world_to_screen(self, wx, wy):
+        """
+        Convert world coordinates → screen coordinates.
+        
+        Args:
+            wx, wy: World coordinates (meters)
+        
+        Returns:
+            sx, sy: Screen coordinates (pixels)
+        """
+        sx = wx * self.scale + self.cam_x
+        sy = wy * self.scale + self.cam_y
+        return sx, sy
+    
+    def start_pan(self, mouse_x, mouse_y):
+        """Start panning the view."""
+        self.is_panning = True
+        self.pan_start_x = mouse_x
+        self.pan_start_y = mouse_y
+    
+    def update_pan(self, mouse_x, mouse_y):
+        """Update the panning of the view."""
+        if self.is_panning:
+            # Calculate the mouse movement
+            dx = mouse_x - self.pan_start_x
+            dy = mouse_y - self.pan_start_y
+            
+            # Move the camera
+            self.cam_x += dx
+            self.cam_y += dy
+            
+            # Update the starting position
+            self.pan_start_x = mouse_x
+            self.pan_start_y = mouse_y
+    
+    def end_pan(self):
+        """End view panning."""
+        self.is_panning = False
+    
+    def reset(self):
+        """Reset the camera to the default position."""
+        self.cam_x = 0
+        self.cam_y = 0
+        self.scale = 1.0
+
+
+# -----------------
 # class Circle
 # -----------------
 class Circle:
@@ -715,7 +845,7 @@ class Circle:
 
     def print_global_speed_vector(self, in_terminal: bool = False, alpha: float = 1.0):
         """
-        Print Global Speed Vector (total velocity vector).
+        Print Global Speed Vector (total velocity vector) with camera transformation.
         
         Draws a line from the body's center showing the direction and magnitude
         of its total velocity. The length is scaled by velocity and time factor.
@@ -729,32 +859,31 @@ class Circle:
         # ===== GET INTERPOLATED STATE =====
         state = self.get_interpolated_state(alpha)
         
-        render_x = state['x']
-        render_y = state['y']
+        world_x = state['x']
+        world_y = state['y']
         render_vx = state['vx']  # <- Interpolated Speed
         render_vy = state['vy']  # <- Interpolated Speed
         
-        # ===== CALCULATE VECTOR START AND END =====
-        # Start point is interpolated body center
-        x1, y1 = render_x, render_y
+        # ===== CONVERT TO SCREEN COORDINATES =====
+        screen_x1, screen_y1 = engine.camera.world_to_screen(world_x, world_y)
         
-        # End point uses INTERPOLATED velocity
-        x2 = render_x + render_vx * self.global_speed_vector_scale * engine.vector_scale
-        y2 = render_y + render_vy * self.global_speed_vector_scale * engine.vector_scale
-        
+        # Calculer la position de fin du vecteur dans le monde
+        world_x2 = world_x + render_vx * self.global_speed_vector_scale
+        world_y2 = world_y + render_vy * self.global_speed_vector_scale
+
+        # Convert to screen coordinates
+        screen_x2, screen_y2 = engine.camera.world_to_screen(world_x2, world_y2)
+
         if in_terminal:
-            speed_magnitude = sqrt(render_vx**2 + render_vy**2)
+            speed_magnitude = sqrt(render_vx ** 2 + render_vy ** 2)
             print(f"N{self.number} Vector at alpha={alpha:.3f}:")
-            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
+            print(f"  World position: ({world_x:.1f}, {world_y:.1f})")
+            print(f"  Screen position: ({screen_x1:.1f}, {screen_y1:.1f})")
             print(f"  Velocity: ({render_vx:.2f}, {render_vy:.2f}) m/s")
-            print(f"  Speed: {speed_magnitude:.2f} m/s")
-            print(f"  Start: ({x1:.1f}, {y1:.1f})")
-            print(f"  End: ({x2:.1f}, {y2:.1f})")
-        
+
         # ===== DRAW VELOCITY VECTOR =====
-        Utils.draw_line(self.GSV_color, (x1, y1), (x2, y2), self.vector_width)
-        
-        # ===== OPTIONALLY DRAW CARDINAL COMPONENTS =====
+        Utils.draw_line(self.GSV_color, (screen_x1, screen_y1), (screen_x2, screen_y2), self.vector_width)
+
         if engine.cardinal_vectors:
             self.print_cardinal_speed_vectors(in_terminal, alpha)
 
@@ -766,6 +895,7 @@ class Circle:
         acting on the body from all other bodies.
 
         Uses interpolated position AND force for smooth vector rendering.
+        Works with camera transformation.
         
         Args:
             in_terminal: If True, also print vector info to console
@@ -774,8 +904,8 @@ class Circle:
         # ===== GET INTERPOLATED STATE =====
         state = self.get_interpolated_state(alpha)
         
-        render_x = state['x']
-        render_y = state['y']
+        world_x = state['x']
+        world_y = state['y']
         render_fx = state['fx']  # <- Interpolated Force
         render_fy = state['fy']  # <- Interpolated Force
 
@@ -798,23 +928,28 @@ class Circle:
         # Add 1 to avoid log(0), multiply by scale factors
         visual_length = log10(force_magnitude + 1) * engine.vector_scale * self.force_vector_scale
         
-        # ===== CALCULATE END POINT =====
+        # ===== CALCULATE END POINT IN WORLD COORDINATES =====
         vector_x = unit_x * visual_length
         vector_y = unit_y * visual_length
-        end_x = render_x + vector_x
-        end_y = render_y + vector_y
+        world_end_x = world_x + vector_x
+        world_end_y = world_y + vector_y
+        
+        # ===== CONVERT TO SCREEN COORDINATES =====
+        screen_x1, screen_y1 = engine.camera.world_to_screen(world_x, world_y)
+        screen_x2, screen_y2 = engine.camera.world_to_screen(world_end_x, world_end_y)
 
         if in_terminal:
             angle_deg = atan2(render_fy, render_fx) * 180 / pi
             print(f"N{self.number} Force at alpha={alpha:.3f}:")
-            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
+            print(f"  World position: ({world_x:.1f}, {world_y:.1f})")
+            print(f"  Screen position: ({screen_x1:.1f}, {screen_y1:.1f})")
             print(f"  Force: ({render_fx:.2e}, {render_fy:.2e}) N")
             print(f"  Magnitude: {force_magnitude:.2e} N")
             print(f"  Angle: {angle_deg:.1f}°")
             print(f"  Visual length: {visual_length:.1f} px")
         
         # ===== DRAW FORCE VECTOR =====
-        Utils.draw_line(Display.SP_BLUE, (render_x, render_y), (end_x, end_y))
+        Utils.draw_line(Display.SP_BLUE, (screen_x1, screen_y1), (screen_x2, screen_y2))
 
     def print_cardinal_speed_vectors(self, in_terminal: bool = False, alpha: float = 1.0):
         """
@@ -824,6 +959,7 @@ class Circle:
         components independently. X component in green, Y component in yellow.
 
         Uses interpolated position and velocity.
+        Works with camera transformation.
         
         Args:
             in_terminal: If True, also print vector info to console
@@ -832,30 +968,41 @@ class Circle:
         # ===== GET INTERPOLATED STATE =====
         state = self.get_interpolated_state(alpha)
         
-        render_x = state['x']
-        render_y = state['y']
+        world_x = state['x']
+        world_y = state['y']
         render_vx = state['vx']  # <- Interpolated X Speed
         render_vy = state['vy']  # <- Interpolated Y Speed
 
-        # ===== CALCULATE VECTOR ENDPOINTS =====
+        # ===== CALCULATE VECTOR ENDPOINTS IN WORLD COORDINATES =====
         # X component (horizontal)
-        x1 = render_x
-        x2 = render_x + render_vx * self.global_speed_vector_scale * engine.vector_scale
+        world_x1 = world_x
+        world_x2 = world_x + render_vx * self.global_speed_vector_scale
         
         # Y component (vertical)
-        y1 = render_y
-        y2 = render_y + render_vy * self.global_speed_vector_scale * engine.vector_scale
+        world_y1 = world_y
+        world_y2 = world_y + render_vy * self.global_speed_vector_scale
+        
+        # ===== CONVERT TO SCREEN COORDINATES =====
+        # For X component (horizontal line)
+        screen_x1, screen_y1 = engine.camera.world_to_screen(world_x1, world_y)
+        screen_x2, screen_y2 = engine.camera.world_to_screen(world_x2, world_y)
+        
+        # For Y component (vertical line)
+        screen_x3, screen_y3 = engine.camera.world_to_screen(world_x, world_y1)
+        screen_x4, screen_y4 = engine.camera.world_to_screen(world_x, world_y2)
 
         if in_terminal:
             print(f"N{self.number} Cardinal vectors at alpha={alpha:.3f}:")
-            print(f"  Position: ({render_x:.1f}, {render_y:.1f})")
-            print(f"  Vx: {render_vx:.2f} m/s → X vector: ({x1:.1f}, {render_y:.1f}) to ({x2:.1f}, {render_y:.1f})")
-            print(f"  Vy: {render_vy:.2f} m/s → Y vector: ({render_x:.1f}, {y1:.1f}) to ({render_x:.1f}, {y2:.1f})")
+            print(f"  World position: ({world_x:.1f}, {world_y:.1f})")
+            print(f"  Screen position: ({screen_x1:.1f}, {screen_y1:.1f})")
+            print(f"  Vx: {render_vx:.2f} m/s")
+            print(f"  Vy: {render_vy:.2f} m/s")
 
         # ===== DRAW X COMPONENT (GREEN HORIZONTAL LINE) =====
-        Utils.draw_line(self.CSV_x_color, (x1, self.y), (x2, self.y), self.vector_width)
+        Utils.draw_line(self.CSV_x_color, (screen_x1, screen_y1), (screen_x2, screen_y2), self.vector_width)
+        
         # ===== DRAW Y COMPONENT (YELLOW VERTICAL LINE) =====
-        Utils.draw_line(self.CSV_y_color, (self.x, y1), (self.x, y2), self.vector_width)
+        Utils.draw_line(self.CSV_y_color, (screen_x3, screen_y3), (screen_x4, screen_y4), self.vector_width)
 
     def print_info(self, y: int):
         """
@@ -1077,10 +1224,15 @@ class Circle:
             
             # Apply random initial velocity if random mode enabled
             if engine.random_mode:
-                max_velocity_per_frame = sqrt(2 * engine.random_energy_field / self.mass)  # m/frame
-                max_velocity = max_velocity_per_frame * engine.FPS_TARGET  # m/s
-                self.vx = random.uniform(-max_velocity, max_velocity)  # m/s
-                self.vy = random.uniform(-max_velocity, max_velocity)  # m/s
+                # Total energy = energy per kg × mass
+                total_energy = engine.random_energy_per_kg * self.mass
+
+                # Maximum velocity based on E = 0.5 * m * v²
+                max_velocity_per_frame = sqrt(2 * total_energy / self.mass)
+                max_velocity = max_velocity_per_frame * engine.FPS_TARGET
+                
+                self.vx = random.uniform(-max_velocity, max_velocity)
+                self.vy = random.uniform(-max_velocity, max_velocity)
             
             self.is_born = True
         
@@ -1099,7 +1251,7 @@ class Circle:
         # Update position tuple
         self.pos = (self.x, self.y)
 
-    def draw_interpolated(self, screen, alpha):
+    def draw_interpolated(self, screen, alpha, interpolate_radius: bool = True):
         """
         Draw body with interpolated position for smooth rendering.
         
@@ -1115,37 +1267,44 @@ class Circle:
         # ===== GET INTERPOLATED STATE =====
         state = self.get_interpolated_state(alpha)
         
-        render_x = state['x']
-        render_y = state['y']
-        render_radius = state['radius']
+        world_x = state['x']
+        world_y = state['y']
+        if interpolate_radius:
+            world_radius = state['radius']
+        
+        # ===== CONVERT WORLD → SCREEN =====
+        screen_x, screen_y = engine.camera.world_to_screen(world_x, world_y)
+        
+        # ===== CALCULATE VISIBLE RADIUS =====
+        # Apply camera scale to radius
+        if interpolate_radius:
+            screen_radius = world_radius * engine.camera.scale
+        else:
+            screen_radius = self.radius * engine.camera.scale
+        visible_radius = max(1, int(screen_radius))
         
         # ===== SECURITY CHECKS =====
-        if not isinstance(render_x, (int, float)):
-            if isinstance(render_x, (list, tuple)) and len(render_x) > 0:
-                render_x = float(render_x[0])
-            else:
-                render_x = 0.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid x coordinate, reset to 0")
+        if not isinstance(world_x, (int, float)):
+            world_x = self.x
+            warnings.warn(f"WARNING: Circle {self.number} had invalid x coordinate")
         
-        if not isinstance(render_y, (int, float)):
-            if isinstance(render_y, (list, tuple)) and len(render_y) > 0:
-                render_y = float(render_y[0])
-            else:
-                render_y = 0.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid y coordinate, reset to 0")
+        if not isinstance(world_y, (int, float)):
+            world_y = self.y
+            warnings.warn(f"WARNING: Circle {self.number} had invalid y coordinate")
         
-        if not isinstance(self.radius, (int, float)):
-            if isinstance(self.radius, (list, tuple)) and len(self.radius) > 0:
-                self.radius = float(self.radius[0])
-            else:
-                self.radius = 1.0
-                warnings.warn(f"WARNING: Circle {self.number} had invalid radius, reset to 1")
+        if interpolate_radius:
+            if not isinstance(world_radius, (int, float)):
+                world_radius = self.radius
+                warnings.warn(f"WARNING: Circle {self.number} had invalid radius")
         # ===========================
         
-        # # ===== CALCULATE VISIBLE RADIUS ===== 
-        # (minimum 1 pixel for visibility)
-        visible_radius = max(1, int(self.radius))
-        
+        # ===== CULLING (OPTIMIZATION) =====
+        # Do not draw if out of screen (with margin)
+        margin = visible_radius + 10
+        if (screen_x < -margin or screen_x > screen.get_width() + margin or
+            screen_y < -margin or screen_y > screen.get_height() + margin):
+            return  # Out of screen, don't draw
+            
         # ===== SELECTION HIGHLIGHTING =====
         if self.full_selected_mode:
             if self.is_selected:
@@ -1158,51 +1317,85 @@ class Circle:
         else:
             if self.is_selected:
                 if visible_radius <= 4:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, 
+                                    (int(screen_x), int(screen_y)),
                                     visible_radius + 2)
                 elif visible_radius <= 20:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, 
+                                    (int(screen_x), int(screen_y)),
                                     visible_radius + visible_radius // 4 + 1)
                 else:
-                    pygame.draw.circle(screen, Display.DUCKY_GREEN, (int(render_x), int(render_y)),
+                    pygame.draw.circle(screen, Display.DUCKY_GREEN, 
+                                    (int(screen_x), int(screen_y)),
                                     visible_radius + 5)
         
         # ===== DRAW SHADOW/OUTLINE =====
-        # for unselected bodies
         if not self.is_selected:
             if visible_radius <= 4:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 1)
+                pygame.draw.circle(screen, Display.DARK_GREY, 
+                                (int(screen_x), int(screen_y)), 
+                                visible_radius + 1)
             elif visible_radius <= 20:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)),
+                pygame.draw.circle(screen, Display.DARK_GREY, 
+                                (int(screen_x), int(screen_y)),
                                 visible_radius + visible_radius // 5)
             else:
-                pygame.draw.circle(screen, Display.DARK_GREY, (int(render_x), int(render_y)), visible_radius + 3)
+                pygame.draw.circle(screen, Display.DARK_GREY, 
+                                (int(screen_x), int(screen_y)), 
+                                visible_radius + 3)
         
         # ===== DRAW MAIN BODY CIRCLE =====
-        self.rect = pygame.draw.circle(screen, self.color, (int(render_x), int(render_y)), visible_radius)
+        self.rect = pygame.draw.circle(screen, self.color, 
+                                    (int(screen_x), int(screen_y)), 
+                                    visible_radius)
 
     def update_fusion(self, other):
         """
-        Check and perform fusion with another body if applicable.
-        
-        Fusion occurs when:
-        - Fusions are enabled
-        - This body is larger or equal mass
-        - Bodies are overlapping (distance <= radius)
-        
-        Args:
-            other: The other Circle object to check fusion with
-        """
-        # Calculate distance between bodies
-        dx = other.x - float(self.x)
-        dy = other.y - float(self.y)
-        distance = float(sqrt((dx ** 2) + (dy ** 2)))
+        Check and perform fusion with double verification.
 
-        # Check fusion conditions
-        if engine.fusions:
-            # Only fuse if this body is larger and bodies are overlapping
-            if self.mass >= other.mass and distance <= self.radius:
-                self.fusion(other)
+        Checks TWO conditions:
+        1. Visual collision detected (interpolated positions)
+        2. Physical collision confirmed (real positions)
+        """
+        if not engine.fusions:
+            return
+
+        if self.mass < other.mass:
+            return  # Only the heavier body can absorb
+
+        # ===== PHYSICAL VERIFICATION (real positions) =====
+        dx_real = other.x - self.x
+        dy_real = other.y - self.y
+        distance_real = sqrt(dx_real**2 + dy_real**2)
+
+        physical_collision = distance_real <= (self.radius + other.radius)
+
+        # ===== VISUAL VERIFICATION (interpolated positions) =====
+        alpha = engine.current_alpha
+
+        visual_x1 = self.prev_x + (self.x - self.prev_x) * alpha
+        visual_y1 = self.prev_y + (self.y - self.prev_y) * alpha
+
+        visual_x2 = other.prev_x + (other.x - other.prev_x) * alpha
+        visual_y2 = other.prev_y + (other.y - other.prev_y) * alpha
+
+        dx_visual = visual_x2 - visual_x1
+        dy_visual = visual_y2 - visual_y1
+        distance_visual = sqrt(dx_visual**2 + dy_visual**2)
+
+        # Interpolated radius
+        radius1 = self.prev_radius + (self.radius - self.prev_radius) * alpha
+        radius2 = other.prev_radius + (other.radius - other.prev_radius) * alpha
+
+        visual_collision = distance_visual <= (radius1 + radius2)
+
+        # ===== FUSION IF BOTH CONDITIONS ARE TRUE =====
+        if physical_collision and visual_collision:
+            self.fusion(other)
+        elif visual_collision and not physical_collision:
+            # Visual collision detected but not physical collision
+            # → Force a physics step (already handled by _check_visual_collisions)
+            pass
 
     def fusion(self, other):
         """
@@ -1300,7 +1493,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.1.3"
+        self.project_version = "3.3.0"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         
@@ -1321,7 +1514,7 @@ class Engine:
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         
-        pygame.display.set_caption(f'Gravity Engine by {self.author_first_name} {self.author_last_name}')
+        pygame.display.set_caption(f'Gravity Engine {self.project_version} by {self.author_first_name} {self.author_last_name}')
 
         # ==================== TIMESTEP SETTINGS ====================
         # FPS number targeted
@@ -1395,10 +1588,10 @@ class Engine:
         self.random_mode = False
         
         # Define max random energy in Joules
-        max_kinetic_energy_joules = 5e-4  # in J
-        # Convert in simulation used units (kg⋅m²/frame²)
-        self.random_energy_field = max_kinetic_energy_joules / (self.FPS_TARGET ** 2)
-        self.random_mass_field = 5e5  # in kg, random beteween self.minimum_mass and value
+        self.random_energy_per_kg = 1e-8  # J/kg
+
+        # in kg, random beteween self.minimum_mass and value
+        self.random_mass_field = 1e7  # (for camera.scale = 1.0)
 
         self.random_environment_number: int = 20
         
@@ -1431,11 +1624,23 @@ class Engine:
         # ==================== BODY MANAGEMENT ====================
         self.circle_number = 0
         self.circle_selected = False
-        
+
+        # ==================== CAMERA ====================
+        self.camera_basic_scale = 1.0
+        self.camera_scale_factor = 1.1  # 1.1 or exp(0.05)
+        self.camera = Camera(
+                            x=0.0,
+                            y=0.0,
+                            scale=self.camera_basic_scale,
+                            scale_step=self.camera_scale_factor
+                        )
+        self.camera_speed = 10
+
         # ==================== INPUT HANDLING ====================
         self.inputs: dict = {}
         self.INPUT_MAP = {}
         self.MOUSEBUTTON_MAP = {}
+        self.show_help = False
         
         # Mouse interaction state
         self.mouse_down = False
@@ -1566,29 +1771,28 @@ class Engine:
                 int((self.screen.get_width() / 2) - (self.font.size("Delete : Delete key")[0] / 2)),
                 y), Display.BLUE, 0)
 
+        text = "Hold H or I to display help"
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 0)
+
         # Display reversed gravity status (top right)
         if self.reversed_gravity:
-            text = f"Reversed gravity (G) : Enabled"
+            text = f"Reversed gravity : Enabled"
         else:
-            text = f"Reversed gravity (G) : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 0)
+            text = f"Reversed gravity : Disabled"
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
 
         # Display velocity vectors status (top right)
         if self.vectors_printed:
-            text = f"Vectors (V) : Enabled"
+            text = f"Vectors : Enabled"
         else:
-            text = f"Vectors (V) : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 1)
+            text = f"Vectors : Disabled"
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 3)
 
         # Display random mode status (top right)
         if self.random_mode:
-            text = f"Random mode (R) : Enabled"
+            text = f"Random mode : Enabled"
         else:
-            text = f"Random mode (R) : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
-
-        # Display random environment generation hint (top right)
-        text = f"Random environment ({self.random_environment_number} bodies) : P"
+            text = f"Random mode : Disabled"
         Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 4)
 
         # Display time acceleration factor (bottom right)
@@ -1596,11 +1800,16 @@ class Engine:
         Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - 2 * self.txt_size - self.txt_gap), Display.BLUE, 0)
 
+        # Display camera zoom (bottom right)
+        text = f"Camera zoom : ×{self.camera.scale:.2e}"
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
+                          self.screen.get_height() - 20 - 3 * self.txt_size - 2 * self.txt_gap), Display.BLUE, 0)
+
         # Display pause status (bottom right)
         if self.is_paused:
-            text = f"Pause (Space) : Enabled"
+            text = f"Pause : Enabled"
         else:
-            text = f"Pause (Space) : Disabled"
+            text = f"Pause : Disabled"
         Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]),
                           self.screen.get_height() - 20 - self.txt_size), Display.BLUE, 0)
 
@@ -1618,10 +1827,10 @@ class Engine:
             # Convert age to years (31,557,600 seconds per year)
             oldest_age_years = oldest_tuple[1] * engine.time_acceleration / 31_557_600
             if oldest_age_years < 2:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} year"
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} Earth year"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
             else:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} years"
+                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} Earth years"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
         else:
             text = f"Oldest body : None"
@@ -1641,25 +1850,206 @@ class Engine:
         Utils.write_screen(text, (int((self.screen.get_width() / 2) - (self.font.size(text)[0] / 2)),
                           int(self.screen.get_height() - 20 - engine.txt_size)), Display.BLUE, 0)
 
-    def generate_environment(self, count: int = 50):
+    def show_help_overlay(self):
+        """
+        Display help overlay with all keyboard and mouse controls.
+        
+        Shows a semi-transparent overlay with comprehensive control information.
+        Can be toggled on/off with H or I key.
+        
+        Uses Utils.write_screen() for consistent text rendering with smaller font size.
+        """
+        # Create semi-transparent overlay
+        self.screen.fill((20, 20, 20, 200))
+        
+        # ===== SAVE CURRENT FONT AND CREATE SMALLER FONT =====
+        original_font = self.font
+        original_txt_size = self.txt_size
+        original_txt_gap = self.txt_gap
+        
+        self.txt_size = 20  # Smaller text for help overlay
+        self.txt_gap = 5    # Smaller gap for compact display
+        self.font = pygame.font.Font(self.used_font, self.txt_size)
+        
+        # Calculate positions
+        center_x = self.screen.get_width() // 2
+        left_margin = center_x - 350
+        key_col_x = center_x - 330
+        sep_col_x = center_x - 120
+        desc_col_x = center_x - 80
+        start_y = 80
+        
+        # ===== TITLE =====
+        title = "GRAVITY ENGINE - CONTROLS GUIDE"
+        title_font = pygame.font.Font(self.used_font, 32)
+        title_surface = title_font.render(title, True, Display.DUCKY_GREEN)
+        title_rect = title_surface.get_rect(center=(center_x, start_y))
+        self.screen.blit(title_surface, title_rect)
+        
+        # Draw separator line
+        pygame.draw.rect(self.screen, Display.BLUE, 
+                        (center_x - 300, start_y + 35, 600, 3))
+        
+        # ===== CONTROLS SECTIONS =====
+        sections = [
+            {
+                "title": "MOUSE CONTROLS",
+                "controls": [
+                    ("Left Click", "Select body / Create body (on empty space)"),
+                    ("Left Hold", "Increase body size exponentially"),
+                    ("Right Click + Drag", "Pan camera view"),
+                    ("Mouse Wheel ↑", "Zoom in (centered on cursor)"),
+                    ("Mouse Wheel ↓", "Zoom out (centered on cursor)"),
+                ]
+            },
+            {
+                "title": "KEYBOARD CONTROLS - Camera",
+                "controls": [
+                    ("T", "Reset camera to default position and zoom"),
+                    ("A", "Zoom in (screen-centered)"),
+                    ("E", "Zoom out (screen-centered)"),
+                    ("↑ ← ↓ →", "Pan camera with arrow keys"),
+                ]
+            },
+            {
+                "title": "KEYBOARD CONTROLS - Simulation",
+                "controls": [
+                    ("Space", "Pause / Unpause simulation"),
+                    ("V", "Toggle velocity vectors display"),
+                    ("R", "Toggle random velocity mode (mass-proportional)"),
+                    ("G", "Toggle reversed gravity (repulsion)"),
+                    ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
+                ]
+            },
+            {
+                "title": "KEYBOARD CONTROLS - Other",
+                "controls": [
+                    ("Delete", "Delete selected body"),
+                    ("H / I", "Toggle this help overlay"),
+                    ("Escape", "Exit program"),
+                ]
+            },
+        ]
+        
+        # Starting Y position and line counter
+        base_y = start_y + 60
+        current_line = 0
+        
+        # Render each section
+        for section in sections:
+            # Section title
+            Utils.write_screen(
+                section["title"],
+                (left_margin, base_y),
+                Display.BLUE,
+                current_line
+            )
+            current_line += 1
+            
+            # Section controls
+            for key, description in section["controls"]:
+                y_pos = base_y + current_line * (self.txt_gap + self.txt_size)
+                
+                # Key (green, left column)
+                key_surface = self.font.render(key, True, Display.DUCKY_GREEN)
+                self.screen.blit(key_surface, (key_col_x, y_pos))
+                
+                # Separator arrow (grey)
+                sep_surface = self.font.render("→", True, Display.DARK_GREY)
+                self.screen.blit(sep_surface, (sep_col_x, y_pos))
+                
+                # Description (white, right column)
+                desc_surface = self.font.render(description, True, Display.WHITE)
+                self.screen.blit(desc_surface, (desc_col_x, y_pos))
+                
+                current_line += 1
+            
+            # Spacing between sections
+            current_line += 1
+        
+        # ===== FOOTER =====
+        footer_y = self.screen.get_height() - 50
+        
+        # Version and author (centered, grey)
+        footer_text = f"Gravity Engine v{self.project_version} by {self.author_first_name} {self.author_last_name}"
+        footer_x = center_x - self.font.size(footer_text)[0] // 2
+        Utils.write_screen(footer_text, (footer_x, footer_y), Display.DARK_GREY, 0)
+        
+        # Close instruction (centered, blue)
+        close_text = "Release H or I to close"
+        close_x = center_x - self.font.size(close_text)[0] // 2
+        Utils.write_screen(close_text, (close_x, footer_y), Display.BLUE, 1)
+        
+        # ===== RESTORE ORIGINAL FONT SETTINGS =====
+        self.font = original_font
+        self.txt_size = original_txt_size
+        self.txt_gap = original_txt_gap
+
+    def generate_environment(self, count: int = 50, temptext: bool = False):
         """
         Generate a random environment with multiple bodies.
         
-        Creates bodies at random positions across the screen with default
-        properties. The count parameter is ignored; uses random_environment_number instead.
-        
+        Bodies are spawned across the visible world area,
+        with masses proportional to the camera zoom level.
+
         Args:
-            count: Ignored parameter (kept for compatibility)
+            count: Ignored parameter, kept for compatibility.
         """
-        # Use configured number of bodies instead of parameter
         count = self.random_environment_number
-        for c in range(count):
-            # Create body at random position with default mass and density
-            new = Circle(x=random.uniform(0, self.screen.get_width()),
-                         y=random.uniform(0, self.screen.get_height()),
-                         density=self.default_density,
-                         mass=random.uniform(self.minimum_mass, self.random_mass_field))
+        
+        # ===== CALCULATE VISIBLE WORLD AREA =====
+        # Top-left corner of the screen in world coordinates
+        world_x_min, world_y_min = self.camera.screen_to_world(0, 0)
+        
+        # Bottom-right corner of the screen in world coordinates
+        world_x_max, world_y_max = self.camera.screen_to_world(
+            self.screen.get_width(),
+            self.screen.get_height()
+        )
+        
+        # ===== CALCULATE MASS RANGE BASED ON ZOOM =====
+        # The more you zoom out, the more massive the bodies must be to remain visible
+        zoom_factor = self.camera.scale  # 1.0 = normal, 0.1 = very zoomed out
+        
+        # Adjust the mass range inversely to the zoom
+        # Zoom 1.0 -> normal mass
+        # Zoom 0.1 -> mass ×10
+        # Zoom 10.0 -> mass /10
+        mass_multiplier = 1.0 / zoom_factor ** 2
+        
+        min_mass = self.minimum_mass * mass_multiplier
+        max_mass = self.random_mass_field * mass_multiplier
+        
+        # ===== GENERATE BODIES =====
+        for _ in range(count):
+            # Random position in the visible world space
+            world_x = random.uniform(world_x_min, world_x_max)
+            world_y = random.uniform(world_y_min, world_y_max)
+            
+            # Random mass adapted to the zoom
+            # Masse selon distribution logarithmique
+            log_min = log10(min_mass)
+            log_max = log10(max_mass)
+            log_mass = random.uniform(log_min, log_max)
+            mass = 10 ** log_mass
+            
+            new = Circle(
+                x=world_x,
+                y=world_y,
+                density=self.default_density,
+                mass=mass
+            )
             circles.append(new)
+        
+        # ===== USER FEEDBACK =====
+        if temptext:
+            TempText(
+                f"Generated {count} bodies (zoom: {zoom_factor:.2e}x)",
+                2.0,
+                (int((self.screen.get_width() / 2) - 200),
+                self.info_y - self.txt_gap - self.txt_size),
+                line=2
+            )
 
     def get_frequency(self) -> float:
         """
@@ -1813,13 +2203,16 @@ class Engine:
         
         # Draw temporary body being created
         if self.temp_circle:
-            self.temp_circle.draw_interpolated(self.screen, alpha)
+            self.temp_circle.draw_interpolated(self.screen, alpha, interpolate_radius=False)
         
         # Display UI information
-        self.print_global_info(self.info_y)
-        for circle in circles:
-            if circle.is_selected:
-                circle.print_info(circle.info_y)
+        if not self.show_help:
+            self.print_global_info(self.info_y)
+            for circle in circles:
+                if circle.is_selected:
+                    circle.print_info(circle.info_y)
+        else:
+            self.show_help_overlay()
 
     def _check_visual_collisions(self, alpha):
         """Check if any bodies collide at interpolated positions."""
@@ -1970,6 +2363,15 @@ class Engine:
             pygame.K_p: self.generate_environment,
             pygame.K_DELETE: ActionManager.delete_selected_circle,
             pygame.K_ESCAPE: ActionManager.quit_engine,
+            # ===== CAMERA =====
+            pygame.K_a: ActionManager.zoom_in,      # A to zoom in
+            pygame.K_e: ActionManager.zoom_out,    # E to zoom out
+            pygame.K_t: ActionManager.reset_camera,    # T to reset
+            # Arrows to move
+            pygame.K_LEFT: lambda: ActionManager.pan_camera(self.camera_speed, 0),
+            pygame.K_RIGHT: lambda: ActionManager.pan_camera(-self.camera_speed, 0),
+            pygame.K_UP: lambda: ActionManager.pan_camera(0, self.camera_speed),
+            pygame.K_DOWN: lambda: ActionManager.pan_camera(0, -self.camera_speed),
         }
         
         # Map mouse events to actions
@@ -1984,7 +2386,7 @@ class Engine:
         self.previous_time = time.time()
         self.time_accumulator = 0.0
 
-        # Main simulation loop
+        # ======== MAIN LOOP ========
         while running:
             # ===== TIMING =====
             current_time = time.time()
@@ -2030,6 +2432,15 @@ class Engine:
                     action = self.KEY_MAP.get(event.key)
                     if action:
                         action()
+
+            # ===== CHECK HELP KEYS (HOLD TO DISPLAY) =====
+            keys = pygame.key.get_pressed()
+            self.show_help = keys[pygame.K_h] or keys[pygame.K_i]
+
+            # ===== PAN CAMERA =====
+            if engine.camera.is_panning:
+                mx, my = pygame.mouse.get_pos()
+                engine.camera.update_pan(mx, my)
             
             # ===== SELECTION MANAGEMENT =====
             # Ensure only one body is selected at a time
@@ -2050,20 +2461,33 @@ class Engine:
                 else:
                     time_held = 0
                     self.mouse_down_start_time = time.time()
-                
-                # Increase radius with acceleration
+
+                # ===== SAVE PREVIOUS RADIUS BEFORE MODIFICATION =====
+                # This ensures smooth interpolation during growth
+                self.temp_circle.prev_radius = self.temp_circle.radius
+
+                # ===== CALCULATE GROWTH RATE =====
                 acceleration_factor = exp(time_held * 0.8)
-                radius_increase = self.growing_speed * 100 * frame_time * acceleration_factor
-                self.temp_circle.radius += radius_increase
                 
-                # Recalculate mass from radius and density
+                # Growth in screen pixels
+                # Number of pixels per frame
+                screen_pixels_per_frame = self.growing_speed * 100 * frame_time * acceleration_factor
+                # Convert to world meters
+                world_meters_per_frame = screen_pixels_per_frame / self.camera.scale
+                # Apply the growth
+                self.temp_circle.radius += world_meters_per_frame
+                
+                # ===== RECALCULATE MASS ===== (from radius and density)
                 if self.temp_circle.density > 0:
                     volume = (4 / 3) * pi * (self.temp_circle.radius ** 3)
                     self.temp_circle.mass = self.temp_circle.density * volume
                 else:
                     self.temp_circle.mass = self.temp_circle.radius ** 3
+
+                # ===== INVALIDATE INTERPOLATION CACHE =====
+                self.temp_circle._interpolated_cache['alpha'] = -1.0
                 
-                # Check for collision
+                # ===== CHECK COLLISION =====
                 self.collision_detected = False
                 for circle in circles:
                     if self.temp_circle.is_colliding_with(circle):
@@ -2237,68 +2661,79 @@ class ActionManager:
 
     @staticmethod
     def handle_mouse_button_down(event: pygame.event):
-        """
-        Handle mouse button press events.
-        
-        Uses INTERPOLATED (visual) positions for click detection, not physical positions.
-        """
-        # Initialize click state
-        engine.circle_collided = None
-        engine.can_create_circle = False
-        engine.mouse_down = True
-        engine.mouse_down_start_time = time.time()
-        x, y = pygame.mouse.get_pos()
+        """Handle mouse button press with camera transformation."""
+        # Don't handle circle creation if in info mode
+        if engine.show_help:
+            return
 
-        if len(circles) > 0:
-            # Get current interpolation alpha
-            alpha = engine.current_alpha
+        # Right click to pan
+        if event.button == 3:  # Right click
+            mx, my = pygame.mouse.get_pos()
+            engine.camera.start_pan(mx, my)
+            return
+
+        # Left click for selection/creation
+        if event.button == 1:  # Left click
+            engine.circle_collided = None
+            engine.can_create_circle = False
+            engine.mouse_down = True
+            engine.mouse_down_start_time = time.time()
             
-            # Check if click is on an existing body (using VISUAL positions)
-            for circle in circles:
-                # Calculate INTERPOLATED position (where the body is visually displayed)
-                visual_x = circle.prev_x + (circle.x - circle.prev_x) * alpha
-                visual_y = circle.prev_y + (circle.y - circle.prev_y) * alpha
-                
-                # Calculate distance from click to VISUAL center
-                dx = fabs(x - visual_x)
-                dy = fabs(y - visual_y)
-                dist = sqrt(dx ** 2 + dy ** 2)
-                
-                # Use visible radius for click detection
-                visible_radius = max(1, int(circle.radius))
-                click_on_circle: bool = dist <= visible_radius
+            # Convert screen position to world coordinates
+            screen_x, screen_y = pygame.mouse.get_pos()
+            world_x, world_y = engine.camera.screen_to_world(screen_x, screen_y)
+            
+            if len(circles) > 0:
+                alpha = engine.current_alpha
 
-                if click_on_circle:
-                    # Click is on a body - prepare for selection
-                    engine.circle_collided = circle.number
-                    # Deselect all other bodies
-                    for c in circles:
-                        if c != circle:
-                            c.is_selected = False
+                # Check collision with bodies (visual positions)
+                for circle in circles:
+                    # Interpolated visual position (world)
+                    visual_world_x = circle.prev_x + (circle.x - circle.prev_x) * alpha
+                    visual_world_y = circle.prev_y + (circle.y - circle.prev_y) * alpha
+
+                    # Distance in world coordinates
+                    dx = fabs(world_x - visual_world_x)
+                    dy = fabs(world_y - visual_world_y)
+                    dist = sqrt(dx**2 + dy**2)
+
+                    # Check if click is within the radius
+                    if dist <= circle.radius:
+                        engine.circle_collided = circle.number
+                        for c in circles:
+                            if c != circle:
+                                c.is_selected = False
                         break
 
-            # Handle selection toggle
-            if engine.circle_collided is not None:
-                # Toggle selection of clicked body
-                for circle in circles:
-                    if circle.number == engine.circle_collided:
-                        circle.switch_selection()
-                        break
-            elif engine.circle_selected:
-                # Click on empty space while body is selected - deselect all
-                for circle in circles:
-                    circle.is_selected = False
+                # Selection handling
+                if engine.circle_collided is not None:
+                    for circle in circles:
+                        if circle.number == engine.circle_collided:
+                            circle.switch_selection()
+                            break
+                elif engine.circle_selected:
+                    for circle in circles:
+                        circle.is_selected = False
+                else:
+                    engine.can_create_circle = True
+
+                if engine.can_create_circle:
+                    # Create in world coordinates
+                    engine.temp_circle = Circle(world_x, world_y, 
+                                            engine.default_density, 
+                                            mass=engine.minimum_mass)
+                    engine.can_create_circle = False
             else:
-                # Click on empty space - allow body creation
-                engine.can_create_circle = True
+                # Create in world coordinates
+                engine.temp_circle = Circle(world_x, world_y, 
+                                        engine.default_density, 
+                                        mass=engine.minimum_mass)
 
-            # Create temporary body if allowed
-            if engine.can_create_circle:
-                engine.temp_circle = Circle(x, y, engine.default_density, mass=engine.minimum_mass)
-                engine.can_create_circle = False
-        else:
-            # No bodies exist - always create new one
-            engine.temp_circle = Circle(x, y, engine.default_density, mass=engine.minimum_mass)
+        # Handle mouse wheel for zoom.
+        if event.button == 4:  # Scroll up
+            engine.camera.zoom_at_mouse(zoom_in=True)
+        elif event.button == 5:  # Scroll down
+            engine.camera.zoom_at_mouse(zoom_in=False)
 
     @staticmethod
     def handle_mouse_button_up(event: pygame.event):
@@ -2310,12 +2745,66 @@ class ActionManager:
         Args:
             event: Pygame mouse button event
         """
-        engine.mouse_down = False
-        engine.mouse_down_start_time = None
-        # Finalize body creation if temporary body exists
-        if engine.temp_circle is not None:
-            circles.append(engine.temp_circle)
-            engine.temp_circle = None
+        # Don't handle circle creation if in info mode
+        if engine.show_help:
+            return
+
+        # End pan handling
+        if event.button == 3:  # Right click
+            engine.camera.end_pan()
+            return
+        
+        # End of body creation
+        if event.button == 1:  # Left click
+            engine.mouse_down = False
+            engine.mouse_down_start_time = None
+            if engine.temp_circle is not None:
+                circles.append(engine.temp_circle)
+                engine.temp_circle = None
+
+    @staticmethod
+    def zoom_in():
+        """Zoom in centered on screen center."""
+        screen_center_x = engine.screen.get_width() // 2
+        screen_center_y = engine.screen.get_height() // 2
+        
+        # Save mouse position
+        old_mouse_pos = pygame.mouse.get_pos()
+        
+        # Simulate mouse in the middle
+        pygame.mouse.set_pos(screen_center_x, screen_center_y)
+        engine.camera.zoom_at_mouse(zoom_in=True)
+        
+        # Reload mouse position
+        pygame.mouse.set_pos(old_mouse_pos)
+
+    @staticmethod
+    def zoom_out():
+        """Zoom out centered on screen center."""
+        screen_center_x = engine.screen.get_width() // 2
+        screen_center_y = engine.screen.get_height() // 2
+        
+        old_mouse_pos = pygame.mouse.get_pos()
+        pygame.mouse.set_pos(screen_center_x, screen_center_y)
+        engine.camera.zoom_at_mouse(zoom_in=False)
+        pygame.mouse.set_pos(old_mouse_pos)
+
+    @staticmethod
+    def reset_camera():
+        """Reset camera to default position and zoom."""
+        engine.camera.reset()
+        TempText("Camera reset",
+                1.5,
+                (int((engine.screen.get_width() / 2) - (engine.font.size("Camera reset")[0] / 2)),
+                engine.info_y - engine.txt_gap - engine.txt_size),
+                line=1
+                )
+
+    @staticmethod
+    def pan_camera(dx, dy):
+        """Pan camera by offset."""
+        engine.camera.cam_x += dx
+        engine.camera.cam_y += dy
 
 
 # -----------------
