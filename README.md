@@ -647,7 +647,7 @@ See [LICENSE](LICENSE) for complete terms.
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
 *Last updated: February 25, 2026*
-*Version: 3.3.2 - Camera and Random Generation Edition*
+*Version: 3.3.3 - Camera and Random Generation Edition*
 
 ---
 
