@@ -2086,9 +2086,9 @@ class Engine:
         if not pygame.mixer.music.get_busy() and self.music:
             try:
                 # Load and queue music tracks
-                pygame.mixer.music.load(Core.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
-                pygame.mixer.music.queue(Core.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
-                pygame.mixer.music.queue(Core.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
+                pygame.mixer.music.load(FileManager.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
+                pygame.mixer.music.queue(FileManager.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
+                pygame.mixer.music.queue(FileManager.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
             except FileNotFoundError:
                 # Silently fail if music files don't exist
                 pass
