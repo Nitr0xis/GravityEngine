@@ -289,7 +289,7 @@ class Display:
             path (Optional[str]): file path ending with .png
         """
         if path is None:
-            path = f"user_data/screenshots/screenshot_{int(time.time())}.png"
+            path = f"{engine.fm.project_root}/user_data/screenshots/screenshot_{int(time.time())}.png"
 
         pygame.image.save(engine.screen, path)
 
