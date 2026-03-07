@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.3.4 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.3.5 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -8,6 +8,15 @@ GitHub account: https://github.com/Nitr0xis/
 GitHub repository: https://github.com/Nitr0xis/GravityEngine/
 LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY-NC-SA 4.0 License
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
+
+--- Dependencies ---
+Pygame: https://www.pygame.org/
+Atlas - My own file managing module:
+    Email: nils.dontot.pro@gmail.com
+    GitHub account: https://github.com/Nitr0xis/
+    GitHub repository: https://github.com/Nitr0xis/Atlas/
+    LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY-NC-SA 4.0 License
+    README: https://github.com/Nitr0xis/Atlas/blob/main/README.md
 
 CONTROLS:
     H/I : Display info
@@ -49,8 +58,9 @@ import subprocess  # For installing missing modules
 import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
+from tkinter import NO
+from typing import Optional  # For args typing
 import warnings  # Used to display warning messages about deprecated features or potential issues
-import datetime  # for file naming
 
 # Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
 from math import *
@@ -73,6 +83,10 @@ try:
     import pygame
 except ImportError:
     raise ImportError("\"pygame\" module is not installed")
+
+# Import my own modules
+from atlas import FileManager
+
 
 """
 Todo:
@@ -99,42 +113,6 @@ Ideas:
 
 # ==================================================================================
 # ==================================================================================
-
-
-class FileManager:
-    @staticmethod
-    def resource_path(relative_path):
-        """
-        Get absolute path to resource, works for dev and PyInstaller.
-        
-        This function handles resource path resolution in two scenarios:
-        1. Development mode: resolves paths relative to project root
-        2. PyInstaller mode: resolves paths from the temporary extraction directory
-        
-        Args:
-            relative_path: Path from project root (e.g., 'assets/font.ttf')
-
-        Returns:
-            Absolute path to the resource
-
-        Examples:
-            > FileManager.resource_path('assets/font.ttf')
-            'C:/Projects/GravityEngine/assets/font.ttf'  # Dev
-            'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
-        """
-        try:
-            # PyInstaller mode: _MEIPASS is the extracted temp folder
-            # This attribute exists when running as a PyInstaller bundle
-            base_path = sys._MEIPASS
-        except AttributeError:
-            # Development mode: go from src/ to project root
-            # __file__ = C:/GravityEngine/src/gravity_engine.py
-            # dirname once = C:/GravityEngine/src
-            # dirname twice = C:/GravityEngine (project root)
-            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-        # Normalize path separators and join with base path
-        return os.path.join(base_path, os.path.normpath(relative_path))
 
 
 # -----------------
@@ -303,6 +281,18 @@ class Display:
     DARK_GREY = Color(100, 100, 100)  # Body shadow/outline color
     RED = Color(255, 0, 0)  # Global velocity vector color
 
+    def save_screenshot(path: Optional[str]):
+        """
+        Save a screenshot of the current screen.
+
+        Args:
+            path (Optional[str]): file path ending with .png
+        """
+        if path is None:
+            path = f"user_data/screenshots/screenshot_{int(time.time())}.png"
+
+        pygame.image.save(engine.screen, path)
+
 
 # -----------------
 # class Tester
@@ -326,7 +316,7 @@ class Tester:
             print("Development mode")
 
         # Test font path resolution
-        test_font = FileManager.resource_path('assets/font.ttf')
+        test_font = engine.fm.resource_path('assets/font.ttf')
         print(f"Font path: {test_font}")
         print(f"Font exists: {os.path.exists(test_font)}")
         print("=" * 60)
@@ -816,7 +806,7 @@ class Circle:
         """Toggle selection state of the body."""
         self.is_selected = not self.is_selected
 
-    def get_nearest(self) -> tuple[int, float] | None:
+    def get_nearest(self) -> Optional[tuple[int, float]]:
         """
         Find the nearest body to this one.
         
@@ -1487,15 +1477,27 @@ class Engine:
             - Delete -> Delete selected body
         """
 
+        # ==================== FILE MANAGER ====================    
+        self.fm = FileManager(
+            project_name="GravityEngine",
+            project_root="GravityEngine",
+            dev_data_folder="user_data",
+            use_documents=True
+        )
+        
+        # Create necessary folders
+        self.fm.create_folder('screenshots')
+        self.fm.create_folder('saves')
+        self.fm.create_folder('logs')
+
         # ==================== SPLASH SCREEN SETTINGS ====================
-        self.splash_screen_font = FileManager.resource_path('assets/fonts/main_font.ttf')
+        self.splash_screen_font = self.fm.resource_path('assets/fonts/main_font.ttf')
         self.splash_screen_enabled = True  # Enable/disable splash screen
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.3.4"
+        self.project_version = "3.3.5"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
-        
         
         # ==================== DISPLAY SETTINGS ====================
         self.FULLSCREEN = True
@@ -1539,7 +1541,7 @@ class Engine:
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
-        self.used_font = FileManager.resource_path('assets/fonts/main_font.ttf')
+        self.used_font = self.fm.resource_path('assets/fonts/main_font.ttf')
         self.txt_size = 30
         self.txt_gap: int = 15
         self.font = pygame.font.Font(self.used_font, self.txt_size)
@@ -1596,7 +1598,7 @@ class Engine:
         self.random_environment_number: int = 20
         
         # ==================== AUDIO SETTINGS ====================
-        self.musics_folder_path = "assets/musics"  # without ressource_path() because it is a folder
+        self.musics_folder_path = "../'assets/musics"  # without ressource_path() because it is a folder
         self.music = False
         self.music_volume = 1
         
@@ -2088,9 +2090,9 @@ class Engine:
         if not pygame.mixer.music.get_busy() and self.music:
             try:
                 # Load and queue music tracks
-                pygame.mixer.music.load(FileManager.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
-                pygame.mixer.music.queue(FileManager.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
-                pygame.mixer.music.queue(FileManager.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
+                pygame.mixer.music.load(self.fm.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
+                pygame.mixer.music.queue(self.fm.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
+                pygame.mixer.music.queue(self.fm.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
             except FileNotFoundError:
                 # Silently fail if music files don't exist
                 pass
@@ -2328,6 +2330,9 @@ class Engine:
         
         The loop runs at the target FPS and continues until the window is closed.
         """
+        # ==================== MINIMUM DEBUG ====================
+        Tester.default_debug()
+
         # Show splash screen at startup
         self.show_splash_screen()
         
@@ -2812,7 +2817,7 @@ class Utils:
     All methods are static utility functions that don't require instance state.
     """
     @staticmethod
-    def heaviest() -> tuple | None:
+    def heaviest() -> Optional[tuple]:
         """
         Find the heaviest body in the simulation.
         
@@ -2835,7 +2840,7 @@ class Utils:
             return None
 
     @staticmethod
-    def oldest() -> tuple | None:
+    def oldest() -> Optional[tuple]:
         """
         Find the oldest body in the simulation.
         
@@ -2890,7 +2895,7 @@ class Utils:
     def write_screen(text: str = "[text]",
               dest: tuple[int, int] = (0, 0),
               color: tuple[int, int, int] = Color(255, 255, 255),
-              line: int = 0) -> pygame.Rect | None:
+              line: int = 0) -> Optional[pygame.Rect]:
         """
         Render and display text on the screen.
         
@@ -2933,9 +2938,6 @@ if __name__ == '__main__':
     """
     # Initialize pygame modules
     pygame.init()
-
-    # Minimum debug
-    Tester.default_debug()
 
     # Global list of all celestial bodies in the simulation
     circles: list[Circle] = []
