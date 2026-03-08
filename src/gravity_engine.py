@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.3.5 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.4.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -280,18 +280,6 @@ class Display:
     YELLOW = Color(241, 247, 0)  # Y-component velocity vector color
     DARK_GREY = Color(100, 100, 100)  # Body shadow/outline color
     RED = Color(255, 0, 0)  # Global velocity vector color
-
-    def save_screenshot(path: Optional[str]):
-        """
-        Save a screenshot of the current screen.
-
-        Args:
-            path (Optional[str]): file path ending with .png
-        """
-        if path is None:
-            path = f"{engine.fm.project_root}/user_data/screenshots/screenshot_{int(time.time())}.png"
-
-        pygame.image.save(engine.screen, path)
 
 
 # -----------------
@@ -1486,9 +1474,9 @@ class Engine:
         )
         
         # Create necessary folders
-        self.fm.create_folder('screenshots')
-        self.fm.create_folder('saves')
-        self.fm.create_folder('logs')
+        self.screenshots_folder_path = self.fm.create_folder('screenshots')
+        self.saves_folder_path = self.fm.create_folder('saves')
+        self.logs_folder_path = self.fm.create_folder('logs')
 
         # ==================== SPLASH SCREEN SETTINGS ====================
         self.splash_screen_font = self.fm.resource_path('assets/fonts/main_font.ttf')
@@ -1496,7 +1484,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.3.5"
+        self.project_version = "3.4.0"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -1917,7 +1905,7 @@ class Engine:
                     ("R", "Toggle random velocity mode (mass-proportional)"),
                     ("G", "Toggle reversed gravity (repulsion)"),
                     ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
-                    ("", ""),
+                    ("S", "Take a screenshot"), ("", f"Saved in {self.screenshots_folder_path}"),
                     ("Delete", "Delete selected body"),
                     ("H / I", "Toggle this help overlay"),
                     ("Escape", "Exit program"),
@@ -1942,10 +1930,10 @@ class Engine:
             
             # Section controls
             for key, description in section["controls"]:
+                y_pos = base_y + current_line * (self.txt_gap + self.txt_size)
+                current_line += 1
                 if (key, description) == ("", ""):
                     continue
-
-                y_pos = base_y + current_line * (self.txt_gap + self.txt_size)
                 
                 # Key (green, left column)
                 key_surface = self.font.render(key, True, Display.DUCKY_GREEN)
@@ -1958,8 +1946,6 @@ class Engine:
                 # Description (white, right column)
                 desc_surface = self.font.render(description, True, Display.WHITE)
                 self.screen.blit(desc_surface, (desc_col_x, y_pos))
-                
-                current_line += 1
             
             # Spacing between sections
             current_line += 1
@@ -2372,6 +2358,8 @@ class Engine:
             pygame.K_RIGHT: lambda: ActionManager.pan_camera(-self.camera_speed, 0),
             pygame.K_UP: lambda: ActionManager.pan_camera(0, self.camera_speed),
             pygame.K_DOWN: lambda: ActionManager.pan_camera(0, -self.camera_speed),
+            # Take screenshots
+            pygame.K_s: ActionManager.save_screenshot
         }
         
         # Map mouse events to actions
@@ -2805,6 +2793,27 @@ class ActionManager:
         """Pan camera by offset."""
         engine.camera.cam_x += dx
         engine.camera.cam_y += dy
+
+    def save_screenshot(path: Optional[str] = None):
+        """
+        Save a screenshot of the current screen.
+
+        Args:
+            path (Optional[str]): file path ending with .png
+        """
+        if path is None:
+            file_name = f"screenshot_{int(time.time())}.png"
+            path = f"{engine.screenshots_folder_path}/{file_name}"
+            TempText(
+                text=f"Screenshot saved as {file_name}",
+                duration=3.0,
+                dest=(
+                    20,
+                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)
+                )
+            )
+
+        pygame.image.save(engine.screen, path)
 
 
 # -----------------
