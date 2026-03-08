@@ -58,7 +58,6 @@ import subprocess  # For installing missing modules
 import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
-from tkinter import NO
 from typing import Optional  # For args typing
 import warnings  # Used to display warning messages about deprecated features or potential issues
 
@@ -67,22 +66,30 @@ from math import *
 
 
 # Required external modules for the simulation
-REQUIRED_MODULES: set[str] = {"pygame"}
+EXTERNAL_REQUIRED_MODULES: set[str] = {"pygame", "matplotlib"}
 
 # Automatically install missing required modules
-for module in REQUIRED_MODULES:
+for module in EXTERNAL_REQUIRED_MODULES:
     if importlib.util.find_spec(module) is None:
+        print(f"Installing module {module}...")
         # Install module using pip if not found
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", module])
         except subprocess.CalledProcessError:
             warnings.warn(f"The pre-installation of the module {module} has failed.")
 
-# Import pygame after ensuring it's installed
+# Import modules after ensuring it's installed
 try:
     import pygame
 except ImportError:
     raise ImportError("\"pygame\" module is not installed")
+
+# For future ideas:
+import tkinter as tk
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    raise ImportError("\"matplotlib\" module is not installed")
 
 # Import my own modules
 from atlas import FileManager
@@ -90,13 +97,6 @@ from atlas import FileManager
 
 """
 Todo:
-    - create folders even with .exe files
-
-For my NSI projects:
-    - add a dynamic configure pannel (choice between pygame and tkinter)
-    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
-
-Ideas:
     - add a focus mode
     - add a "define as referential button"
     - add collision epsilon
@@ -105,6 +105,13 @@ Ideas:
     - mass transfer on collision without fusion
     - add senarios in json
     - add .csv export method
+
+For my NSI projects:
+    - add a dynamic configure pannel (choice between pygame and tkinter)
+    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
+
+Ideas:
+    -=-=-=-=-
 """
 
 
