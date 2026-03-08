@@ -90,9 +90,13 @@ from atlas import FileManager
 
 """
 Todo:
-    - Use my own module for file managing
-    - Add screenshots
-    - add the holding of camera keys
+    - create folders even with .exe files
+
+For my NSI projects:
+    - add a dynamic configure pannel (choice between pygame and tkinter)
+    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
+
+Ideas:
     - add a focus mode
     - add a "define as referential button"
     - add collision epsilon
@@ -101,13 +105,6 @@ Todo:
     - mass transfer on collision without fusion
     - add senarios in json
     - add .csv export method
-
-For my NSI projects:
-    - add a dynamic configure pannel (choice between pygame and tkinter)
-    - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
-
-Ideas:
-    -=-=-=-=-
 """
 
 
@@ -1468,7 +1465,6 @@ class Engine:
         # ==================== FILE MANAGER ====================    
         self.fm = FileManager(
             project_name="GravityEngine",
-            project_root="GravityEngine",
             dev_data_folder="user_data",
             use_documents=True
         )

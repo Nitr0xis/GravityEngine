@@ -97,7 +97,7 @@ class FileManager:
         else:
             # Auto-detect: go up one level from atlas.py location
             # __file__ = C:/Project/src/atlas.py
-            self.project_root = os.path.dirname(os.path.abspath(__file__))
+            self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     def resource_path(self, relative_path: str) -> str:
         """
