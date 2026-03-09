@@ -1904,7 +1904,7 @@ class Engine:
                     ("↑ ← ↓ →", "Pan camera with arrow keys"),
                     ("", ""),
                     ("Space", "Pause / Unpause simulation"),
-                    ("V", "Toggle velocity vectors display"),
+                    ("V", "Toggle vectors display (red: velocity vectors, blue: force vectors)"),
                     ("R", "Toggle random velocity mode (mass-proportional)"),
                     ("G", "Toggle reversed gravity (repulsion)"),
                     ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
