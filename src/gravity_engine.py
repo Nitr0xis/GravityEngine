@@ -1911,7 +1911,7 @@ class Engine:
                     ("S", "Take a screenshot"), ("", f"Saved in {self.screenshots_folder_path}"),
                     ("Delete", "Delete selected body"),
                     ("H / I", "Toggle this help overlay"),
-                    ("Escape", "Exit program"),
+                    ("Escape/Alt+F4", "Exit program"),
                 ]
             },
         ]
