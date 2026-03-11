@@ -236,7 +236,7 @@ class ConfigPanel:
     def _save(self):
         cfg = {k: getattr(self.engine, k) for k in [
             "time_acceleration", "FPS_TARGET", "default_density", "fusions",
-            "vectors_printed", "force_vectors", "vector_scale", "camera_zoom",
+            "vectors_printed", "vector_scale", "camera_zoom",
             "adaptive_substeps", "adaptive_substeps_max_extra"
         ]}
         payload = {
