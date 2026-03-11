@@ -23,7 +23,7 @@ A real-time N-body gravitational simulation with camera system, pygame configura
 
 - [Before We Begin](#before-we-begin)
 - [Overview](#overview)
-- [What's New in v3.4.0](#whats-new-in-v340)
+- [What's New in v3.5.0](#whats-new-in-v350)
 - [Features](#features)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
