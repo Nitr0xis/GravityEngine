@@ -1,0 +1,15 @@
+{
+  "version": "3.5.0",
+  "config": {
+    "time_acceleration": 20000.0,
+    "FPS_TARGET": 120,
+    "default_density": 5514.0,
+    "fusions": true,
+    "vectors_printed": false,
+    "force_vectors": true,
+    "vector_scale": 1,
+    "camera_zoom": 1.0,
+    "adaptive_substeps": false,
+    "adaptive_substeps_max_extra": 0.0
+  }
+}

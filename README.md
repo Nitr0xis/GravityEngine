@@ -1,8 +1,8 @@
 # Gravity Engine
 
-## Version 3.4.0 - Screenshots Edition
+## Version 3.5.0 - Complete Configuration Panel Edition
 
-A real-time N-body gravitational simulation with camera system, zoom-adaptive generation, and interactive help overlay.
+A real-time N-body gravitational simulation with camera system, pygame configuration panel, and interactive help overlay.
 
 **Created by Nils DONTOT**
 
@@ -23,7 +23,7 @@ A real-time N-body gravitational simulation with camera system, zoom-adaptive ge
 
 - [Before We Begin](#before-we-begin)
 - [Overview](#overview)
-- [What's New in v3.3.0](#whats-new-in-v330)
+- [What's New in v3.4.0](#whats-new-in-v340)
 - [Features](#features)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
@@ -41,7 +41,7 @@ A real-time N-body gravitational simulation with camera system, zoom-adaptive ge
 
 ---
 
-## 🪶 Before We Begin
+## Before We Begin
 
 Hello, I am 15 years old and passionate about programming and physics. In mid-2025, I decided to create a gravity simulator with Python. This is the result of my work. Feel free to submit pull requests if you identify potential improvements or optimization opportunities. I am constantly improving it, and I hope you like it.
 
@@ -55,7 +55,10 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ### Key Technical Features
 
+- **Pygame configuration panel** - Real-time parameter adjustment with custom widgets
 - **Interactive help overlay** - Hold H or I for instant control reference
+- **Atlas file manager** - Cross-platform file management (dev + exe)
+- **Screenshot system** - Capture simulations with S key
 - **Complete camera system** - Pan, zoom, reset with smooth transitions
 - **Zoom-adaptive generation** - Body masses scale with zoom level
 - **Screen-constant growth** - Bodies grow at constant visual rate
@@ -67,59 +70,110 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ---
 
-## What's New in v3.3.0
+## What's New in v3.5.0
 
-### Interactive Complete Camera and Help System (February 2026 (was previous for April))
+### Pygame Configuration Panel (May 2026)
 
-**Major Feature:** Advanced camera system with a new random generation mode Real-time help overlay accessible anytime during simulation.
+**Major Feature:** Professional overlay-style configuration panel built entirely in Pygame.
 
-#### Interactive Advanced Camera System
-**Camera navigation (pan, zoom, reset)**
-- Press A or E to zoom in or zoom out
-- Use the arrows or the right button to move the camera
-- Use T to reset mouse zoom and position
+#### Custom Widget System
 
-#### Interactive Help Overlay
+**Widgets Implemented:**
+- Animated checkboxes with smooth fade-in/fade-out
+- Linear and logarithmic sliders with real-time value display
+- Buttons with hover effects
+- Scrollable content panel
+- Semi-transparent overlay design
 
-**Instant Access:**
-- Hold **H** or **I** to display complete controls guide
-- Release to return to simulation immediately
-- No interruption to physics simulation
+**Visual Design:**
+- Matches Gravity Engine color scheme (ducky green accents)
+- Dark theme with professional appearance
+- Smooth animations on all interactions
+- Responsive to mouse hover and drag
 
-**Professional Design:**
-- Semi-transparent dark overlay
-- Organized sections (Mouse, Camera, Simulation, Other)
-- Color-coded controls (green keys, white descriptions)
-- Centered layout with clear separation
+#### Configuration Features
 
-**Comprehensive Coverage:**
-- All mouse controls (click, drag, zoom)
-- Camera navigation (pan, zoom, reset)
-- Simulation controls (pause, vectors, random mode)
-- System commands (delete, exit)
+**Real-Time Adjustment:**
+- Modify parameters while simulation runs
+- See changes immediately in the background
+- No interruption to physics or rendering
+- Smooth overlay appearance/disappearance
 
-#### User Experience Improvements
+**Sections:**
+- Simulation: Time acceleration, Target FPS
+- Physics: Default density, Body fusions toggle
+- Visual: Vector display, Force vectors, Vector scale
 
-**Visual Indicator:**
-- "Hold H or I to display help" shown in top-right corner
-- Subtle red text to indicate availability
-- Always visible but unobtrusive
+**Persistence:**
+- Save configuration to JSON (user_data/config.json)
+- Load saved configurations
+- Automatic file management via Atlas
 
-**Smooth Integration:**
-- Help overlay pauses interactions but not physics
-- Information remains accessible during simulation
-- No need to exit or pause to view controls
+#### User Experience
 
-**Design Philosophy:**
-- Hold to display = temporary reference
-- Release to dismiss = fluid workflow
-- No toggle state = intuitive behavior
+**Opening/Closing:**
+- Press C to toggle panel
+- Press ESC to close
+- Click outside panel to close
+- Overlay dims simulation background
+
+**Interaction:**
+- Drag sliders to adjust values
+- Click checkboxes to toggle
+- Mouse wheel to scroll if needed
+- Visual feedback on hover
+
+### Atlas File Manager Integration
+
+**Cross-Platform Paths:**
+- Automatic dev/exe detection
+- User data in Documents folder (exe)
+- User data in project folder (dev)
+- Resource path resolution for assets
+
+**Folder Management:**
+- Screenshots folder created automatically
+- Saves folder for future save/load
+- Logs folder for debugging
+- Config file storage
+
+### Screenshot System
+
+**Capture Functionality:**
+- Press S to take screenshot
+- Automatic timestamped filenames
+- Saved to screenshots folder
+- Confirmation message displayed
+- Full resolution capture
 
 ---
 
 ## Features
 
-### Current Features (April 2026 - v3.3.0)
+### Current Features (May 2026 - v3.5.0)
+
+**Configuration Panel:**
+- Pygame-based overlay interface
+- Custom animated widgets (checkboxes, sliders, buttons)
+- Real-time parameter adjustment
+- Save/load configuration to JSON
+- Scrollable content support
+- Professional dark theme matching simulation
+- No external windows or dependencies
+
+**File Management:**
+- Atlas module for cross-platform paths
+- Automatic folder creation (screenshots, saves, logs)
+- Dev mode: files in project folder
+- Exe mode: files in Documents folder
+- Resource path resolution for assets
+
+**Screenshot System:**
+- One-key screenshot capture (S)
+- Automatic file naming with timestamp
+- Saved to managed screenshots folder
+- Visual confirmation message
+- Full resolution PNG format
 
 **Interactive Help:**
 - Real-time help overlay (hold H or I)
@@ -135,10 +189,10 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 - Arrow keys for camera movement
 - Reset camera with T key
 - Smooth camera transitions
-- World ↔ screen coordinate conversion
+- World to screen coordinate conversion
 
 **Random Generation:**
-- Zoom-adaptive body masses (mass ∝ 1/scale²)
+- Zoom-adaptive body masses (mass proportional to 1/scale squared)
 - Logarithmic mass distribution
 - World-coordinate generation
 - Bodies always fill visible screen
@@ -152,13 +206,13 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 - Mass calculated from radius and density
 
 **Random Mode:**
-- Mass-proportional energy (E ∝ mass)
+- Mass-proportional energy (E proportional to mass)
 - Heavy bodies move realistically
 - Proportional kinetic energy distribution
 - Adjustable energy per kilogram
 
 **Physics Engine:**
-- Real-time N-body gravitational simulation with O(n²) calculations
+- Real-time N-body gravitational simulation with O(n squared) calculations
 - Fixed timestep integration (1/120s) for deterministic behavior
 - Complete interpolation system (position, velocity, force, radius)
 - Momentum and mass conservation in all interactions
@@ -191,10 +245,16 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 - Physics validation (force summation, determinism, uniform speed)
 - Interpolation validation (position, velocity, force, cache)
 
+### Recent Improvements (v3.4.0)
+
+- **Pygame configuration panel** - Professional overlay with custom widgets
+- **Atlas file manager** - Cross-platform file path management
+- **Screenshot system** - One-key capture with auto-naming
+- **Config persistence** - Save/load settings to JSON
+- **Real-time adjustment** - Change parameters without interrupting simulation
+
 ### Recent Improvements (v3.3.0)
 
-- **Complete camera system** - Pan, zoom, reset with coordinate conversion
-- **Zoom-adaptive generation** - Body masses scale with zoom level
 - **Interactive help overlay** - Hold H/I for instant control reference
 - **Visual help indicator** - Top-right corner reminder
 - **Smooth help integration** - No simulation interruption
@@ -203,8 +263,10 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ### Recent Improvements (v3.2.0)
 
+- **Complete camera system** - Pan, zoom, reset with coordinate conversion
+- **Zoom-adaptive generation** - Body masses scale with zoom level
 - **Screen-constant growth** - Visual growth rate independent of zoom
-- **Mass-proportional energy** - Heavy bodies move realistically (E ∝ mass)
+- **Mass-proportional energy** - Heavy bodies move realistically (E proportional to mass)
 - **Radius interpolation fix** - No more flicker during body creation
 
 ---
@@ -217,7 +279,9 @@ For Windows users:
 
 1. Download `GravityEngine.exe` from [Releases](https://github.com/Nitr0xis/GravityEngine/releases)
 2. Double-click to run - no installation needed
-3. Press **H** or **I** in-app for controls guide
+3. Press **C** for configuration panel
+4. Press **H** or **I** for controls guide
+5. Press **S** to capture screenshots
 
 Note: The executable is self-contained with all dependencies included.
 
@@ -240,7 +304,7 @@ pip install pygame
 # Run simulation
 python src/gravity_engine.py
 
-# Press H or I in-app for controls
+# Press C for config, H for help, S for screenshot
 ```
 
 ### Option 3: Virtual Environment (Recommended)
@@ -262,121 +326,253 @@ python src/gravity_engine.py
 
 ## Building Executables
 
-### Using the Build Menu (Recommended)
+### Using PyInstaller
 
-Double-click `make.bat` to access the interactive build system:
+Build a standalone executable with all dependencies:
 
-```
-================================================
-  Gravity Engine - Build System
-  by Nils DONTOT
-================================================
+```bash
+# Install PyInstaller
+pip install pyinstaller
 
-[1] Build Development      (with console)
-[2] Build Release          (ready to distribute)
-[3] Clean                  (remove build files)
-[4] Clean + Build Release  (fresh release build)
-[5] Run                    (without building)
-[6] Test Executable        (run last built .exe)
-[7] Open dist folder       (view executables)
-[8] Help
-[0] Exit
+# Build executable
+pyinstaller --onefile --windowed --add-data "assets;assets" --name GravityEngine src/gravity_engine.py
 
-================================================
+# Executable will be in dist/ folder
 ```
 
-### Build Options
-
-| Option | Purpose | Output | Use Case |
-|--------|---------|--------|----------|
-| **[1] Development** | Quick build with debug console | `GravityEngine_Dev.exe` | Testing, debugging |
-| **[2] Release** | Optimized, no console | `GravityEngine.exe` | Distribution |
-| **[3] Clean** | Remove build artifacts | - | Fresh start |
-| **[4] Clean + Build** | Clean then release build | `GravityEngine.exe` | Final distribution |
-| **[5] Run** | Launch Python source | - | Quick testing |
-| **[6] Test Executable** | Run last built .exe | - | Verify build |
-| **[7] Open dist/** | Open folder in Explorer | - | View executables |
+**Notes:**
+- `--onefile`: Single executable file
+- `--windowed`: No console window
+- `--add-data`: Include assets folder
+- Exe includes all dependencies automatically
 
 ---
 
 ## Controls
 
-**💡 TIP: Press and hold H or I during simulation for complete controls guide!**
-
-### Mouse Controls
-
-| Action | Effect |
-|--------|--------|
-| **Left Click** | Select body / Create body (on empty space) |
-| **Left Hold** | Increase body size exponentially (screen-constant growth) |
-| **Right Click + Drag** | Pan camera view |
-| **Mouse Wheel Up** | Zoom in (centered on cursor) |
-| **Mouse Wheel Down** | Zoom out (centered on cursor) |
-
-Note: Click detection uses visual positions (interpolated), not physical positions.
-
-### Keyboard Controls
+### Configuration
 
 | Key | Action |
 |-----|--------|
-| **H / I** | **Display help overlay (hold to show, release to hide)** |
-| **Space** | Pause/unpause simulation |
-| **V** | Toggle velocity vectors |
-| **R** | Toggle random velocity mode (mass-proportional) |
-| **G** | Toggle reversed gravity |
-| **P** | Generate random environment (20 bodies, zoom-adaptive) |
-| **T** | Reset camera to default position and zoom |
-| **A** | Zoom in (screen-centered) |
-| **E** | Zoom out (screen-centered) |
-| **↑ ← ↓ →** | Pan camera with arrow keys |
-| **Delete** | Delete selected body |
-| **Escape** | Exit program |
+| C | Open/close configuration panel |
+
+**Configuration Panel:**
+- Click and drag sliders to adjust values
+- Click checkboxes to toggle options
+- Mouse wheel to scroll (if needed)
+- Save button: Store current config
+- Load button: Restore saved config
+- Close button: Exit panel
+
+### Help System
+
+| Key | Action |
+|-----|--------|
+| H or I (hold) | Display interactive help overlay |
+
+### Camera Navigation
+
+| Input | Action |
+|-------|--------|
+| Right Click + Drag | Pan camera view |
+| Mouse Wheel Up | Zoom in (cursor-centered) |
+| Mouse Wheel Down | Zoom out (cursor-centered) |
+| A | Zoom in (screen-centered) |
+| E | Zoom out (screen-centered) |
+| Arrow Keys | Pan camera (Up/Down/Left/Right) |
+| T | Reset camera to default position and zoom |
+
+### Body Interaction
+
+| Input | Action |
+|-------|--------|
+| Left Click | Select body OR create new body (on empty space) |
+| Left Click + Hold | Increase body size exponentially |
+| Delete | Delete selected body |
+
+### Simulation Control
+
+| Key | Action |
+|-----|--------|
+| Space | Pause/unpause simulation |
+| V | Toggle velocity/force vectors display |
+| R | Toggle random velocity mode |
+| G | Toggle reversed gravity (repulsion) |
+| P | Generate 20 random bodies (zoom-adaptive) |
+| S | Take screenshot (saved to screenshots folder) |
+
+### System
+
+| Key | Action |
+|-----|--------|
+| Escape | Exit program |
+| Alt + F4 | Exit program (Windows) |
 
 ---
 
 ## Configuration
 
-Modify parameters in `Engine.__init__()` within `src/gravity_engine.py`.
+### Using the Configuration Panel
 
-### Key Configuration Sections
+**Access:**
+1. Press **C** to open panel
+2. Panel appears as overlay on simulation
+3. Simulation continues running in background
 
-**Camera Settings:**
+**Available Settings:**
+
+**Simulation Section:**
+- **Time Acceleration** - Simulation speed multiplier (1e3 to 1e8, logarithmic)
+- **Target FPS** - Rendering frames per second (30 to 240, linear)
+
+**Physics Section:**
+- **Default Density** - Body density in kg/m³ (1e2 to 1e5, logarithmic)
+- **Enable Body Fusions** - Toggle collision merging (checkbox)
+
+**Visual Section:**
+- **Show Velocity Vectors** - Display red velocity arrows (checkbox)
+- **Show Force Vectors** - Display blue force arrows (checkbox)
+- **Vector Scale** - Adjust vector length multiplier (0.1 to 10.0, linear)
+
+**Saving Configuration:**
+1. Adjust parameters as desired
+2. Click **Save** button
+3. Settings stored in `user_data/config.json`
+4. Click **Load** to restore saved settings
+
+### Manual Configuration (Advanced)
+
+Edit parameters directly in `gravity_engine.py`:
+
 ```python
-self.camera_basic_scale = 1.0        # Default zoom level
-self.camera_scale_factor = 1.1       # Zoom step multiplier
-self.camera.min_scale = 0.001        # Minimum zoom (max zoom out)
-self.camera.max_scale = 100.0        # Maximum zoom (max zoom in)
-self.camera_speed = 10               # Arrow key pan speed (pixels/frame)
+# In Engine.__init__()
+
+# Simulation
+self.time_acceleration = 2e4  # Simulation speed
+self.FPS_TARGET = 120  # Rendering FPS
+
+# Physics
+self.default_density = 5.514e3  # kg/m³ (Earth density)
+self.fusions = True  # Enable body merging
+self.minimum_mass = 1e3  # Minimum body mass (kg)
+
+# Visual
+self.vectors_printed = False  # Show vectors
+self.force_vectors = True  # Show force vectors
+self.vector_scale = 1.0  # Vector length multiplier
+self.use_interpolation = True  # Smooth rendering
+
+# Performance
+self.performance_mode = "precise"  # "precise" or "adaptive"
+self.min_physics_interval = 0.025  # 40 Hz physics (adaptive mode)
+
+# Camera
+self.camera_speed = 10  # Arrow key pan speed
+self.camera_scale_factor = 1.1  # Zoom step multiplier
+
+# Random
+self.random_mode = False  # Random velocity on creation
+self.random_energy_per_kg = 1e-8  # J/kg for random velocities
+self.random_mass_field = 1e7  # Maximum random mass range
+self.random_environment_number = 20  # Bodies generated per P press
 ```
 
-**Random Generation:**
-```python
-self.random_energy_per_kg = 1e-8     # Energy per kilogram (J/kg)
-self.random_mass_field = 1e7         # Max mass at zoom 1.0 (kg)
-self.random_environment_number = 20  # Bodies created with P key
+---
+
+## Physics
+
+### Gravitational Force
+
+Newton's law of universal gravitation:
+
+```
+F = G × (m1 × m2) / r²
 ```
 
-**Body Creation:**
+Where:
+- F = gravitational force (Newtons)
+- G = gravitational constant (6.674 × 10⁻¹¹ N⋅m²/kg²)
+- m1, m2 = masses of the two bodies (kg)
+- r = distance between centers (meters)
+
+### Integration Method
+
+**Fixed Timestep (Precise Mode):**
+- Physics calculated every 1/120 seconds
+- Deterministic behavior
+- Position: x(t+dt) = x(t) + v(t) × dt
+- Velocity: v(t+dt) = v(t) + a(t) × dt
+- Acceleration: a = F / m
+
+**Adaptive Mode:**
+- Physics throttled to 40 Hz (configurable)
+- Rendering still 120 FPS
+- Accumulates time between updates
+- Smooth visuals, acceptable accuracy
+
+### Interpolation System
+
+**Complete State Interpolation:**
+- Position: x_render = x_prev + (x - x_prev) × alpha
+- Velocity: v_render = v_prev + (v - v_prev) × alpha
+- Force: f_render = f_prev + (f - f_prev) × alpha
+- Radius: r_render = r_prev + (r - r_prev) × alpha
+
+Where alpha = time_accumulator / physics_timestep (0 to 1)
+
+### Collision and Fusion
+
+**Detection:**
+- Visual: Check interpolated positions
+- Physical: Verify real positions
+- Fusion only if both collide
+
+**Fusion Physics:**
+- Conservation of momentum: p_total = p1 + p2
+- Conservation of mass: m_total = m1 + m2
+- New position: Center of mass
+- New velocity: Total momentum / total mass
+- New radius: Calculated from volume and density
+
+---
+
+## Performance Modes
+
+### Precise Mode (Default)
+
+**Characteristics:**
+- Fixed 120 Hz physics updates
+- Deterministic simulation
+- Accurate long-term behavior
+- May slow down with many bodies (100+)
+
+**Best for:**
+- Accurate simulations
+- Scientific demonstrations
+- Small to medium body counts (< 50)
+
+**Configuration:**
 ```python
-self.growing_speed = 0.1             # Growth rate (pixels/frame base)
-self.minimum_mass = 1e3              # Minimum body mass (kg)
-self.default_density = 5.514e3       # Default density (kg/m³, Earth)
+self.performance_mode = "precise"
 ```
 
-**Performance Mode:**
-```python
-self.performance_mode = "precise"    # or "adaptive"
-# - "precise": Fixed 120 Hz, deterministic, may slow with many bodies
-# - "adaptive": Throttled updates (40 Hz), smooth, less accurate
+### Adaptive Mode
 
-self.min_physics_interval = 0.025    # 25ms = 40 Hz (adaptive mode)
-```
+**Characteristics:**
+- Throttled physics (40 Hz default, configurable)
+- Smooth 120 FPS rendering always
+- Less accurate over long time periods
+- Handles 100+ bodies smoothly
 
-**Physics Settings:**
+**Best for:**
+- Large simulations (100+ bodies)
+- Visual demonstrations
+- Performance priority over accuracy
+
+**Configuration:**
 ```python
-self.G = 6.6743e-11                  # Gravitational constant
-self.time_acceleration = 2e4         # Time speed factor
-self.fusions = True                  # Enable body fusion
+self.performance_mode = "adaptive"
+self.min_physics_interval = 0.025  # 40 Hz (25ms between updates)
 ```
 
 ---
@@ -385,81 +581,48 @@ self.fusions = True                  # Enable body fusion
 
 ### First Launch
 
-1. Run `src/gravity_engine.py` or `dist/GravityEngine.exe`
-2. Wait for splash screen (3 seconds)
-3. **Press and hold H or I to see complete controls guide**
-4. Click and hold to create a body (growth is screen-constant)
-5. Press P to generate random system (20 bodies, zoom-adaptive)
-6. Use mouse wheel to zoom in/out
-7. Right-click drag to pan the view
-8. Click a body to see detailed information
-9. Press V to see vectors (red = velocity, blue = force)
-10. Press Space to pause and analyze
-11. Press T to reset camera view
+**Getting Oriented:**
+1. Launch the program
+2. Press **H** or **I** (hold) to see controls
+3. Release to continue
+4. Press **C** to explore configuration panel
+5. Close panel to return to simulation
 
-### Using the Help System
+### Creating Your First System
 
-**Access Help:**
-- Press and **hold** H or I key
-- Complete controls guide appears instantly
-- Organized by category for easy reference
+**Binary Orbit:**
+1. Left-click and hold for 2 seconds (creates first body)
+2. Release mouse
+3. Left-click another location and hold 2 seconds (second body)
+4. Watch them orbit each other
+5. Press **V** to see velocity vectors
 
-**Navigate Help:**
-- Read all controls without leaving simulation
-- Physics continues running in background
-- No need to memorize all keys
-
-**Return to Simulation:**
-- Simply **release** H or I
-- Help disappears immediately
-- Resume normal interaction
-
-### Camera Navigation
+### Using the Camera
 
 **Exploring Large Simulations:**
-1. Generate 100+ bodies (press P five times)
-2. Zoom out (mouse wheel down) to see overview
-3. Pan to interesting region (right-click drag)
-4. Zoom in (mouse wheel up) on specific bodies
-5. Press T to return to default view
+1. Press **P** five times (generates 100 bodies)
+2. Scroll mouse wheel down to zoom out
+3. Right-click and drag to pan around
+4. Scroll mouse wheel up to zoom in on interesting regions
+5. Press **T** to reset view
 
-**Creating at Different Scales:**
-1. Zoom out (bodies will be heavier automatically)
-2. Create large bodies (hold 3-5 seconds)
-3. Zoom in (bodies will be lighter automatically)
-4. Create small bodies (hold 1-2 seconds)
-5. All bodies appear similar size visually!
+### Adjusting Parameters
 
-### Creating Systems
+**Real-Time Tweaking:**
+1. Press **C** to open configuration
+2. Drag "Time Acceleration" slider to speed up/slow down
+3. Uncheck "Enable Body Fusions" to prevent merging
+4. Adjust "Vector Scale" to make arrows more visible
+5. Click **Save** to keep settings for next time
 
-**Binary System:**
-1. Create two medium bodies (hold 2-3 seconds each)
-2. Place close but not touching
-3. Watch them orbit
-4. Enable vectors (V) to see motion
-5. Zoom out to see full orbits
+### Capturing Your Work
 
-**Chaotic Three-Body:**
-1. Create three similar-sized bodies
-2. Arrange in triangle
-3. Press R for random mode
-4. Add more bodies for chaos
-5. Use camera to follow the action
-
-**Central Star:**
-1. Zoom out 10× (mouse wheel down)
-2. Create one large central body (hold 5+ seconds)
-3. Zoom back in (mouse wheel up)
-4. Add smaller bodies around it
-5. Disable fusion in config to prevent merging
-6. Enable random mode for orbits
-
-**Large Simulation (100+ bodies):**
-1. Switch to adaptive mode in config
-2. Press P repeatedly (20 bodies each time)
-3. Zoom out to see overview
-4. Enjoy smooth 120 FPS
-5. Pan to explore different regions
+**Taking Screenshots:**
+1. Create interesting configuration
+2. Press **S** key
+3. Screenshot saved automatically to screenshots folder
+4. Confirmation message appears
+5. Find images in: Documents/GravityEngine/screenshots/ (exe) or user_data/screenshots/ (dev)
 
 ---
 
@@ -467,25 +630,25 @@ self.fusions = True                  # Enable body fusion
 
 Gravity Engine demonstrates:
 
-1. **Newton's Law of Universal Gravitation** - F = G(m₁m₂)/r²
-2. **Momentum Conservation** - Total momentum before = after
+1. **Newton's Law of Universal Gravitation** - F = G(m1×m2)/r²
+2. **Momentum Conservation** - Total momentum before equals after
 3. **Fixed Timestep Integration** - Deterministic physics
 4. **Linear Interpolation** - Smooth rendering between states
-5. **Coordinate Transformation** - World ↔ screen conversion
+5. **Coordinate Transformation** - World to screen conversion
 6. **Zoom-Adaptive Scaling** - Mass scales with view scale
-7. **Mass-Energy Relationship** - E = ½mv², E ∝ mass for fair dynamics
+7. **Mass-Energy Relationship** - E = 0.5mv², E proportional to mass
 8. **Vector Mathematics** - Force and velocity decomposition
 9. **N-body Problem** - Classical unsolved problem
 10. **Visual Collision Detection** - Interpolated collision checking
-11. **Interactive UI Design** - Help overlay, real-time feedback
-12. **User Experience** - Intuitive controls, smooth interactions
+11. **UI Design Principles** - Overlay panels, custom widgets
+12. **File Management** - Cross-platform path resolution
 
 Perfect for:
 - Physics education (Newton's laws, gravity, coordinate systems)
 - Programming learning (game physics, Pygame, Python, UI design)
 - Mathematics (vectors, trigonometry, integration, logarithms)
-- Computational thinking (optimization, algorithms, spatial transformations)
-- User interface design (help systems, overlays, visual feedback)
+- Computational thinking (optimization, algorithms, transformations)
+- User interface design (configuration panels, help systems, widgets)
 
 ---
 
@@ -493,9 +656,15 @@ Perfect for:
 
 ### Common Issues
 
+**Configuration panel not opening:**
+- Make sure you press **C** (not Ctrl+C)
+- Check console for error messages
+- Verify config_panel_pygame.py is in src/ folder
+
 **Font not found:**
 - Ensure `assets/fonts/main_font.ttf` exists
 - Check file paths are correct
+- Verify Atlas is resolving paths properly
 
 **Help overlay not showing:**
 - Make sure you're **holding** H or I (not just pressing)
@@ -503,37 +672,50 @@ Perfect for:
 - Check that fonts are properly loaded
 
 **Simulation too fast/slow:**
-- Adjust `self.time_acceleration` in config
+- Press **C** to open config panel
+- Adjust Time Acceleration slider
 - Default: 2e4 (20,000× real time)
+- Or edit `self.time_acceleration` in code
 
 **Poor performance:**
-- Switch to adaptive mode
+- Switch to adaptive mode in config
 - Reduce physics frequency: `self.min_physics_interval = 0.050`
 - Disable vectors (V key)
-- Lower FPS: `self.FPS_TARGET = 60`
+- Lower FPS via config panel
 
-**Bodies too small after zooming out:**
-- Fixed in v3.2.0 with zoom-adaptive generation
-- Press P after zooming to generate appropriate bodies
-- Body masses now scale with zoom²
-
-**Body growth invisible when zoomed out:**
-- Fixed in v3.2.0 with screen-constant growth
-- Growth rate now adapts to zoom level
-- Visual growth speed is constant
-
-**Heavy bodies don't move in random mode:**
-- Fixed in v3.2.0 with mass-proportional energy
-- Energy now scales with mass (E ∝ mass)
-- Heavy bodies move realistically
+**Screenshots not saving:**
+- Check user_data/screenshots/ folder exists
+- Verify Atlas file manager initialized
+- Check console for error messages
+- Ensure write permissions in Documents folder (exe)
 
 ---
 
-## Roadmap (Can release sooner)
+## Roadmap
 
 See [ROADMAP.md](ROADMAP.md) for complete development plans.
 
-### Recently Completed (v3.3.0 - February 2026)
+### Recently Completed (v3.4.0 - May 2026)
+
+**Configuration Panel:**
+- Pygame-based overlay interface
+- Custom animated widgets
+- Real-time parameter adjustment
+- Save/load to JSON
+- Professional dark theme
+
+**File Management:**
+- Atlas module integration
+- Cross-platform path resolution
+- Automatic folder creation
+- Dev/exe mode detection
+
+**Screenshot System:**
+- One-key screenshot capture
+- Automatic file naming
+- Managed folder storage
+
+### Recently Completed (v3.3.0 - April 2026)
 
 **Interactive Help System:**
 - Real-time help overlay (hold H or I)
@@ -542,15 +724,17 @@ See [ROADMAP.md](ROADMAP.md) for complete development plans.
 - Visual availability indicator
 - Smooth integration with simulation
 
+### Recently Completed (v3.2.0 - March 2026)
+
 **Camera System:**
 - Complete pan, zoom, reset functionality
-- World ↔ screen coordinate conversion
+- World to screen coordinate conversion
 - Cursor-centered mouse wheel zoom
 - Screen-centered keyboard zoom (A/E)
 - Arrow key camera movement
 
 **Random Generation:**
-- Zoom-adaptive body masses (mass ∝ 1/scale²)
+- Zoom-adaptive body masses (mass proportional to 1/scale²)
 - Logarithmic mass distribution
 - World-coordinate generation
 - Bodies always fill visible screen
@@ -561,9 +745,24 @@ See [ROADMAP.md](ROADMAP.md) for complete development plans.
 - Smooth radius interpolation fix
 
 **Random Mode:**
-- Mass-proportional energy (E ∝ mass)
+- Mass-proportional energy (E proportional to mass)
 - Heavy bodies move realistically
 - Proportional kinetic energy distribution
+
+### Current Focus (June 2026)
+
+| Priority | Feature | Status |
+|----------|---------|--------|
+| 1 | Save/load scenarios (JSON) | In Progress |
+| 2 | Predefined scenario presets | Planned |
+| 3 | Performance profiling | Planned |
+| 4 | Enhanced data export (CSV) | Planned |
+
+### Next Milestones
+
+- **June 2026**: Save/load system, scenario presets
+- **July 2026**: Performance optimization, data export
+- **Q3 2026**: Visual effects, analysis tools, comprehensive documentation
 
 ---
 
@@ -584,7 +783,7 @@ Contributions are welcome! Here's how:
 
 ```bash
 # 1. Fork and clone
-git clone https://github.com/Nitr0xis/GravityEngine.git
+git clone https://github.com/YOUR_USERNAME/GravityEngine.git
 
 # 2. Create feature branch
 git checkout -b feature/your-feature
@@ -601,10 +800,11 @@ git push origin feature/your-feature
 
 ### Priority Areas
 
-- HIGH: Save/load system (May 2026)
-- MEDIUM: Enhanced camera features (May 2026)
-- MEDIUM: Scenario presets (May 2026)
-- LOW: Visual effects (July 2026)
+- HIGH: Save/load system (June 2026)
+- HIGH: Scenario presets (June 2026)
+- MEDIUM: Performance profiling (July 2026)
+- MEDIUM: Data export features (July 2026)
+- LOW: Visual effects (August 2026)
 
 ---
 
@@ -646,9 +846,9 @@ See [LICENSE](LICENSE) for complete terms.
 
 **Made with ❤️ and ☕ by [Nils DONTOT](https://github.com/Nitr0xis) (age 15)**
 
-*Last updated: February 25, 2026*
-*Version: 3.4.0 - Screenshots Edition*
+*Last updated: March 2026*  
+*Version: 3.5.0 - Complete Configuration Panel Edition*
 
 ---
 
-*Enjoy exploring gravitational physics!*
+*Enjoy exploring gravitational physics! Press C for config, H for help, S for screenshots!*

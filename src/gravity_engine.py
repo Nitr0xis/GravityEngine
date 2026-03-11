@@ -1,5 +1,5 @@
 """
-Gravity Engine 3.4.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.5.0 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -34,20 +34,14 @@ CONTROLS:
     Mouse wheel (optional) : Zoom in and Zoom out
 
 CONFIGURATION (in Engine.__init__()) (Main parameters):
-    performance_mode      : "precise" (accurate) or "adaptive" (fast)
     time_acceleration     : Simulation speed (default: 4e6)
-    min_physics_interval  : Update rate in adaptive mode (default: 0.025s)
     FPS_TARGET            : Rendering FPS (default: 120)
     default_density       : Body density kg/m³ (default: 5514)
     fusions               : Enable/disable body fusion (default: True)
 
-MODES:
-    PRECISE (default) : Fixed timestep, deterministic, may slow with many bodies
-    ADAPTIVE : Throttled updates, smooth rendering, less accurate
-
 PHYSICS:
     Newtonian gravity (F = G×m₁×m₂/r²), momentum conservation,
-    fixed/adaptive timestep, visual collision detection
+    fixed timestep, visual collision detection
 """
 
 
@@ -85,7 +79,6 @@ except ImportError:
     raise ImportError("\"pygame\" module is not installed")
 
 # For future ideas:
-import tkinter as tk
 try:
     import matplotlib.pyplot as plt
 except ImportError:
@@ -93,10 +86,12 @@ except ImportError:
 
 # Import my own modules
 from atlas import FileManager
+from config_panel import ConfigPanel
 
 
 """
 Todo:
+    - update code structure
     - add a focus mode
     - add a "define as referential button"
     - add collision epsilon
@@ -552,7 +547,7 @@ class Camera:
         self.scale_step = scale_step  # Zoom multiplier (1.1 = +10% per step)
         
         # ===== LIMITS =====
-        self.min_scale = 0.001  # Minimum zoom (very zoomed out)
+        self.min_scale = 1e-7  # Minimum zoom (very zoomed out)
         self.max_scale = 100.0  # Maximum zoom (very zoomed in)
         
         # ===== PANNING =====
@@ -1018,7 +1013,7 @@ class Circle:
         Utils.write_screen(text, (20, y - 20), Display.BLUE, 3)
 
         # Radius (in meters)
-        text = f"Radius : {round(self.radius * 10) / 10} m"
+        text = f"Radius : {self.radius:.3e} m"
         Utils.write_screen(text, (20, y - 20), Display.BLUE, 4)
 
         # Volume (in cubic meters)
@@ -1043,13 +1038,13 @@ class Circle:
         Utils.write_screen(text, (20, y - 20), Display.BLUE, 10)
 
         # Position coordinates
-        text = f"Coordinates : {int(self.x)}; {int(self.y)}"
+        text = f"Coordinates : {int(self.x) / 1000}; {int(self.y) / 1000}"
         Utils.write_screen(text, (20, y - 20), Display.BLUE, 11)
 
         # Nearest body information
         nearest_tuple = self.get_nearest()
         if nearest_tuple is not None:
-            text = f"Nearest body : n°{nearest_tuple[0]} -> {round(nearest_tuple[1]):.2e} m"
+            text = f"Nearest body : n°{nearest_tuple[0]} → {round(nearest_tuple[1]):.2e} m"
             Utils.write_screen(text, (20, y - 20), Display.BLUE, 12)
         else:
             text = f"Nearest body : None"
@@ -1331,7 +1326,50 @@ class Circle:
                                     (int(screen_x), int(screen_y)), 
                                     visible_radius)
 
-    def update_fusion(self, other):
+    def _will_collide_continuous(self, other, dt_sim: float) -> bool:
+        """
+        Continuous collision detection (CCD) over one time step.
+
+        Approximations:
+        - Relative velocity is assumed constant during the step.
+        - Radius is assumed constant during the step.
+        """
+        # Relative position at the start of the step
+        dx = other.x - self.x
+        dy = other.y - self.y
+
+        # Collision radius (sum of radii)
+        R = self.radius + other.radius
+
+        # If already overlapping, we're colliding
+        if dx * dx + dy * dy <= R * R:
+            return True
+
+        # Relative displacement over dt_sim
+        dvx = (other.vx - self.vx) * dt_sim
+        dvy = (other.vy - self.vy) * dt_sim
+
+        # Quadratic in parameter t ∈ [0,1]: |p + v t| = R
+        a = dvx * dvx + dvy * dvy
+        if a < 1e-20:
+            # No meaningful relative motion
+            return False
+
+        b = 2.0 * (dx * dvx + dy * dvy)
+        c = dx * dx + dy * dy - R * R
+
+        disc = b * b - 4.0 * a * c
+        if disc < 0.0:
+            return False
+
+        sqrt_disc = sqrt(disc)
+        t1 = (-b - sqrt_disc) / (2.0 * a)
+        t2 = (-b + sqrt_disc) / (2.0 * a)
+
+        # Collision si une des racines tombe dans [0,1]
+        return (0.0 <= t1 <= 1.0) or (0.0 <= t2 <= 1.0)
+
+    def update_fusion(self, other, dt_sim: float):
         """
         Check and perform fusion with double verification.
 
@@ -1345,12 +1383,17 @@ class Circle:
         if self.mass < other.mass:
             return  # Only the heavier body can absorb
 
-        # ===== PHYSICAL VERIFICATION (real positions) =====
+        # ===== PHYSICAL VERIFICATION (real positions + CCD) =====
         dx_real = other.x - self.x
         dy_real = other.y - self.y
         distance_real = sqrt(dx_real**2 + dy_real**2)
 
+        # Instant collision (overlap at current state)
         physical_collision = distance_real <= (self.radius + other.radius)
+
+        # Continuous Collision Detection: did they intersect during this step?
+        if not physical_collision:
+            physical_collision = self._will_collide_continuous(other, dt_sim)
 
         # ===== VISUAL VERIFICATION (interpolated positions) =====
         alpha = engine.current_alpha
@@ -1487,7 +1530,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.4.0"
+        self.project_version = "3.5.0"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -1526,6 +1569,9 @@ class Engine:
         # Previous frame time for delta calculation
         self.previous_time = time.time()
 
+        # ==================== CONFIGURATION PANEL ====================
+        self.config_panel: ConfigPanel | None = None  # Will be created on first open
+
         # ==================== SIMULATION SETTINGS ====================
         self.FPS_TARGET = 120
         self.time_acceleration = 2e4  # Time acceleration factor
@@ -1562,17 +1608,13 @@ class Engine:
         self.vectors_in_front = True
         self.vector_scale = 1
 
-        # ==================== PERFORMANCE MODE ====================
-        self.performance_mode = "precise"  # "precise" or "adaptive", "adaptive" as actually important problems
-        # - "precise": Slows down if CPU is slow (deterministic)
-        # - "adaptive": Compensates with large steps (smooth but imprecise)
-        # Maximum allowed step time in adaptive performance mode (prevents overly large physics steps)
-        self.MAX_ADAPTIVE_STEP_TIME = 0.050  # Max 50ms
-
-        # Adaptive throttling: limits the frequency of physics calculations
-        self.min_physics_interval = 0.025  # 200ms = max 5 calculations/second
-        self.last_physics_time = 0.0  # Timestamp of the last physics calculation
-        self.physics_time_debt = 0.0  # Time accumulated since the last calculation
+        # ==================== ADAPTIVE SUBSTEPS (CCD helper) ====================
+        # When enabled, each fixed physics step can be subdivided into
+        # additional substeps based on bodies' speeds and radii.
+        # This helps avoid fast bodies tunnelling through others.
+        self.adaptive_substeps: bool = False
+        # Max extra substeps per base step (0 = disabled, 1 = up to 2x, etc.)
+        self.adaptive_substeps_max_extra: float = 0.0
 
         # ==================== RENDERING STATE ====================
         self.current_alpha = 1.0  # Current interpolation alpha (for selection)
@@ -1611,8 +1653,8 @@ class Engine:
         self.simulation_time_in_pause = 0.0  # Time spent paused (towards simulation_time)
         self.pause_start_simulation_time = None  # simulation_time at the moment of pause
 
-        # ==================== GESTION VISUELLE DES COLLISIONS ====================
-        self.skip_prev_update = False  # Drapeau pour empêcher la mise à jour de prev_x/prev_y
+        # ==================== VISUAL COLLISION HANDLING ====================
+        self.skip_prev_update = False  # Flag to prevent updating prev_x/prev_y
         
         # ==================== BODY MANAGEMENT ====================
         self.circle_number = 0
@@ -1642,6 +1684,42 @@ class Engine:
         self.circle_collided = False
         self.collision_detected = False
         self.temp_circle: Circle
+
+    # ==================== UI HELPERS ====================
+    def notify(self, text: str, duration: float = 2.0, line: int = 0) -> None:
+        """
+        Display a small temporary message at the bottom of the screen.
+        Used by the configuration panel to confirm actions.
+        """
+        y = self.screen.get_height() - (line + 2) * (self.txt_gap + self.txt_size)
+        TempText(
+            text=text,
+            duration=duration,
+            dest=(20, y)
+        )
+
+    # ==================== CAMERA PROPERTIES (for UI) ====================
+    @property
+    def camera_zoom(self) -> float:
+        """
+        Zoom de la caméra exposé au panneau de configuration.
+        
+        Utilise directement le facteur de zoom interne de la caméra.
+        """
+        return self.camera.scale
+
+    @camera_zoom.setter
+    def camera_zoom(self, value: float) -> None:
+        """
+        Update the camera zoom from the UI.
+        
+        Value is automatically clamped between min_scale and max_scale.
+        """
+        if not hasattr(self, "camera"):
+            return
+        # Clamp to the camera allowed range
+        value = max(self.camera.min_scale, min(value, self.camera.max_scale))
+        self.camera.scale = value
 
     def handle_input(self, event: pygame.event.Event = None) -> None:
         """
@@ -1752,7 +1830,7 @@ class Engine:
         # Display heaviest body information
         heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
-            text = f"Heaviest body : n°{heaviest_tuple[0]} -> {heaviest_tuple[1] / 1000:.2e} kg"
+            text = f"Heaviest body : n°{heaviest_tuple[0]} → {heaviest_tuple[1] / 1000:.2e} kg"
             Utils.write_screen(text, (20, y), Display.BLUE, 2)
         else:
             text = f"Heaviest body : None"
@@ -1767,26 +1845,8 @@ class Engine:
         text = "Hold H or I to display the help box"
         Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 0)
 
-        # Display reversed gravity status (top right)
-        if self.reversed_gravity:
-            text = f"Reversed gravity : Enabled"
-        else:
-            text = f"Reversed gravity : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 2)
-
-        # Display velocity vectors status (top right)
-        if self.vectors_printed:
-            text = f"Vectors : Enabled"
-        else:
-            text = f"Vectors : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 3)
-
-        # Display random mode status (top right)
-        if self.random_mode:
-            text = f"Random mode : Enabled"
-        else:
-            text = f"Random mode : Disabled"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Display.BLUE, 4)
+        text = "Press C to show the config menu"
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 1)
 
         # Display time acceleration factor (bottom right)
         text = f"Time factor : ×{self.time_acceleration:.2e}"
@@ -1820,10 +1880,10 @@ class Engine:
             # Convert age to years (31,557,600 seconds per year)
             oldest_age_years = oldest_tuple[1] * engine.time_acceleration / 31_557_600
             if oldest_age_years < 2:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} Earth year"
+                text = f"Oldest body : n°{oldest_tuple[0]} → {int(oldest_age_years * 1000) / 1000} Earth year"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
             else:
-                text = f"Oldest body : n°{oldest_tuple[0]} -> {int(oldest_age_years * 1000) / 1000} Earth years"
+                text = f"Oldest body : n°{oldest_tuple[0]} → {int(oldest_age_years * 1000) / 1000} Earth years"
                 Utils.write_screen(text, (20, y), Display.BLUE, 3)
         else:
             text = f"Oldest body : None"
@@ -1911,6 +1971,7 @@ class Engine:
                     ("S", "Take a screenshot"), ("", f"Saved in {self.screenshots_folder_path}"),
                     ("Delete", "Delete selected body"),
                     ("H / I", "Toggle this help overlay"),
+                    ("C", "Toggle the config panel"),
                     ("Escape/Alt+F4", "Exit program"),
                 ]
             },
@@ -2097,6 +2158,8 @@ class Engine:
         Args:
             dt: Fixed timestep duration (always self.physics_timestep)
         """
+        # Simulated duration (including time acceleration factor)
+        dt_sim = dt * self.time_acceleration
         # Remove bodies marked for deletion (after fusion)
         circles_to_remove = [circle for circle in circles if circle.suicide]
         for circle in circles_to_remove:
@@ -2109,8 +2172,8 @@ class Engine:
                 if circle != other_circle:
                     # Calculate and store attraction force
                     circle.attract_forces.append(circle.attract(other_circle))
-                    # Check for fusion conditions
-                    circle.update_fusion(other_circle)
+                    # Check for fusion conditions (with CCD on the current step)
+                    circle.update_fusion(other_circle, dt_sim)
         
         # Update all bodies (position, velocity, age, etc.)
         for circle in circles:
@@ -2118,6 +2181,46 @@ class Engine:
 
         # IMPORTANT: Increment simulation time
         self.simulation_time += dt
+
+    def physics_step_with_substeps(self, dt: float) -> None:
+        """
+        Execute a physics step, optionally subdivided into adaptive substeps.
+
+        - If self.adaptive_substeps is False or max extra is 0,
+          a single physics_step(dt) is executed.
+        - Otherwise, we estimate how many substeps are needed to
+          limit displacement relative to radius.
+        """
+        if not self.adaptive_substeps or self.adaptive_substeps_max_extra <= 0.0:
+            self.physics_step(dt)
+            return
+
+        # Estimate the worst displacement / radius ratio
+        max_ratio = 0.0
+        if len(circles) > 0:
+            for c in circles:
+                if c.radius <= 0:
+                    continue
+                # Speed already computed (m/s) or recomputed if missing
+                speed = getattr(c, "speed", sqrt(c.vx ** 2 + c.vy ** 2))
+                # Displacement over the simulated step
+                disp = speed * dt * self.time_acceleration
+                ratio = disp / c.radius if c.radius > 0 else 0.0
+                if ratio > max_ratio:
+                    max_ratio = ratio
+
+        # Threshold: target max displacement ≈ 0.5 radius per substep
+        threshold = 0.5
+        if max_ratio <= 0.0:
+            substeps = 1
+        else:
+            required = ceil(max_ratio / threshold)
+            max_allowed = 1 + int(self.adaptive_substeps_max_extra)
+            substeps = max(1, min(required, max_allowed))
+
+        sub_dt = dt / substeps
+        for _ in range(substeps):
+            self.physics_step(sub_dt)
     
     def render(self, alpha):
         """
@@ -2293,8 +2396,7 @@ class Engine:
                 # Ignore all events during splash screen
                 if event.type == pygame.QUIT:
                     # Allow quit to work
-                    pygame.quit()
-                    sys.exit()
+                    ActionManager.quit_engine()
                 # All other events are ignored
             
             # Maintain FPS
@@ -2356,6 +2458,8 @@ class Engine:
             pygame.K_a: ActionManager.zoom_in,      # A to zoom in
             pygame.K_e: ActionManager.zoom_out,    # E to zoom out
             pygame.K_t: ActionManager.reset_camera,    # T to reset
+            # ===== CONFIGURATION PANEL =====
+            pygame.K_c: lambda: ActionManager.open_config_panel(),
             # Arrows to move
             pygame.K_LEFT: lambda: ActionManager.pan_camera(self.camera_speed, 0),
             pygame.K_RIGHT: lambda: ActionManager.pan_camera(-self.camera_speed, 0),
@@ -2408,11 +2512,18 @@ class Engine:
             # Limit accumulator to prevent spiral of death
             if self.time_accumulator > self.max_accumulation:
                 self.time_accumulator = self.max_accumulation
+
+            # ===== UPDATE KEYS MAP =====
+            if engine.config_panel is None or not engine.config_panel.visible:
+                self.KEY_MAP[pygame.K_ESCAPE] = ActionManager.quit_engine
+            else:
+                self.KEY_MAP[pygame.K_ESCAPE] = engine.config_panel.toggle
             
             # ===== EVENT HANDLING =====
+            events_list = []
             for event in pygame.event.get():
                 self.handle_input(event)
-                
+                events_list.append(event)
                 if event.type == pygame.QUIT:
                     ActionManager.quit_engine()
                 elif event.type in self.MOUSEBUTTON_MAP:
@@ -2423,6 +2534,10 @@ class Engine:
                     action = self.KEY_MAP.get(event.key)
                     if action:
                         action()
+
+            # ===== UPDATE CONFIG PANEL =====
+            if hasattr(self, 'config_panel') and self.config_panel:
+                self.config_panel.update(events_list)
 
             # ===== CHECK HELP KEYS (HOLD TO DISPLAY) =====
             keys = pygame.key.get_pressed()
@@ -2491,85 +2606,37 @@ class Engine:
                     self.mouse_down = False
                     self.mouse_down_start_time = None
             
-            # ===== PHYSICS (fixed timestep) =====
+            # ===== PHYSICS (fixed timestep - precise only, with optional substeps) =====
             # Do as many physics steps as needed to catch up
             if not self.is_paused:
-                current_real_time = time.time()
-        
-                if self.performance_mode == "adaptive":
-                    # ADAPTIVE mode: limit the frequency of physics calculations for performance
-
-                    time_since_last_physics = current_real_time - self.last_physics_time
-
-                    # Accumulate time since last physics update
-                    self.physics_time_debt += frame_time
-
-                    # Check if enough time has passed to perform a physics update
-                    if time_since_last_physics >= self.min_physics_interval:
-                        # Perform ONLY ONE physics calculation with all the accumulated time
-                        total_dt = self.physics_time_debt
-
-                        # Limit the maximum step size to avoid "physics explosions" (instabilities/bugs from too large time step)
-                        max_single_step = 0.5  # maximum of 500ms per step
-                        if total_dt > max_single_step:
-                            warnings.warn(f"WARNING: Physics step too large ({total_dt*1000:.0f}ms), clamping to {max_single_step*1000:.0f}ms")
-                            total_dt = max_single_step
-
-                        # Execute the physics update
-                        self.physics_step(total_dt)
-
-                        # Reset counters for next calculation and for interpolation rendering
-                        self.last_physics_time = current_real_time
-                        self.physics_time_debt = 0.0
-                        self.time_accumulator = 0.0  # Reset for interpolation
-
-                    else:
-                        # Pas encore temps de calculer, juste accumuler pour l'interpolation
-                        self.time_accumulator += frame_time
-                        
-                        # Limiter l'accumulator pour éviter débordement
-                        if self.time_accumulator > self.min_physics_interval:
-                            self.time_accumulator = self.min_physics_interval
+                # Precise mode: original behavior (regular calculations)
+                self.time_accumulator += frame_time
                 
-                elif self.performance_mode == "precise":
-                    # Mode précis : comportement original (calculs réguliers)
-                    self.time_accumulator += frame_time
-                    
-                    # Limiter accumulator
-                    if self.time_accumulator > self.max_accumulation:
-                        self.time_accumulator = self.max_accumulation
-                    
-                    # Faire autant de calculs que nécessaire
-                    physics_steps = 0
-                    max_steps_per_frame = 2
-                    
-                    while self.time_accumulator >= self.physics_timestep:
-                        if physics_steps >= max_steps_per_frame:
-                            break
-                        
-                        self.physics_step(self.physics_timestep)
-                        self.time_accumulator -= self.physics_timestep
-                        physics_steps += 1
-                    
-                    # Perdre le temps restant si limite atteinte
+                # Limiter accumulator
+                if self.time_accumulator > self.max_accumulation:
+                    self.time_accumulator = self.max_accumulation
+                
+                # Faire autant de calculs que nécessaire
+                physics_steps = 0
+                max_steps_per_frame = 2
+                
+                while self.time_accumulator >= self.physics_timestep:
                     if physics_steps >= max_steps_per_frame:
-                        self.time_accumulator = 0.0
-
-                else:
-                    # when performance_mode is not "precise" or "adaptative"
-                    raise ValueError("Engine.performance_mode must be \"precise\" or \"adaptive\" [can be updated in Engine.__init__()]")
+                        break
+                    
+                    self.physics_step_with_substeps(self.physics_timestep)
+                    self.time_accumulator -= self.physics_timestep
+                    physics_steps += 1
+                
+                # Perdre le temps restant si limite atteinte
+                if physics_steps >= max_steps_per_frame:
+                    self.time_accumulator = 0.0
             
             # ===== RENDERING =====
             # Calculate interpolation alpha for smooth rendering
             # alpha = how far we are between current and next physics state
             if self.use_interpolation:
-                if self.performance_mode == "adaptive":
-                    # In adaptive mode, alpha represents the time since the last physics step
-                    time_since_physics = time.time() - self.last_physics_time
-                    alpha = min(1.0, time_since_physics / self.min_physics_interval)
-                else:
-                    # In precise mode: use the normal alpha calculation
-                    alpha = self.time_accumulator / self.physics_timestep
+                alpha = self.time_accumulator / self.physics_timestep
             else:
                 alpha = 1.0
             
@@ -2589,6 +2656,10 @@ class Engine:
             
             # Render with interpolation
             self.render(alpha)
+
+            # ===== DRAW CONFIG PANEL (OVERLAY) =====
+            if hasattr(self, 'config_panel') and self.config_panel:
+                self.config_panel.draw()
             
             # Update display and maintain target FPS
             pygame.display.flip()
@@ -2632,13 +2703,16 @@ class ActionManager:
         engine.vectors_printed = not engine.vectors_printed
 
     @staticmethod
-    def quit_engine(text: str = "See you soon!"):
+    def quit_engine(text: Optional[str] = None):
         """
         Quit the simulation and exit the program.
         
         Args:
             text: Exit message (not currently displayed)
         """
+        if text is None:
+            text = f"{60 * "="}\nSee you soon! Project available on https://github.com/Nitr0xis/GravityEngine/\n{60 * "="}"
+
         pygame.quit()
         sys.exit(text)
 
@@ -2655,6 +2729,10 @@ class ActionManager:
         """Handle mouse button press with camera transformation."""
         # Don't handle circle creation if in info mode
         if engine.show_help:
+            return
+
+        # Don't handle circle creation if config panel is open
+        if engine.config_panel is not None and engine.config_panel.visible:
             return
 
         # Right click to pan
@@ -2817,6 +2895,15 @@ class ActionManager:
             )
 
         pygame.image.save(engine.screen, path)
+
+    @staticmethod
+    def open_config_panel():
+        """Open/close the configuration panel."""
+        if not hasattr(engine, 'config_panel') or engine.config_panel is None:
+            engine.config_panel = ConfigPanel(engine, engine.screen, engine.used_font)
+        
+        engine.config_panel.toggle()
+
 
 
 # -----------------

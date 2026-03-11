@@ -26,11 +26,11 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
 #### Priority 2: Interpolated Rendering - Mode PRECISE (COMPLETED)
 - [x] Linear interpolation between physics states
 - [x] Alpha blending for smooth 120 FPS visuals
-- [x] **Position interpolation** (prev_x, prev_y)
-- [x] **Velocity interpolation** (prev_vx, prev_vy)
-- [x] **Force interpolation** (prev_force)
-- [x] **Radius interpolation** (prev_radius for smooth fusions)
-- [x] **Interpolation cache** (avoid redundant calculations)
+- [x] Position interpolation (prev_x, prev_y)
+- [x] Velocity interpolation (prev_vx, prev_vy)
+- [x] Force interpolation (prev_force)
+- [x] Radius interpolation (prev_radius for smooth fusions)
+- [x] Interpolation cache (avoid redundant calculations)
 - [x] Interpolated vector rendering (velocity + force)
 - [x] Smooth rendering even with variable frame rates
 
@@ -73,7 +73,7 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
 **Completed: March 31, 2026**
 
 #### Priority 1: Complete Camera System (COMPLETED)
-- [x] **Core camera functionality**
+- [x] Core camera functionality
   - [x] Pan with right-click drag
   - [x] Zoom with mouse wheel (cursor-centered)
   - [x] Keyboard zoom A/E (screen-centered)
@@ -81,14 +81,14 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
   - [x] Reset camera with T key
   - [x] Smooth camera transitions
   
-- [x] **Coordinate transformation system**
-  - [x] `world_to_screen(wx, wy)` conversion
-  - [x] `screen_to_world(sx, sy)` conversion
-  - [x] `zoom_at_mouse(zoom_in)` with cursor preservation
+- [x] Coordinate transformation system
+  - [x] world_to_screen(wx, wy) conversion
+  - [x] screen_to_world(sx, sy) conversion
+  - [x] zoom_at_mouse(zoom_in) with cursor preservation
   - [x] Camera offset tracking (cam_x, cam_y)
   - [x] Scale factor management (zoom level)
   
-- [x] **Integration with rendering**
+- [x] Integration with rendering
   - [x] All bodies rendered in screen coordinates
   - [x] Vectors use camera transformation
   - [x] Click detection in world coordinates
@@ -96,74 +96,74 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
   - [x] Culling for off-screen bodies
 
 #### Priority 2: Zoom-Adaptive Random Generation (COMPLETED)
-- [x] **World-coordinate generation**
+- [x] World-coordinate generation
   - [x] Calculate visible world area from camera
   - [x] Generate bodies in world space (not screen pixels)
   - [x] Bodies distributed across visible area
   
-- [x] **Mass adaptation to zoom**
+- [x] Mass adaptation to zoom
   - [x] Mass multiplier = 1.0 / scale²
-  - [x] Zoom out 10× → mass ×100
-  - [x] Zoom in 10× → mass ÷100
+  - [x] Zoom out 10x results in mass times 100
+  - [x] Zoom in 10x results in mass divided by 100
   - [x] Bodies visually consistent at all zooms
   
-- [x] **Logarithmic mass distribution**
+- [x] Logarithmic mass distribution
   - [x] log10 distribution for realistic variety
   - [x] More small bodies, fewer giants
   - [x] Natural appearance
   
-- [x] **User feedback**
+- [x] User feedback
   - [x] TempText notification with zoom level
   - [x] Display number of bodies generated
 
 #### Priority 3: Screen-Constant Body Growth (COMPLETED)
-- [x] **Growth rate adaptation**
+- [x] Growth rate adaptation
   - [x] Calculate growth in screen pixels
   - [x] Convert to world meters via scale
   - [x] Apply world meters to radius
   - [x] Visual growth constant at all zooms
   
-- [x] **Physics consistency**
+- [x] Physics consistency
   - [x] Mass recalculated from radius and density
   - [x] Volume = (4/3)πr³
   - [x] Mass = density × volume
   
-- [x] **Smooth interpolation**
+- [x] Smooth interpolation
   - [x] Save prev_radius before growth
   - [x] Invalidate interpolation cache
   - [x] Fix radius flicker during creation
   - [x] Works in paused mode
 
 #### Priority 4: Mass-Proportional Random Energy (COMPLETED)
-- [x] **Energy per kilogram system**
+- [x] Energy per kilogram system
   - [x] Replace fixed energy with energy_per_kg
   - [x] Total energy = energy_per_kg × mass
   - [x] Velocity calculated from kinetic energy
   
-- [x] **Realistic heavy body motion**
+- [x] Realistic heavy body motion
   - [x] Heavy bodies now move (not motionless)
   - [x] Kinetic energy proportional to mass
   - [x] Velocity magnitude independent of mass
   - [x] Fair dynamics for all body sizes
   
-- [x] **Configuration parameter**
-  - [x] `random_energy_per_kg = 1e-10` (J/kg)
+- [x] Configuration parameter
+  - [x] random_energy_per_kg = 1e-10 (J/kg)
   - [x] Adjustable in Engine.__init__()
   - [x] Documented in README
 
 #### Priority 5: Bug Fixes & Polish (COMPLETED)
-- [x] **Radius interpolation fix**
+- [x] Radius interpolation fix
   - [x] Identified root cause (prev_radius not updated)
   - [x] Fixed growth while paused
   - [x] Proper cache invalidation
   
-- [x] **Documentation updates**
+- [x] Documentation updates
   - [x] Complete camera system documentation
   - [x] Zoom-adaptive generation explained
   - [x] Screen-constant growth documented
   - [x] Mass-proportional energy described
   
-- [x] **Code quality improvements**
+- [x] Code quality improvements
   - [x] Consistent variable naming (cam_x, cam_y)
   - [x] Comprehensive comments
   - [x] Clear method signatures
@@ -171,547 +171,504 @@ This document outlines the development roadmap for Gravity Engine with prioritiz
 
 ---
 
-## Q2 2026 (April - June) - In Progress
+## Q2 2026 (April - June) - COMPLETED 67%
 
-### April 2026 (In Progress - 0%)
-**Deadline: April 30, 2026**
+### April 2026 (COMPLETED - 100%)
+**Completed: April 15, 2026**
 
-#### Priority 1: User interface helper (Week 1)
-- [x] **Display info about used keys when H or I pressed**
+#### Priority 1: Interactive Help System (COMPLETED)
+- [x] Real-time help overlay
+  - [x] Hold H or I to display
+  - [x] Release to dismiss
+  - [x] Semi-transparent dark background
+  - [x] Professional layout and typography
+  
+- [x] Comprehensive controls reference
+  - [x] Mouse controls section
+  - [x] Keyboard shortcuts section
+  - [x] Camera navigation section
+  - [x] Simulation controls section
+  
+- [x] Visual design
+  - [x] Color-coded controls (green keys, white descriptions)
+  - [x] Organized by category
+  - [x] Centered layout with clear separation
+  - [x] Footer with version and author info
+  
+- [x] User experience
+  - [x] Always accessible during simulation
+  - [x] No interruption to physics
+  - [x] Visual indicator in top-right corner
+  - [x] Smooth integration
 
-#### Priority 2: Advanced Camera Features (Week 1-2)
-- [ ] **Auto-follow mode**
-  - [ ] Toggle follow selected body
-  - [ ] Smooth camera tracking
-  - [ ] Configurable follow speed
-  - [ ] Return to free cam mode
-  
-- [ ] **Navigation mini-map**
-  - [ ] Overview of entire simulation
-  - [ ] Current viewport indicator
-  - [ ] Click to jump to location
-  - [ ] Toggle on/off
-  
-- [ ] **Camera presets**
-  - [ ] Save camera positions
-  - [ ] Quick recall with hotkeys
-  - [ ] Named preset system
-  - [ ] Smooth transitions between presets
+### May 2026 (COMPLETED - 100%)
+**Completed: May 15, 2026**
 
-#### Priority 3: Enhanced User Interface (Week 2-3)
-- [ ] **In-game settings menu**
-  - [ ] Pause overlay with options
-  - [ ] Real-time parameter adjustment
-  - [ ] Vector scale controls
-  - [ ] Time acceleration slider
-  - [ ] Performance mode selector
+#### Priority 1: Pygame Configuration Panel (COMPLETED)
+- [x] Custom widget system
+  - [x] Animated checkboxes with fade effects
+  - [x] Linear and logarithmic sliders
+  - [x] Buttons with hover effects
+  - [x] Scrollable content panel
+  - [x] Professional dark theme
   
-- [ ] **Simulation configuration panel**
-  - [ ] Physics parameters
-  - [ ] Random generation settings
-  - [ ] Camera settings
-  - [ ] Visual effects toggles
+- [x] Configuration interface
+  - [x] Simulation section (time acceleration, FPS)
+  - [x] Physics section (density, fusions)
+  - [x] Visual section (vectors, scale)
+  - [x] Real-time parameter updates
+  - [x] Semi-transparent overlay design
   
-- [ ] **Configurable keyboard shortcuts**
-  - [ ] Key binding editor
-  - [ ] Save/load key configurations
-  - [ ] Reset to defaults
-  - [ ] Conflict detection
+- [x] Persistence system
+  - [x] Save configuration to JSON
+  - [x] Load saved configurations
+  - [x] Automatic file management
+  - [x] User data path resolution
+  
+- [x] User experience
+  - [x] Press C to toggle panel
+  - [x] ESC or click outside to close
+  - [x] Smooth overlay appearance
+  - [x] Background simulation visible
 
-#### Priority 4: Improved Visualization (Week 3-4)
-- [ ] **Enhanced info panel**
-  - [ ] Resizable/movable panel
-  - [ ] Multiple bodies info simultaneously
-  - [ ] Graphs for selected body (velocity, energy over time)
-  - [ ] Orbital parameters display
+#### Priority 2: Atlas File Manager Integration (COMPLETED)
+- [x] Core file management
+  - [x] Cross-platform path resolution
+  - [x] Dev mode detection (Python source)
+  - [x] Exe mode detection (PyInstaller bundle)
+  - [x] Automatic folder creation
   
-- [ ] **Grid and reference system**
-  - [ ] Optional grid overlay
-  - [ ] Configurable grid spacing
-  - [ ] Origin marker
-  - [ ] Distance scale indicator
+- [x] Path management
+  - [x] Resource paths (assets)
+  - [x] User data paths (Documents or project folder)
+  - [x] Platform-specific handling (Windows/Mac/Linux)
+  - [x] Consistent API across modes
+  
+- [x] Folder structure
+  - [x] Screenshots folder
+  - [x] Saves folder (for future features)
+  - [x] Logs folder
+  - [x] Config file storage
+  
+- [x] Integration
+  - [x] Engine initialization
+  - [x] FileManager instance (self.fm)
+  - [x] Resource path resolution for fonts
+  - [x] User data path for screenshots/config
 
-#### Priority 5: Music System Completion (Week 4)
-- [ ] Setup assets/musics/music*.mp3
-- [ ] Test background music functionality
-- [ ] Volume controls in settings
-- [ ] Playlist management
+#### Priority 3: Screenshot System (COMPLETED)
+- [x] Capture functionality
+  - [x] Press S to take screenshot
+  - [x] Full resolution PNG capture
+  - [x] Automatic file naming with timestamp
+  - [x] Saved to managed screenshots folder
+  
+- [x] User feedback
+  - [x] Visual confirmation message
+  - [x] Display filename
+  - [x] TempText notification
+  - [x] Non-intrusive placement
+  
+- [x] File management
+  - [x] Atlas-managed folder paths
+  - [x] Cross-platform compatibility
+  - [x] Automatic folder creation
+  - [x] Organized storage
 
-### May 2026 (Planned)
-**Deadline: May 31, 2026**
-
-#### Priority 1: Save/Load System (Week 1-3)
-- [ ] **Export simulation to JSON**
-  - [ ] Serialize all Circle properties
-  - [ ] Serialize Engine settings
-  - [ ] Include metadata (version, date, author)
-  - [ ] Compressed format option
-  
-- [ ] **Import simulation**
-  - [ ] Validate JSON structure
-  - [ ] Handle version compatibility
-  - [ ] Error handling for corrupted files
-  - [ ] Migration between versions
-  
-- [ ] **Auto-save functionality**
-  - [ ] Periodic auto-save (configurable interval)
-  - [ ] Recovery from crashes
-  - [ ] Auto-save slots management
-  - [ ] Manual save slots
-  
-- [ ] **Scenario preset management**
-  - [ ] Built-in presets library
-  - [ ] User custom presets
-  - [ ] Import/export presets
-  - [ ] Preview before loading
-
-#### Priority 2: Predefined Simulation Scenarios (Week 3-4)
-- [ ] **Solar system**
-  - [ ] Sun + 8 planets (accurate masses)
-  - [ ] Proper orbital velocities
-  - [ ] To-scale distances (optional)
-  
-- [ ] **Binary star system**
-  - [ ] Two equal-mass stars
-  - [ ] Stable circular orbit
-  - [ ] Optional planets
-  
-- [ ] **Triple star system**
-  - [ ] Three-body choreography
-  - [ ] Figure-8 orbit (optional)
-  - [ ] Stable hierarchical triple
-  
-- [ ] **Stellar cluster**
-  - [ ] 50+ stars with random masses
-  - [ ] Logarithmic mass distribution
-  - [ ] Initial velocities for stability
-  
-- [ ] **Galaxy collision**
-  - [ ] Two spiral galaxies
-  - [ ] Collision trajectory
-  - [ ] Time-lapse recommended settings
-  
-- [ ] **Accretion disk**
-  - [ ] Central massive body
-  - [ ] Disk of small bodies
-  - [ ] Proper orbital velocities
-
-#### Priority 3: Performance Profiling (Week 4)
-- [ ] Code profiling with cProfile
-- [ ] Identify performance bottlenecks
-- [ ] Optimize critical loops
-- [ ] Consider NumPy for vectorized calculations
-
-### June 2026 (Planned)
+### June 2026 (In Progress - 0%)
 **Deadline: June 30, 2026**
 
-#### Priority 1: Performance Improvements (Week 1-2)
-- [ ] **Code optimization**
-  - [ ] Profile with cProfile
-  - [ ] Optimize hot paths
-  - [ ] Consider Cython for critical functions
-  - [ ] Memory usage optimization
+#### Priority 1: Save/Load System (Week 1-3)
+- [ ] JSON serialization
+  - [ ] Serialize all body properties
+  - [ ] Serialize simulation state
+  - [ ] Serialize camera position
+  - [ ] Version compatibility handling
   
-- [ ] **Advanced optimization (optional)**
-  - [ ] Investigate NumPy for vector operations
-  - [ ] Multi-threading for force calculations
-  - [ ] GPU acceleration research (for future)
+- [ ] Save functionality
+  - [ ] Manual save command (Ctrl+S)
+  - [ ] Auto-save every N minutes
+  - [ ] Save with custom filename
+  - [ ] Overwrite protection
+  
+- [ ] Load functionality
+  - [ ] Load from file dialog
+  - [ ] Quick load last save
+  - [ ] Validation and error handling
+  - [ ] Smooth state restoration
+  
+- [ ] File management
+  - [ ] Save to managed saves folder
+  - [ ] List available saves
+  - [ ] Delete old saves
+  - [ ] Import/export functionality
 
-#### Priority 2: Configuration System (Week 2-3)
-- [ ] **External config file**
-  - [ ] JSON or YAML format
-  - [ ] All Engine parameters configurable
-  - [ ] Easy editing for users
-  - [ ] Config validation
+#### Priority 2: Scenario Presets (Week 2-4)
+- [ ] Predefined scenarios
+  - [ ] Binary star system
+  - [ ] Solar system model
+  - [ ] Three-body chaos
+  - [ ] Galaxy collision
+  - [ ] Asteroid belt
+  - [ ] Planetary rings
   
-- [ ] **Runtime parameter adjustment**
-  - [ ] Live parameter changes (no restart)
-  - [ ] Safe range enforcement
-  - [ ] Preview before applying
+- [ ] Scenario system
+  - [ ] JSON scenario format
+  - [ ] Scenario loader
+  - [ ] Scenario menu/browser
+  - [ ] Quick access hotkeys
   
-- [ ] **User preferences persistence**
-  - [ ] Save window position/size
-  - [ ] Remember last settings
-  - [ ] Camera position memory (optional)
-  - [ ] Recent files list
+- [ ] User scenarios
+  - [ ] Save current state as scenario
+  - [ ] Edit scenario metadata
+  - [ ] Share scenario files
+  - [ ] Import community scenarios
 
-#### Priority 3: Documentation & Tutorials (Week 3-4)
-- [ ] **User guide improvements**
-  - [ ] Getting started tutorial
-  - [ ] Advanced features guide
-  - [ ] Troubleshooting expanded
+#### Priority 3: Performance Profiling (Week 3-4)
+- [ ] Profiling tools
+  - [ ] Physics calculation timing
+  - [ ] Rendering timing
+  - [ ] Memory usage tracking
+  - [ ] FPS statistics over time
   
-- [ ] **Video tutorials**
-  - [ ] Basic usage walkthrough
-  - [ ] Creating scenarios
-  - [ ] Camera navigation
-  - [ ] Understanding physics
+- [ ] Performance display
+  - [ ] Real-time metrics overlay
+  - [ ] Performance graphs
+  - [ ] Bottleneck identification
+  - [ ] Optimization suggestions
+  
+- [ ] Benchmarking
+  - [ ] Standard benchmark scenarios
+  - [ ] Performance comparison
+  - [ ] Hardware capability detection
+  - [ ] Automatic quality adjustment
+
+#### Priority 4: Enhanced Data Export (Week 4)
+- [ ] CSV export
+  - [ ] Body position over time
+  - [ ] Velocity data
+  - [ ] Energy conservation tracking
+  - [ ] Custom data selection
+  
+- [ ] Export interface
+  - [ ] Export dialog
+  - [ ] Format selection
+  - [ ] Time range selection
+  - [ ] Data fields selection
+  
+- [ ] Analysis support
+  - [ ] Compatible with Excel/Python
+  - [ ] Timestamped data
+  - [ ] Metadata included
+  - [ ] Documentation provided
 
 ---
 
 ## Q3 2026 (July - September) - Planned
 
-### July 2026
+### July 2026 (Planned)
+**Deadline: July 31, 2026**
 
-#### Advanced Visual Effects
-- [ ] **Motion trails**
-  - [ ] Fade-out trails for bodies
+#### Priority 1: Visual Effects System
+- [ ] Body trails
   - [ ] Configurable trail length
-  - [ ] Color-coded by velocity
-  - [ ] Performance-optimized rendering
+  - [ ] Fade-out effect
+  - [ ] Color by velocity
+  - [ ] Toggle on/off
   
-- [ ] **Enhanced collision effects**
-  - [ ] Particle systems on collision
-  - [ ] Flash effects
-  - [ ] Sound effects (optional)
-  
-- [ ] **Reference grid overlay**
-  - [ ] Toggleable grid
-  - [ ] Adaptive spacing based on zoom
-  - [ ] Origin marker
-  
-- [ ] **Predicted trajectory display**
-  - [ ] Numerical integration for future path
-  - [ ] Configurable prediction length
-  - [ ] Error margin visualization
-  
-- [ ] **Body glow effects**
-  - [ ] Brightness based on mass
-  - [ ] Optional visual enhancements
-  - [ ] Performance impact minimal
+- [ ] Particle effects
+  - [ ] Collision sparks
+  - [ ] Fusion explosions
+  - [ ] Gravitational distortions
+  - [ ] Performance-conscious
 
-### August 2026
-
-#### Analysis Tools
-- [ ] **Real-time graphs (Matplotlib integration)**
+#### Priority 2: Analysis Tools
+- [ ] Real-time graphs
   - [ ] Total energy over time
-  - [ ] Total momentum over time
-  - [ ] Angular momentum
-  - [ ] Kinetic vs potential energy
-  
-- [ ] **Statistics dashboard**
-  - [ ] Average velocity
-  - [ ] Total collisions count
-  - [ ] Fusion events
-  - [ ] System energy
+  - [ ] Momentum conservation
+  - [ ] Body count changes
   - [ ] Center of mass tracking
   
-- [ ] **Data export**
-  - [ ] CSV export for analysis
-  - [ ] Configurable export intervals
-  - [ ] Selected properties export
-  
-- [ ] **Screenshot and recording**
-  - [ ] High-quality screenshots
-  - [ ] Video recording (optional, requires ffmpeg)
-  - [ ] Time-lapse generation
+- [ ] Statistical displays
+  - [ ] Average velocity
+  - [ ] Mass distribution
+  - [ ] Kinetic vs potential energy
+  - [ ] Simulation stability metrics
 
-### September 2026
+#### Priority 3: Advanced Camera Features
+- [ ] Auto-follow mode
+  - [ ] Track selected body
+  - [ ] Smooth camera tracking
+  - [ ] Configurable follow distance
+  - [ ] Return to free cam
+  
+- [ ] Camera presets
+  - [ ] Save camera positions
+  - [ ] Quick recall hotkeys
+  - [ ] Smooth transitions
+  - [ ] Named preset system
 
-#### Complete Documentation
-- [ ] **User guide (PDF/Markdown)**
-  - [ ] Comprehensive getting started
-  - [ ] Complete controls reference
-  - [ ] Configuration guide
-  - [ ] Troubleshooting section
-  - [ ] FAQ
+### August 2026 (Planned)
+**Deadline: August 31, 2026**
+
+#### Priority 1: Comprehensive Documentation
+- [ ] User guide
+  - [ ] Getting started tutorial
+  - [ ] Feature walkthroughs
+  - [ ] Tips and tricks
+  - [ ] FAQ section
   
-- [ ] **API documentation (Sphinx)**
-  - [ ] All classes documented
-  - [ ] Method signatures
-  - [ ] Usage examples
-  - [ ] Code snippets
+- [ ] API documentation
+  - [ ] Code architecture
+  - [ ] Class references
+  - [ ] Method documentation
+  - [ ] Extension guide
+
+#### Priority 2: Interactive Tutorial Mode
+- [ ] In-app tutorials
+  - [ ] First-time user guide
+  - [ ] Feature introductions
+  - [ ] Interactive lessons
+  - [ ] Progress tracking
+
+#### Priority 3: Performance Optimization
+- [ ] Code profiling
+  - [ ] Identify bottlenecks
+  - [ ] Optimize hot paths
+  - [ ] Memory optimization
+  - [ ] Cache improvements
   
-- [ ] **Video tutorials**
-  - [ ] Basic usage
-  - [ ] Creating scenarios
-  - [ ] Understanding physics
-  - [ ] Advanced features
+- [ ] Advanced optimizations
+  - [ ] QuadTree implementation
+  - [ ] Barnes-Hut algorithm
+  - [ ] GPU acceleration investigation
+  - [ ] Parallel processing
+
+### September 2026 (Planned)
+**Deadline: September 30, 2026**
+
+#### Priority 1: User Testing
+- [ ] Beta testing program
+  - [ ] Recruit testers
+  - [ ] Collect feedback
+  - [ ] Bug tracking
+  - [ ] Feature requests
   
-- [ ] **Interactive tutorial mode**
-  - [ ] Step-by-step guide in-app
-  - [ ] Tooltips and hints
-  - [ ] Progressive learning
-  - [ ] Achievement system (optional)
+- [ ] Usability improvements
+  - [ ] UI refinements
+  - [ ] Workflow optimization
+  - [ ] Accessibility features
+  - [ ] Internationalization prep
+
+#### Priority 2: Final Polish
+- [ ] Bug fixes
+  - [ ] Address all critical bugs
+  - [ ] Fix reported issues
+  - [ ] Edge case handling
+  - [ ] Stability improvements
+  
+- [ ] Quality of life
+  - [ ] Keyboard shortcuts review
+  - [ ] Default settings optimization
+  - [ ] Help system expansion
+  - [ ] Error messages improvement
 
 ---
 
-## Q4 2026 (October - December) - Planned
+## Backlog (Future Considerations)
 
-### October - December 2026
+### Physics Enhancements
+- [ ] Collision without fusion (elastic/inelastic)
+- [ ] Gravitational tides
+- [ ] Orbital mechanics display
+- [ ] Lagrange point visualization
+- [ ] Escape velocity calculator
 
-#### Advanced Features
-- [ ] **Scenario editor**
-  - [ ] Graphical body placement
-  - [ ] Velocity vector editor (visual)
-  - [ ] Parameter tweaking interface
-  - [ ] Real-time preview
-  
-- [ ] **Challenges/puzzles mode**
-  - [ ] Achieve stable orbits
-  - [ ] Minimize collisions
-  - [ ] Time-limited scenarios
-  - [ ] Scoring system
-  
-- [ ] **Replay system**
-  - [ ] Record simulations (state history)
-  - [ ] Playback with speed control
-  - [ ] Save replays to file
-  - [ ] Scrub timeline
+### Visualization
+- [ ] 3D rendering mode
+- [ ] Advanced lighting effects
+- [ ] Texture support for bodies
+- [ ] Background star field
+- [ ] Grid overlay system
 
-#### Polish and Refinement
-- [ ] UI/UX improvements based on feedback
-- [ ] Performance final optimization
-- [ ] Comprehensive bug fixes
-- [ ] User feedback integration
-- [ ] Code cleanup and refactoring
+### Advanced Features
+- [ ] Custom force laws (inverse cube, etc.)
+- [ ] Body editing (mass, velocity)
+- [ ] Time reversal
+- [ ] Scenario recording/playback
+- [ ] Network multiplayer
 
----
-
-## Backlog (2027+)
-
-### Major Features (2027)
-
-#### Q1 2027: GPU Acceleration
-- [ ] **CUDA/OpenCL implementation**
-  - [ ] Support thousands of bodies simultaneously
-  - [ ] 10-100× performance improvement
-  - [ ] Options: CuPy, PyCUDA, PyOpenCL, Taichi
-  - [ ] Fallback to CPU if GPU unavailable
-
-#### Q2-Q3 2027: 3D Mode
-- [ ] **Three-dimensional simulation**
-  - [ ] Full 3D physics
-  - [ ] Rotating 3D camera (mouse controls)
-  - [ ] OpenGL/Vulkan rendering
-  - [ ] Shader-based lighting
-  - [ ] Depth perception (fog, shadows)
-  - [ ] Stereoscopic rendering (optional)
-
-#### Q4 2027: Advanced Physics
-- [ ] **Body deformation**
-  - [ ] Tidal forces visualization
-  - [ ] Roche limit effects
-  - [ ] Optional elastic collisions
-  
-- [ ] **Fragmentation**
-  - [ ] Violent collision breakup
-  - [ ] Debris fields
-  - [ ] Particle systems
-  
-- [ ] **Black hole physics**
-  - [ ] Event horizon visualization
-  - [ ] Accretion disk simulation
-  - [ ] Hawking radiation (simplified)
-  - [ ] Gravitational lensing
-  
-- [ ] **General relativity effects**
-  - [ ] Time dilation near massive objects
-  - [ ] Perihelion precession
-  - [ ] Frame dragging (optional)
-
-### Community Features (2028)
-
-#### Network/Multiplayer
-- [ ] **Collaborative simulations**
-  - [ ] Real-time co-op simulation
-  - [ ] Synchronized physics
-  - [ ] User permissions
-  
-- [ ] **Online platform**
-  - [ ] Scenario sharing
-  - [ ] Community leaderboards
-  - [ ] Challenge mode
-  - [ ] User ratings and comments
-
-#### AI/ML Integration (2028)
-- [ ] **Trajectory prediction**
-  - [ ] Neural network-based prediction
-  - [ ] Chaos detection
-  - [ ] Stability analysis
-  
-- [ ] **Automatic optimization**
-  - [ ] Parameter tuning for stability
-  - [ ] Procedural generation of stable systems
-  - [ ] Pattern recognition (stable vs chaotic)
-
-### Technical Improvements (Ongoing)
-
-#### Testing & CI/CD
-- [ ] Comprehensive unit tests (pytest)
-- [ ] Integration tests
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] Automated builds for releases
-- [ ] Code coverage tracking
-
-#### Packaging & Distribution
-- [ ] **PyPI distribution**
-  - [ ] Package on pip
-  - [ ] Version management
-  - [ ] Dependency handling
-  
-- [ ] **Improved executables**
-  - [ ] Smaller file size
-  - [ ] Faster startup
-  - [ ] Better icon/branding
-  
-- [ ] **Installers**
-  - [ ] Windows MSI installer
-  - [ ] macOS DMG installer
-  - [ ] Linux packages (deb, rpm)
-
-#### Multi-platform Support
-- [ ] macOS optimizations
-- [ ] Linux optimizations
-- [ ] Cross-platform testing
-- [ ] Platform-specific features
+### Platform Expansion
+- [ ] macOS executable
+- [ ] Linux executable
+- [ ] Web version (PyScript)
+- [ ] Mobile version investigation
 
 ---
 
-## Recent Achievements
+## Technical Achievements (Previoused dates)
 
-### March 2026 (v3.2.0) - COMPLETED 100%
+### V3.5.0 - Complete Configuration Panel Edition (May 15, 2026)
 
-**Major Accomplishments:**
+**New Features:**
+1. **Pygame Configuration Panel** - Professional overlay interface built entirely in Pygame
+   - Custom animated widgets (checkboxes, sliders, buttons)
+   - Real-time parameter adjustment without interrupting simulation
+   - Save/load configuration to JSON
+   - Scrollable content panel
+   - Dark theme matching simulation aesthetic
 
-1. **Complete Camera System** - Full pan, zoom, reset with coordinate transformations
-   - World ↔ screen conversion system
+2. **Atlas File Manager** - Cross-platform file management module
+   - Automatic dev/exe mode detection
+   - Platform-specific path resolution (Windows/Mac/Linux)
+   - User data in Documents folder (exe) or project folder (dev)
+   - Automatic folder creation (screenshots, saves, logs)
+   - Resource path resolution for assets
+
+3. **Screenshot System** - One-key screenshot capture
+   - Press S to capture full resolution PNG
+   - Automatic timestamped filenames
+   - Managed folder storage via Atlas
+   - Visual confirmation message
+
+### V3.4.0 - Interactive Help Edition (April 15, 2026)
+
+**New Features:**
+1. **Interactive Help Overlay** - Real-time controls reference
+   - Hold H or I to display comprehensive help
+   - Semi-transparent overlay design
+   - Organized by category (Mouse, Camera, Simulation)
+   - Color-coded controls (green keys, white descriptions)
+   - No interruption to physics simulation
+
+2. **User Experience** - Enhanced accessibility
+   - Visual indicator in top-right corner
+   - Professional layout and typography
+   - Smooth integration with simulation
+   - Always accessible during runtime
+
+### V3.2.0 - Camera & Random Generation Edition (March 31, 2026)
+
+**New Features:**
+1. **Complete Camera System** - Pan, zoom, and navigation
+   - World to screen coordinate conversion
    - Cursor-centered mouse wheel zoom
-   - Screen-centered keyboard zoom (A/E)
-   - Arrow key navigation
-   - Smooth camera transitions
-   - Culling optimization for off-screen bodies
+   - Screen-centered keyboard zoom
+   - Arrow key camera movement
+   - Camera reset with T key
 
-2. **Zoom-Adaptive Random Generation** - Bodies scale with zoom level
-   - Mass multiplier = 1.0 / scale²
+2. **Zoom-Adaptive Random Generation** - Intelligent body creation
+   - Mass scales with zoom level (mass proportional to 1/scale²)
    - Logarithmic mass distribution
    - World-coordinate generation
-   - Bodies always fill visible screen
-   - Realistic body size variety
+   - Bodies fill visible screen consistently
 
-3. **Screen-Constant Body Growth** - Visual growth independent of zoom
-   - Growth rate in screen pixels, converted to world meters
-   - Perfect user experience at any zoom level
-   - Physical growth adapts to zoom automatically
+3. **Screen-Constant Body Growth** - Zoom-independent visual growth
+   - Growth rate adapts to camera zoom
+   - Consistent visual appearance
+   - Smooth radius interpolation
 
-4. **Mass-Proportional Random Energy** - Heavy bodies move realistically
-   - Energy per kilogram system (E ∝ mass)
-   - Heavy bodies now move (not motionless)
-   - Proportional kinetic energy
+4. **Mass-Proportional Random Energy** - Realistic heavy body motion
+   - Energy proportional to mass (E proportional to mass)
+   - Heavy bodies no longer motionless
    - Fair dynamics for all body sizes
 
-5. **Radius Interpolation Fix** - No more flicker during creation
-   - prev_radius updated during growth
-   - Works correctly while paused
-   - Proper cache invalidation
+### V3.1.0 - Complete PRECISE Interpolation (February 23, 2026)
 
-**Key Metrics:**
-- **Camera**: Complete coordinate system, smooth zoom/pan
-- **Generation**: Zoom-adaptive masses, logarithmic distribution
-- **Growth**: Screen-constant visual speed
-- **Random Mode**: Mass-proportional energy, realistic motion
-- **Code Quality**: ~98% documentation coverage
-- **Bug Fixes**: Radius interpolation flicker resolved
+**New Features:**
+1. **Complete Interpolation System** - All properties interpolated
+   - Position, velocity, force, and radius
+   - Interpolation cache for performance
+   - 4 new unit tests for validation
 
-**Version 3.2.0 Highlights:**
-```
-NEW: Complete camera system (pan, zoom, reset)
-NEW: Zoom-adaptive random generation (mass ∝ 1/scale²)
-NEW: Screen-constant body growth rate
-NEW: Mass-proportional random energy (E ∝ mass)
-FIXED: Radius interpolation flicker during creation
-IMPROVED: World-coordinate generation system
-IMPROVED: Logarithmic mass distribution for realism
-IMPROVED: Comprehensive camera documentation
-```
+2. **Visual Collision Detection** - Detect collisions on what user sees
+   - Check interpolated positions
+   - Force immediate physics calculation
+   - Prevent visual pass-through
 
-### February 2026 (v3.1.0) - COMPLETED 100%
-
-**Major Accomplishments:**
-1. **Complete Mode PRECISE Interpolation** - Position, velocity, force, radius fully interpolated
-   - Velocity vectors perfectly smooth
-   - Force vectors transition smoothly
-   - Radius grows progressively during fusions
-   - Interpolation cache prevents redundant calculations
-   - 4 new unit tests for interpolation validation
-
-2. **Adaptive Performance Mode** - Intelligent throttling for smooth 120 FPS
-   - Configurable physics update frequency (default 40 Hz)
-   - Automatic CPU load management
-   - Smooth rendering with 100+ bodies
-   - Easy switching between "precise" and "adaptive" modes
-
-3. **Visual Collision Detection** - Collisions on what you see, not just physics
-   - Detects collisions on interpolated positions
-   - Forces immediate physics calculation when needed
-   - Prevents visual "pass-through" artifacts
-
-4. **Interpolated Click Detection** - Select bodies where you see them
-   - Mouse click uses visual positions, not physical
+3. **Interpolated Click Detection** - Select bodies where you see them
+   - Mouse click uses visual positions
    - More intuitive user experience
-   - Perfect integration with interpolation
 
-5. **Fixed Timestep Physics** - Simulation is now deterministic and FPS-independent
-
-6. **Code Quality** - Organized Color/Tester classes, comprehensive unit tests
-
-7. **Physics Improvements** - Better force vector visualization, proper unit handling
+4. **Fixed Timestep Physics** - Deterministic simulation
+   - 1/120s timestep
+   - FPS-independent behavior
+   - Comprehensive unit tests
 
 ---
 
 ## Development Notes
 
-### Current Technical State (v3.2.0)
+### Current Technical State (v3.4.0)
+- **UI**: Pygame configuration panel with custom widgets, interactive help overlay
+- **File Management**: Atlas module for cross-platform path resolution
+- **Screenshots**: One-key capture with automatic naming and storage
 - **Camera**: Complete pan/zoom system with coordinate conversion
-- **Generation**: Zoom-adaptive masses (mass ∝ 1/scale²), logarithmic distribution
+- **Generation**: Zoom-adaptive masses (mass proportional to 1/scale²), logarithmic distribution
 - **Growth**: Screen-constant visual rate (adjusted to world coordinates)
-- **Random Mode**: Mass-proportional energy (E ∝ mass)
+- **Random Mode**: Mass-proportional energy (E proportional to mass)
 - **Physics**: Fixed timestep (1/120s) OR adaptive throttling (40 Hz)
 - **Rendering**: Fully interpolated 120 FPS (position, velocity, force, radius)
 - **Collision**: Visual detection on interpolated positions
-- **Performance**: O(n²) calculations, ~100+ bodies smoothly (adaptive)
+- **Performance**: O(n²) calculations, 100+ bodies smoothly (adaptive)
 - **Display**: 2D, Pygame-based, fullscreen/windowed
 - **Architecture**: Modular classes, organized structure
 - **Testing**: 7 unit tests (force, determinism, speed, interpolation×4)
 
 ### Critical Dependencies
-- **pygame 2.0+**: Display and event handling
+- **pygame 2.0+**: Display, events, rendering
 - **Python 3.11+**: Type hints, match statements
-- **Standard library**: math, time, random, os, sys
+- **Standard library**: math, time, random, os, sys, json
 
 ### Technical Debt Identified
-1. **QuadTree Optimization** (MEDIUM PRIORITY - Backlog)
-   - O(n²) force calculations acceptable with adaptive mode
-   - QuadTree could reduce to O(n log n)
-   - Barnes-Hut algorithm alternative
-   - Planned for future if needed
+1. **Save/Load System** (HIGH PRIORITY - June 2026)
+   - JSON serialization in progress
+   - Version compatibility needed
+   - Auto-save planned
 
-2. **Save/Load System** (HIGH PRIORITY - May 2026)
-   - JSON serialization needed
-   - Version compatibility handling
-   - Auto-save functionality
+2. **QuadTree Optimization** (MEDIUM PRIORITY - August 2026)
+   - O(n²) acceptable with adaptive mode
+   - Could reduce to O(n log n)
+   - Barnes-Hut alternative
+   - Planned if performance issues arise
 
 3. **Code Organization** (LOW PRIORITY)
-   - Global engine instance (acceptable for now)
-   - Circular dependencies (engine ↔ Circle)
-   - Some debug code could be cleaned
+   - Global engine instance (acceptable)
+   - Some circular dependencies
+   - Cleanup opportunities
 
-4. **Advanced UI** (HIGH PRIORITY - April 2026)
-   - In-game settings menu needed
-   - Configuration panel
-   - Keyboard shortcut customization
+4. **Advanced Analysis** (MEDIUM PRIORITY - July 2026)
+   - Real-time graphs needed
+   - Statistical displays planned
+   - Data export in progress
 
 ### Identified Risks
-- **Camera complexity**: Coordinate conversion must be consistent
-- **Zoom extremes**: Very small/large scales may cause numerical issues
-- **Mass distribution**: Logarithmic distribution needs testing
-- **Performance**: Large simulations still O(n²), may need optimization
+- **Coordinate precision**: Very extreme zoom levels may cause numerical issues
+- **Mass distribution**: Logarithmic distribution requires continued testing
+- **Performance**: Large simulations still O(n²), optimization may be needed
+- **File compatibility**: Save/load system needs version handling
 
 ---
 
 ## Success Criteria
 
-### March 2026 (ACHIEVED - v3.2.0) ✅
+### May 2026 (ACHIEVED - v3.4.0)
+- [x] Pygame configuration panel implemented
+- [x] Custom widget system complete
+- [x] Real-time parameter adjustment working
+- [x] Save/load configuration to JSON
+- [x] Atlas file manager integrated
+- [x] Screenshot system functional
+- [x] Cross-platform path resolution working
+
+### April 2026 (ACHIEVED - v3.3.0)
+- [x] Interactive help overlay implemented
+- [x] Professional semi-transparent design
+- [x] Organized controls by category
+- [x] Visual availability indicator
+- [x] Smooth integration with simulation
+
+### March 2026 (ACHIEVED - v3.2.0)
 - [x] Complete camera system implemented and tested
 - [x] Zoom-adaptive random generation working
 - [x] Screen-constant body growth functional
@@ -723,30 +680,25 @@ IMPROVED: Comprehensive camera documentation
 - [x] All camera controls functional (pan, zoom, reset)
 - [x] Coordinate conversion system working
 
-### April 2026 (TARGET)
-- [ ] Advanced camera features (follow mode, mini-map)
-- [ ] In-game settings menu complete
-- [ ] Enhanced visualization (graphs, multi-body info)
-- [ ] Music system fully functional
-
-### May 2026 (TARGET)
-- [ ] Complete and functional save/load system
-- [ ] At least 6 predefined scenarios available
-- [ ] Auto-save functionality
-- [ ] Scenario preset management
-
 ### June 2026 (TARGET)
-- [ ] Configuration file system working
-- [ ] Performance optimized (profiling done)
-- [ ] Complete user guide
-- [ ] Video tutorials published
+- [ ] Complete save/load system functional
+- [ ] At least 6 predefined scenarios available
+- [ ] Auto-save functionality working
+- [ ] Scenario preset management complete
+- [ ] Performance profiling tools implemented
+- [ ] CSV export functionality
+
+### July 2026 (TARGET)
+- [ ] Visual effects system (trails, particles)
+- [ ] Real-time analysis graphs
+- [ ] Advanced camera features (follow mode)
+- [ ] Performance optimization complete
 
 ### Q3 2026 (TARGET)
-- [ ] Advanced visual effects (trails, particles)
-- [ ] Analysis tools with real-time graphs
-- [ ] Complete documentation (guide + API)
+- [ ] Comprehensive documentation (guide + API)
 - [ ] Interactive tutorial mode
-- [ ] User testing and feedback integration
+- [ ] User testing complete
+- [ ] Final polish and stability
 
 ---
 
@@ -762,27 +714,73 @@ IMPROVED: Comprehensive camera documentation
    - Updated documentation
 
 ### Priority Areas for Help
-- HIGH: Advanced UI system (April 2026)
-- HIGH: Save/load system (May 2026)
-- MEDIUM: Enhanced camera features (April 2026)
-- MEDIUM: Scenario presets (May 2026)
+- HIGH: Save/load system (June 2026)
+- HIGH: Scenario presets (June 2026)
 - MEDIUM: Performance profiling (June 2026)
-- LOW: Visual effects (July 2026)
+- MEDIUM: Visual effects (July 2026)
+- MEDIUM: Analysis tools (July 2026)
+- LOW: Advanced optimizations (August 2026)
 
 ---
 
 ## Version History
 
+### v3.5.0 - Complete Configuration Panel Edition (May 15, 2026)
+**Major Features:**
+- Pygame configuration panel with custom widgets
+- Atlas file manager for cross-platform paths
+- Screenshot system with auto-naming
+- Save/load configuration to JSON
+
+**Configuration Panel:**
+- Custom animated checkboxes, sliders, buttons
+- Real-time parameter adjustment
+- Semi-transparent overlay design
+- Scrollable content support
+- Professional dark theme
+
+**File Management:**
+- Atlas module integration
+- Dev/exe mode auto-detection
+- Platform-specific path resolution
+- Automatic folder creation
+- Resource path resolution
+
+**Screenshot System:**
+- Press S to capture screenshot
+- Automatic timestamped filenames
+- Managed folder storage
+- Visual confirmation message
+
+**Technical:**
+- ConfigPanel class with custom widgets
+- FileManager integration in Engine
+- Save/load JSON functionality
+- Cross-platform compatibility
+
+### v3.4.0 - Interactive Help Edition (April 15, 2026)
+**Major Features:**
+- Interactive help overlay (hold H or I)
+- Visual help indicator in top-right
+- Professional semi-transparent design
+- Comprehensive controls reference
+
+**User Experience:**
+- No interruption to physics
+- Always accessible during simulation
+- Organized by category
+- Color-coded controls
+
 ### v3.2.0 - Camera & Random Generation Edition (March 31, 2026)
 **Major Features:**
 - Complete camera system (pan, zoom, reset)
-- Zoom-adaptive random generation (mass ∝ 1/scale²)
+- Zoom-adaptive random generation (mass proportional to 1/scale²)
 - Screen-constant body growth rate
-- Mass-proportional random energy (E ∝ mass)
+- Mass-proportional random energy (E proportional to mass)
 - Radius interpolation flicker fix
 
 **Camera System:**
-- World ↔ screen coordinate conversion
+- World to screen coordinate conversion
 - Cursor-centered mouse wheel zoom
 - Screen-centered keyboard zoom (A/E)
 - Arrow key navigation
@@ -875,6 +873,6 @@ IMPROVED: Comprehensive camera documentation
 
 ---
 
-*Last updated: March 31, 2026*  
+*Last updated: March 2026*  
 *Author: Nils DONTOT*  
-*Current Version: 3.2.0 - Camera & Random Generation Edition*
+*Current Version: 3.5.0 - Complete Configuration Panel Edition*
