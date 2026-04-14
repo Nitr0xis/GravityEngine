@@ -91,6 +91,7 @@ from config_panel import ConfigPanel
 
 """
 Todo:
+    - regler le probleme de density (probleme de cohérence volume masse)
     - update code structure
     - add a focus mode
     - add a "define as referential button"
@@ -2148,12 +2149,13 @@ class Engine:
                 pass
             pygame.mixer.music.play(loop, start, fade_ms)
     
+    ### A passer en GO
     def physics_step(self, dt):
         """
         Execute one physics step with fixed timestep.
         
         This ensures deterministic physics regardless of rendering FPS.
-        Always called with dt = self.physics_timestep (1/120 s).
+        Always called with dt = self.physics_timestep (1/120 (engine.FPS_TARGET) s).
         
         Args:
             dt: Fixed timestep duration (always self.physics_timestep)
@@ -2882,19 +2884,28 @@ class ActionManager:
         Args:
             path (Optional[str]): file path ending with .png
         """
+        # Mode sans écriture disque: on conserve une copie en mémoire seulement.
+        # (Aucun fichier n'est créé, même si un `path` est fourni.)
+        engine.last_screenshot_surface = engine.screen.copy()
         if path is None:
             file_name = f"screenshot_{int(time.time())}.png"
-            path = f"{engine.screenshots_folder_path}/{file_name}"
             TempText(
-                text=f"Screenshot saved as {file_name}",
+                text=f"Screenshot captured (memory): {file_name}",
                 duration=3.0,
                 dest=(
                     20,
                     engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)
                 )
             )
-
-        pygame.image.save(engine.screen, path)
+        else:
+            TempText(
+                text="Screenshot captured (memory only)",
+                duration=3.0,
+                dest=(
+                    20,
+                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)
+                )
+            )
 
     @staticmethod
     def open_config_panel():

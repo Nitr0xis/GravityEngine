@@ -191,7 +191,7 @@ class ConfigPanel:
         y = self._checkbox(x, y, "Enable Reversed Gravity", "reversed_gravity")
         y = self._checkbox(x, y, "Enable Random Speed Mode", "random_mode")
         y = self._slider(x, y, w, "Corpses Density", "default_density",
-                         1e2, 1e9, True, "{:.2e} kg/m³")  # 1e9 is the average density of white dwarfs
+                         1e0, 1e9, True, "{:.2e} kg/m³")  # 1e9 is the average density of white dwarfs
         y = self._checkbox(x, y, "Enable Body Fusions", "fusions")
         
         # === VISUAL ===
@@ -244,13 +244,12 @@ class ConfigPanel:
             "config": cfg,
         }
         try:
-            path = self.engine.fm.user_data_path("saves/config.json")
-            with open(path, 'w') as f:
-                json.dump(payload, f, indent=2)
-            print(f"✓ Config saved: {path}")
+            # Mode sans écriture disque: conserver la config en mémoire seulement.
+            setattr(self.engine, "last_saved_config_payload", payload)
+            print("✓ Config saved (memory only)")
             # On-screen message
             if hasattr(self.engine, "notify"):
-                self.engine.notify("Configuration saved", duration=2.0)
+                self.engine.notify("Configuration saved (memory only)", duration=2.0)
         except Exception as e:
             print(f"✗ Save failed: {e}")
     
