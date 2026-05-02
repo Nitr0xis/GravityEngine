@@ -1831,7 +1831,7 @@ class Engine:
         # Display heaviest body information
         heaviest_tuple = Utils.heaviest()
         if heaviest_tuple is not None:
-            text = f"Heaviest body : n°{heaviest_tuple[0]} → {heaviest_tuple[1] / 1000:.2e} kg"
+            text = f"Heaviest body : n°{heaviest_tuple[0]} → {heaviest_tuple[1]:.2e} kg"
             Utils.write_screen(text, (20, y), Display.BLUE, 2)
         else:
             text = f"Heaviest body : None"
