@@ -45,6 +45,22 @@ class Widget:
         pass
 
 
+class SectionTitle(Widget):
+    """Titre de section (texte seul, non interactif)."""
+
+    def __init__(self, x, y, text, font):
+        super().__init__(x, y, 1, 22)
+        self.text = text
+        self.font = font
+
+    def update(self, events):
+        pass
+
+    def draw(self, surf):
+        t = self.font.render(self.text, True, C.BLUE)
+        surf.blit(t, (self.rect.x, self.rect.y))
+
+
 class Checkbox(Widget):
     def __init__(self, x, y, label, font, val, cb):
         super().__init__(x, y, 20, 20)
@@ -184,14 +200,14 @@ class ConfigPanel:
         y = self._slider(x, y, w, "Target FPS", "FPS_TARGET",
                          30, 240, False, "{:.0f} FPS")
         y = self._slider(x, y, w, "Time Acceleration", "time_acceleration",
-                         1e3, 1e8, True, "{:.2e}x")
+                         1e3, 1e5, True, "{:.2e}x")
         
         # === PHYSICS ===
         y = self._sec(x, y, "Physics")
         y = self._checkbox(x, y, "Enable Reversed Gravity", "reversed_gravity")
         y = self._checkbox(x, y, "Enable Random Speed Mode", "random_mode")
         y = self._slider(x, y, w, "Corpses Density", "default_density",
-                         1e0, 1e9, True, "{:.2e} kg/m³")  # 1e9 is the average density of white dwarfs
+                         1e0, 1e5, True, "{:.2e} kg/m³")
         y = self._checkbox(x, y, "Enable Body Fusions", "fusions")
         
         # === VISUAL ===
@@ -201,6 +217,11 @@ class ConfigPanel:
         y = self._checkbox(x, y, "Show Vectors", "vectors_printed")
         y = self._slider(x, y, w, "Vector Scale", "vector_scale",
                          0.1, 10.0, False, "{:.2f}x")
+        y = self._checkbox(x, y, "Gravitational lensing grid", "gravitational_grid_enabled")
+        y = self._slider(x, y, w, "Grid lens strength", "grid_lens_amount",
+                         0.0, 10, False, "{:.2f}x")
+        y = self._slider(x, y, w, "Grid spacing (screen px)", "grid_target_spacing_px",
+                         40.0, 160.0, False, "{:.0f} px")
 
         # === ADVANCED / CCD ===
         y = self._sec(x, y, "Advanced (Collisions)")
@@ -218,8 +239,9 @@ class ConfigPanel:
         self.max_scroll = max(0, y + 50 - (self.py + self.ph))
     
     def _sec(self, x, y, txt):
-        y += 15
-        return y + 30
+        y += 12
+        self.widgets.append(SectionTitle(x, y, txt, self.font_med))
+        return y + 26
     
     def _checkbox(self, x, y, label, attr):
         self.widgets.append(Checkbox(x, y, label, self.font_sm,
@@ -237,19 +259,23 @@ class ConfigPanel:
         cfg = {k: getattr(self.engine, k) for k in [
             "time_acceleration", "FPS_TARGET", "default_density", "fusions",
             "vectors_printed", "force_vectors", "vector_scale", "camera_zoom",
-            "adaptive_substeps", "adaptive_substeps_max_extra"
+            "adaptive_substeps", "adaptive_substeps_max_extra",
+            "reversed_gravity", "random_mode",
+            "gravitational_grid_enabled", "grid_lens_amount", "grid_target_spacing_px",
         ]}
         payload = {
             "version": getattr(self.engine, "project_version", "unknown"),
             "config": cfg,
         }
         try:
-            # Mode sans écriture disque: conserver la config en mémoire seulement.
+            self.engine.fm.create_folder("saves")
+            path = self.engine.fm.user_data_path("saves/config.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
             setattr(self.engine, "last_saved_config_payload", payload)
-            print("✓ Config saved (memory only)")
-            # On-screen message
+            print(f"✓ Config saved: {path}")
             if hasattr(self.engine, "notify"):
-                self.engine.notify("Configuration saved (memory only)", duration=2.0)
+                self.engine.notify("Configuration enregistrée", duration=2.0)
         except Exception as e:
             print(f"✗ Save failed: {e}")
     

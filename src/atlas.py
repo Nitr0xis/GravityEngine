@@ -215,13 +215,16 @@ class FileManager:
             >>> fm.create_folder('C:/temp/test', use_user_data=False)
             'C:/temp/test/'
         """
-        # Mode sans écriture disque: ne crée aucun dossier.
-        if use_user_data:
-            full_path = self.user_data_path(path)
-        else:
-            full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
-        print(f"• create_folder skipped (read-only mode): {full_path}")
-        return full_path
+        try:
+            if use_user_data:
+                full_path = self.user_data_path(path)
+            else:
+                full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
+            os.makedirs(full_path, exist_ok=exist_ok)
+            return full_path
+        except Exception as e:
+            print(f"✗ Failed to create folder '{path}': {e}")
+            return None
 
     def create_file(self,
                     path: str,
@@ -252,13 +255,25 @@ class FileManager:
             >>> fm.create_file('README.md', '# Project', use_user_data=False)
             'C:/Project/README.md'
         """
-        # Mode sans écriture disque: ne crée aucun fichier.
-        if use_user_data:
-            full_path = self.user_data_path(path)
-        else:
-            full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
-        print(f"• create_file skipped (read-only mode): {full_path}")
-        return full_path
+        try:
+            if use_user_data:
+                full_path = self.user_data_path(path)
+            else:
+                full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
+            if create_parents:
+                parent = os.path.dirname(full_path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+            if isinstance(content, bytes):
+                with open(full_path, 'wb') as f:
+                    f.write(content)
+            else:
+                with open(full_path, 'w', encoding=encoding) as f:
+                    f.write(content)
+            return full_path
+        except Exception as e:
+            print(f"✗ Failed to create file '{path}': {e}")
+            return None
 
     def write_file(self,
                    path: str,
@@ -268,13 +283,28 @@ class FileManager:
                    encoding: str = 'utf-8',
                    create_parents: bool = True) -> Optional[str]:
         """Write content to a file."""
-        # Mode sans écriture disque: n'écrit rien.
-        if use_user_data:
-            full_path = self.user_data_path(path)
-        else:
-            full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
-        print(f"• write_file skipped (read-only mode): {full_path}")
-        return full_path
+        try:
+            if use_user_data:
+                full_path = self.user_data_path(path)
+            else:
+                full_path = path if os.path.isabs(path) else os.path.join(self.project_root, path)
+            if create_parents:
+                parent = os.path.dirname(full_path)
+                if parent:
+                    os.makedirs(parent, exist_ok=True)
+            if 'b' in mode:
+                with open(full_path, mode) as f:
+                    if isinstance(content, bytes):
+                        f.write(content)
+                    else:
+                        f.write(content.encode(encoding))
+            else:
+                with open(full_path, mode, encoding=encoding) as f:
+                    f.write(content)
+            return full_path
+        except Exception as e:
+            print(f"✗ Failed to write file '{path}': {e}")
+            return None
 
     def read_file(self,
                   path: str,
@@ -481,19 +511,25 @@ class FileManager:
                   use_user_data_src: bool = True,
                   use_user_data_dst: bool = True) -> bool:
         """Copy a file from source to destination."""
-        # Mode sans écriture disque: ne copie rien.
-        if use_user_data_src:
-            src_path = self.user_data_path(src)
-        else:
-            src_path = src if os.path.isabs(src) else os.path.join(self.project_root, src)
+        try:
+            if use_user_data_src:
+                src_path = self.user_data_path(src)
+            else:
+                src_path = src if os.path.isabs(src) else os.path.join(self.project_root, src)
 
-        if use_user_data_dst:
-            dst_path = self.user_data_path(dst)
-        else:
-            dst_path = dst if os.path.isabs(dst) else os.path.join(self.project_root, dst)
+            if use_user_data_dst:
+                dst_path = self.user_data_path(dst)
+            else:
+                dst_path = dst if os.path.isabs(dst) else os.path.join(self.project_root, dst)
 
-        print(f"• copy_file skipped (read-only mode): {src_path} -> {dst_path}")
-        return False
+            dst_parent = os.path.dirname(dst_path)
+            if dst_parent:
+                os.makedirs(dst_parent, exist_ok=True)
+            shutil.copy2(src_path, dst_path)
+            return True
+        except Exception as e:
+            print(f"✗ Failed to copy file '{src}' -> '{dst}': {e}")
+            return False
 
     def move_file(self,
                   src: str,
@@ -501,16 +537,22 @@ class FileManager:
                   use_user_data_src: bool = True,
                   use_user_data_dst: bool = True) -> bool:
         """Move/rename a file."""
-        # Mode sans écriture disque: ne déplace rien.
-        if use_user_data_src:
-            src_path = self.user_data_path(src)
-        else:
-            src_path = src if os.path.isabs(src) else os.path.join(self.project_root, src)
+        try:
+            if use_user_data_src:
+                src_path = self.user_data_path(src)
+            else:
+                src_path = src if os.path.isabs(src) else os.path.join(self.project_root, src)
 
-        if use_user_data_dst:
-            dst_path = self.user_data_path(dst)
-        else:
-            dst_path = dst if os.path.isabs(dst) else os.path.join(self.project_root, dst)
+            if use_user_data_dst:
+                dst_path = self.user_data_path(dst)
+            else:
+                dst_path = dst if os.path.isabs(dst) else os.path.join(self.project_root, dst)
 
-        print(f"• move_file skipped (read-only mode): {src_path} -> {dst_path}")
-        return False
+            dst_parent = os.path.dirname(dst_path)
+            if dst_parent:
+                os.makedirs(dst_parent, exist_ok=True)
+            shutil.move(src_path, dst_path)
+            return True
+        except Exception as e:
+            print(f"✗ Failed to move file '{src}' -> '{dst}': {e}")
+            return False

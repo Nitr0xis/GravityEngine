@@ -32,6 +32,7 @@ CONTROLS:
     Left click : Click to select/create bodies, hold to increase size
     Right click : Move the camera
     Mouse wheel (optional) : Zoom in and Zoom out
+    B : Toggle gravitational lensing grid (background)
 
 CONFIGURATION (in Engine.__init__()) (Main parameters):
     time_acceleration     : Simulation speed (default: 4e6)
@@ -55,14 +56,20 @@ import sys  # For system-specific parameters and functions
 from typing import Optional  # For args typing
 import warnings  # Used to display warning messages about deprecated features or potential issues
 
-# Import all math functions for convenience (sqrt, sin, cos, atan2, etc.)
-from math import *
+from math import atan2, ceil, cos, exp, fabs, log10, pi, sin, sqrt
+
+try:
+    from math import cbrt
+except ImportError:
+    def cbrt(x: float) -> float:
+        if x >= 0:
+            return x ** (1.0 / 3.0)
+        return -((-x) ** (1.0 / 3.0))
 
 
 # Required external modules for the simulation
 EXTERNAL_REQUIRED_MODULES: set[str] = {"pygame", "matplotlib"}
 
-# Automatically install missing required modules
 for module in EXTERNAL_REQUIRED_MODULES:
     if importlib.util.find_spec(module) is None:
         print(f"Installing module {module}...")
@@ -71,6 +78,10 @@ for module in EXTERNAL_REQUIRED_MODULES:
             subprocess.check_call([sys.executable, "-m", "pip", "install", module])
         except subprocess.CalledProcessError:
             warnings.warn(f"The pre-installation of the module {module} has failed.")
+            warnings.warn(
+                f"Module '{module}' is not installed. Install with: {sys.executable} -m pip install {module}",
+                stacklevel=1,
+            )
 
 # Import modules after ensuring it's installed
 try:
@@ -87,11 +98,15 @@ except ImportError:
 # Import my own modules
 from atlas import FileManager
 from config_panel import ConfigPanel
+from gravitational_grid import draw_gravitational_grid
 
+# Référence globale attendue par Circle, TempText, ActionManager, Utils, etc.
+engine: Optional["Engine"] = None
 
+ 
 """
 Todo:
-    - regler le probleme de density (probleme de cohérence volume masse)
+    - redo the key bindings using the ctrl key
     - update code structure
     - add a focus mode
     - add a "define as referential button"
@@ -103,7 +118,6 @@ Todo:
     - add .csv export method
 
 For my NSI projects:
-    - add a dynamic configure pannel (choice between pygame and tkinter)
     - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
 
 Ideas:
@@ -303,8 +317,13 @@ class Tester:
         else:
             print("Development mode")
 
-        # Test font path resolution
-        test_font = engine.fm.resource_path('assets/font.ttf')
+        eng = getattr(sys.modules[__name__], "engine", None)
+        if eng is None:
+            print("engine: not initialized (default_debug called before Engine.__init__ completed)")
+            print("=" * 60)
+            return
+
+        test_font = eng.fm.resource_path("assets/fonts/main_font.ttf")
         print(f"Font path: {test_font}")
         print(f"Font exists: {os.path.exists(test_font)}")
         print("=" * 60)
@@ -529,8 +548,7 @@ class TempText:
             return False
         else:
             # Draw the text at its position
-            Utils.write_screen(self.text, (self.x, self.y + self.line * (engine.txt_gap + engine.txt_size)),
-                        self.color)
+            Utils.write_screen(self.text, (self.x, self.y), self.color)
             return True
 
 
@@ -1010,7 +1028,7 @@ class Circle:
             Utils.write_screen(text, (20, y - 20), Display.BLUE, 2)
 
         # Mass (in kilograms)
-        text = f"Mass : {self.mass:.2e} kg"
+        text = f"Mass : {self.mass:.2e} kg ({self.mass / 5.972e24:.2e} EM)"
         Utils.write_screen(text, (20, y - 20), Display.BLUE, 3)
 
         # Radius (in meters)
@@ -1439,21 +1457,32 @@ class Circle:
         # This ensures smooth interpolation when radius suddenly increases
         self.prev_radius = self.radius
 
+        m_self, m_other = self.mass, other.mass
+        d_self, d_other = self.density, other.density
+
         # ===== CALCULATE TOTAL MASS =====
-        total_mass = self.mass + other.mass
+        total_mass = m_self + m_other
         
         # ===== CALCULATE NEW POSITION (CENTER OF MASS) =====
         # COM = (m1*r1 + m2*r2) / (m1 + m2)
-        self.x = (self.x * self.mass + other.x * other.mass) / total_mass
-        self.y = (self.y * self.mass + other.y * other.mass) / total_mass
+        self.x = (self.x * m_self + other.x * m_other) / total_mass
+        self.y = (self.y * m_self + other.y * m_other) / total_mass
 
         # ===== CALCULATE NEW VELOCITY (MOMENTUM CONSERVATION) =====
         # p = m*v, so v_new = (p1 + p2) / (m1 + m2)
-        self.vx = (self.vx * self.mass + other.vx * other.mass) / total_mass
-        self.vy = (self.vy * self.mass + other.vy * other.mass) / total_mass
+        self.vx = (self.vx * m_self + other.vx * m_other) / total_mass
+        self.vy = (self.vy * m_self + other.vy * m_other) / total_mass
 
         # ===== UPDATE MASS =====
         self.mass = total_mass
+
+        # ===== DENSITY (moyenne pondérée par la masse, cohérente avec V = m/ρ) =====
+        if d_self > 0 and d_other > 0:
+            self.density = (m_self * d_self + m_other * d_other) / total_mass
+        elif d_other > 0:
+            self.density = d_other
+        elif d_self > 0:
+            self.density = d_self
 
         # ===== RECALCULATE RADIUS FROM NEW MASS (using density) =====
         if self.density > 0:
@@ -1609,7 +1638,13 @@ class Engine:
         self.vectors_in_front = True
         self.vector_scale = 1
 
-        # ==================== ADAPTIVE SUBSTEPS (CCD helper) ====================
+        # Grille de fond (lentille gravitationnelle, infinie, sensible à la caméra)
+        self.gravitational_grid_enabled: bool = False
+        self.grid_lens_amount: float = 3.5  # intensité de la déformation (0 = pas d'effet)
+        self.grid_target_spacing_px: float = 72.0  # espacement cible à l'écran (px)
+        self.grid_max_lines: int = 64
+        self.grid_subdivide_px: float = 96.0  # au-delà, sous-grille 1/5 du pas majeur
+        self.grid_lens_softening_world: float = 0.0  # 0 = auto (rayon + fraction de la vue)
         # When enabled, each fixed physics step can be subdivided into
         # additional substeps based on bodies' speeds and radii.
         # This helps avoid fast bodies tunnelling through others.
@@ -1632,7 +1667,6 @@ class Engine:
         self.random_environment_number: int = 20
         
         # ==================== AUDIO SETTINGS ====================
-        self.musics_folder_path = "../'assets/musics"  # without ressource_path() because it is a folder
         self.music = False
         self.music_volume = 1
         
@@ -1646,13 +1680,13 @@ class Engine:
         self.latency = None
         self.save_time_1 = 0
         self.save_time_2 = 0
-        self.counter = 0
+        self._fps_display_accumulator = 0.0
 
         # ==================== SIMULATION TIME ====================
         # time tracking
         self.simulation_time = 0.0  # Actual simulation time calculated (in seconds)
-        self.simulation_time_in_pause = 0.0  # Time spent paused (towards simulation_time)
-        self.pause_start_simulation_time = None  # simulation_time at the moment of pause
+        self.simulation_time_in_pause = 0.0  # Wall-clock seconds spent paused (statistics)
+        self._pause_wall_clock_start: Optional[float] = None
 
         # ==================== VISUAL COLLISION HANDLING ====================
         self.skip_prev_update = False  # Flag to prevent updating prev_x/prev_y
@@ -1685,6 +1719,9 @@ class Engine:
         self.circle_collided = False
         self.collision_detected = False
         self.temp_circle: Circle
+
+        global engine
+        engine = self
 
     # ==================== UI HELPERS ====================
     def notify(self, text: str, duration: float = 2.0, line: int = 0) -> None:
@@ -1737,16 +1774,6 @@ class Engine:
         elif event.type is pygame.KEYUP:
             self.inputs[event.key] = True
 
-    def refresh_pause(self):
-        
-        """Update accumulated pause time.
-        
-        Called continuously while paused to track total time spent in pause state.
-        This ensures accurate time tracking when calculating simulation age."""
-        
-        self.simulation_time_in_pause += time.time() - self.pause_start_simulation_time
-        self.pause_start_simulation_time = time.time()
-
     def pause(self):
         """
         Pause the simulation.
@@ -1754,8 +1781,8 @@ class Engine:
         Stops physics updates while keeping the display active.
         Records the pause start time for accurate time tracking.
         """
-        self.pause_start_simulation_time = time.time()
-        self.pause_start_simulation_time = self.net_simulation_time()  # Save simulation_time
+        if not self.is_paused:
+            self._pause_wall_clock_start = time.time()
         self.is_paused = True
 
     def unpause(self):
@@ -1765,15 +1792,9 @@ class Engine:
         Updates time tracking for all bodies and the engine to account for
         the time spent in pause state. This ensures age calculations remain accurate.
         """
-        # Update pause time for real time
-        self.simulation_time_in_pause += time.time() - self.pause_start_simulation_time
-        
-        # Update pause time for simulation time
-        # (While paused, simulation_time does not change, so there is no need to adjust it)
-        
-        # Clear pause state
-        self.pause_start_simulation_time = None
-        self.pause_start_simulation_time = None
+        if self._pause_wall_clock_start is not None:
+            self.simulation_time_in_pause += time.time() - self._pause_wall_clock_start
+            self._pause_wall_clock_start = None
         self.is_paused = False
 
     def net_simulation_time(self) -> float:
@@ -1872,7 +1893,7 @@ class Engine:
         Utils.write_screen(text, (20, y), Display.BLUE, 0)
 
         # Display total mass (top left)
-        text = f"Total mass : {round(Utils.mass_sum()):.2e} kg"
+        text = f"Total mass : {Utils.mass_sum():.2e} kg ({Utils.mass_sum() / 5.972e24:.2e} EM)"
         Utils.write_screen(text, (20, y), Display.BLUE, 1)
 
         # Display oldest body information (top left)
@@ -1966,6 +1987,7 @@ class Engine:
                     ("", ""),
                     ("Space", "Pause / Unpause simulation"),
                     ("V", "Toggle vectors display (red: velocity vectors, blue: force vectors)"),
+                    ("B", "Toggle gravitational lensing grid (infinite background)"),
                     ("R", "Toggle random velocity mode (mass-proportional)"),
                     ("G", "Toggle reversed gravity (repulsion)"),
                     ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
@@ -2140,14 +2162,16 @@ class Engine:
         """
         if not pygame.mixer.music.get_busy() and self.music:
             try:
-                # Load and queue music tracks
-                pygame.mixer.music.load(self.fm.ressource_path(f'{self.musics_folder_path}/music1.mp3'))
-                pygame.mixer.music.queue(self.fm.ressoucre_path(f'{self.musics_folder_path}/music2.mp3'))
-                pygame.mixer.music.queue(self.fm.ressource_path(f'{self.musics_folder_path}/music3.mp3'))
-            except FileNotFoundError:
-                # Silently fail if music files don't exist
+                mus_dir = self.fm.resource_path("assets/musics")
+                m1 = os.path.join(mus_dir, "music1.mp3")
+                m2 = os.path.join(mus_dir, "music2.mp3")
+                m3 = os.path.join(mus_dir, "music3.mp3")
+                pygame.mixer.music.load(m1)
+                pygame.mixer.music.queue(m2)
+                pygame.mixer.music.queue(m3)
+                pygame.mixer.music.play(loop, start, fade_ms)
+            except (FileNotFoundError, OSError, pygame.error, AttributeError):
                 pass
-            pygame.mixer.music.play(loop, start, fade_ms)
     
     ### A passer en GO
     def physics_step(self, dt):
@@ -2269,6 +2293,8 @@ class Engine:
         
             # STEP 4: Reset alpha to 0 (start again from the saved visual position)
             alpha = 0
+
+        draw_gravitational_grid(self.screen, self, alpha, circles)
 
         # Render vectors if enabled
         if self.vectors_in_front:
@@ -2451,6 +2477,7 @@ class Engine:
         self.KEY_MAP = {
             pygame.K_SPACE: ActionManager.toggle_pause,
             pygame.K_v: ActionManager.toggle_vectors_printed,
+            pygame.K_b: ActionManager.toggle_gravitational_grid,
             pygame.K_r: ActionManager.toggle_random_mode,
             pygame.K_g: ActionManager.toggle_reversed_gravity,
             pygame.K_p: self.generate_environment,
@@ -2477,6 +2504,8 @@ class Engine:
             pygame.MOUSEBUTTONUP: ActionManager.handle_mouse_button_up,
         }
 
+        self.beginning_time = time.time()
+
         running = True
 
         # Initialize time tracking
@@ -2494,18 +2523,13 @@ class Engine:
             self.frequency = 1.0 / frame_time if frame_time > 0 else self.FPS_TARGET
             self.latency = frame_time
             
-            # Update FPS display at regular intervals
-            if self.counter / self.frequency == int(self.counter / self.frequency):
+            self._fps_display_accumulator += frame_time
+            if self._fps_display_accumulator >= 0.2:
+                self._fps_display_accumulator = 0.0
                 if self.frequency < self.FPS_TARGET + 20:
                     self.displayed_FPS = self.frequency
                 else:
-                    self.displayed_FPS = self.FPS_TARGET
-            
-            # Update frame counter
-            if self.counter + 1 >= self.frequency:
-                self.counter = 0
-            else:
-                self.counter += 1
+                    self.displayed_FPS = float(self.FPS_TARGET)
             
             # Add to accumulator (only if not paused)
             if not self.is_paused:
@@ -2688,6 +2712,17 @@ class ActionManager:
             engine.unpause()
         else:
             engine.pause()
+
+    @staticmethod
+    def toggle_gravitational_grid():
+        """Active ou désactive la grille de fond avec effet lentille gravitationnelle."""
+        engine.gravitational_grid_enabled = not engine.gravitational_grid_enabled
+        state = "activée" if engine.gravitational_grid_enabled else "désactivée"
+        TempText(
+            f"Grille gravitationnelle {state}",
+            1.5,
+            (20, engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)),
+        )
 
     @staticmethod
     def toggle_random_mode():
@@ -2877,6 +2912,7 @@ class ActionManager:
         engine.camera.cam_x += dx
         engine.camera.cam_y += dy
 
+    @staticmethod
     def save_screenshot(path: Optional[str] = None):
         """
         Save a screenshot of the current screen.
@@ -2884,27 +2920,33 @@ class ActionManager:
         Args:
             path (Optional[str]): file path ending with .png
         """
-        # Mode sans écriture disque: on conserve une copie en mémoire seulement.
-        # (Aucun fichier n'est créé, même si un `path` est fourni.)
-        engine.last_screenshot_surface = engine.screen.copy()
+        surf = engine.screen.copy()
+        engine.last_screenshot_surface = surf
+        engine.fm.create_folder("screenshots")
         if path is None:
             file_name = f"screenshot_{int(time.time())}.png"
-            TempText(
-                text=f"Screenshot captured (memory): {file_name}",
-                duration=3.0,
-                dest=(
-                    20,
-                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)
-                )
-            )
+            full_path = os.path.join(engine.screenshots_folder_path, file_name)
         else:
+            full_path = path
+        try:
+            pygame.image.save(surf, full_path)
+            shown = os.path.basename(full_path)
             TempText(
-                text="Screenshot captured (memory only)",
+                text=f"Screenshot enregistré : {shown}",
                 duration=3.0,
                 dest=(
                     20,
-                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size)
-                )
+                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size),
+                ),
+            )
+        except (pygame.error, OSError, ValueError, TypeError) as e:
+            TempText(
+                text=f"Échec capture : {e}",
+                duration=3.0,
+                dest=(
+                    20,
+                    engine.screen.get_height() - 2 * (engine.txt_gap + engine.txt_size),
+                ),
             )
 
     @staticmethod
@@ -2973,17 +3015,17 @@ class Utils:
             return None
 
     @staticmethod
-    def mass_sum() -> int:
+    def mass_sum() -> float:
         """
         Calculate total mass of all bodies in the simulation.
         
         Returns:
             Sum of all body masses
         """
-        all_mass = 0
+        total = 0.0
         for circle in circles:
-            all_mass += circle.mass
-        return all_mass
+            total += float(circle.mass)
+        return total
 
     @staticmethod
     def draw_line(color: tuple[int, int, int] | tuple[int, int, int, int] = (255, 255, 255),
