@@ -275,7 +275,7 @@ class ConfigPanel:
             setattr(self.engine, "last_saved_config_payload", payload)
             print(f"✓ Config saved: {path}")
             if hasattr(self.engine, "notify"):
-                self.engine.notify("Configuration enregistrée", duration=2.0)
+                self.engine.notify("Config saved", duration=2.0)
         except Exception as e:
             print(f"✗ Save failed: {e}")
     

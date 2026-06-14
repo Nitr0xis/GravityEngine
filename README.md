@@ -1,6 +1,6 @@
 # GravityEngine
 
-**v3.7.0** — N-body gravitational simulator built with Python and Pygame.
+**v3.7.1** — N-body gravitational simulator built with Python and Pygame.
 
 **Author:** Nils DONTOT  
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
@@ -20,7 +20,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.7.0](#whats-new-in-v370)
+- [What's New in v3.7](#whats-new-in-v37)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -56,7 +56,7 @@ Gravity Engine is an interactive N-body gravitational simulation that allows you
 
 ---
 
-## What's New in v3.7.0
+## What's New in v3.7
 
 ### Gravitational Lensing Grid
 
@@ -383,4 +383,4 @@ See [LICENSE](LICENSE) — full terms at [creativecommons.org/licenses/by-nc-sa/
 
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
 **Issues:** [github.com/Nitr0xis/GravityEngine/issues](https://github.com/Nitr0xis/GravityEngine/issues)  
-*Last updated: June 2026 — v3.7.0*
+*Last updated: June 2026 — v3.7.1*
