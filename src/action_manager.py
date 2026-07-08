@@ -8,6 +8,7 @@ from temp_text import TempText
 from config_panel import ConfigPanel
 from circle import Circle
 from math import fabs, sqrt
+from logger import Logger
 
 
 class ActionManager:
@@ -24,6 +25,7 @@ class ActionManager:
             state.engine.unpause()
         else:
             state.engine.pause()
+        Logger.info(f"Simulation paused: {state.engine.is_paused}")
 
     @staticmethod
     def toggle_gravitational_grid():
@@ -34,21 +36,25 @@ class ActionManager:
             1.5,
             (20, state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size)),
         )
+        Logger.info(f"Gravitational grid: {state.engine.gravitational_grid_enabled}")
 
     @staticmethod
     def toggle_random_mode():
         """Toggle random velocity mode for new bodies."""
         state.engine.random_mode = not state.engine.random_mode
+        Logger.info(f"Random mode: {state.engine.random_mode}")
 
     @staticmethod
     def toggle_reversed_gravity():
         """Toggle reversed gravity mode (repulsion instead of attraction)."""
         state.engine.reversed_gravity = not state.engine.reversed_gravity
+        Logger.info(f"Reversed gravity: {state.engine.reversed_gravity}")
 
     @staticmethod
     def toggle_vectors_printed():
         """Toggle display of velocity and force vectors."""
         state.engine.vectors_printed = not state.engine.vectors_printed
+        Logger.info(f"Vectors printed: {state.engine.vectors_printed}")
 
     @staticmethod
     def quit_engine(text: Optional[str] = None):
@@ -61,6 +67,7 @@ class ActionManager:
         if text is None:
             text = f"{60 * "="}\nSee you soon! Project available on https://github.com/Nitr0xis/GravityEngine/\n{60 * "="}"
 
+        Logger.info("Quitting engine")
         pygame.quit()
         sys.exit(text)
 
@@ -71,6 +78,7 @@ class ActionManager:
             if circle.is_selected:
                 state.circles.remove(circle)
                 break
+        Logger.info(f"Deleted selected circle : ID={circle.number}")
 
     @staticmethod
     def handle_mouse_button_down(event: pygame.event):
@@ -216,6 +224,7 @@ class ActionManager:
                 state.engine.info_y - state.engine.txt_gap - state.engine.txt_size),
                 line=1
                 )
+        Logger.info("Camera reset")
 
     @staticmethod
     def pan_camera(dx, dy):
@@ -231,6 +240,8 @@ class ActionManager:
         Args:
             path (Optional[str]): file path ending with .png
         """
+        from logger import Logger
+        
         surf = state.engine.screen.copy()
         state.engine.last_screenshot_surface = surf
         state.engine.fm.create_folder("screenshots")
@@ -250,6 +261,7 @@ class ActionManager:
                     state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size),
                 ),
             )
+            Logger.info(f"Screenshot saved: {shown}")
         except (pygame.error, OSError, ValueError, TypeError) as e:
             TempText(
                 text=f"Échec capture : {e}",
@@ -259,6 +271,7 @@ class ActionManager:
                     state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size),
                 ),
             )
+            Logger.exception(f"Screenshot failed: {e}")
 
     @staticmethod
     def open_config_panel():

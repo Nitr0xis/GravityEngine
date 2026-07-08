@@ -1,9 +1,11 @@
 # GravityEngine
 
-**v3.7.1** — N-body gravitational simulator built with Python and Pygame.
+*N-body gravitational simulator built with Python and Pygame.*
 
-**Author:** Nils DONTOT  
-**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
+**v3.8.0** — *Logging Edition*
+
+**Author:** Nils DONTOT
+**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
 **Contact:** nils.dontot.pro@gmail.com
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
@@ -20,7 +22,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.7](#whats-new-in-v37)
+- [What's New in v3.8](#whats-new-in-v38)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -37,43 +39,40 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 
 ## Overview
 
-Gravity Engine is an interactive N-body gravitational simulation that allows you to create and observe celestial bodies interacting under Newtonian gravity. Watch bodies orbit, collide, and merge in real-time with accurate physics and smooth visualization.
+GravityEngine is an interactive N-body gravitational simulation. Create celestial bodies, watch them orbit, collide, and merge under Newtonian gravity, in real time.
 
-### Key Technical Features
+<p align="center"><img src="previews/preview_1.png" width="80%" alt="Multiple bodies with velocity/force vectors"></p>
 
-- **Pygame configuration panel** - Real-time parameter adjustment with custom widgets
-- **Interactive help overlay** - Hold H or I for instant control reference
-- **Atlas file manager** - Cross-platform file management (dev + exe)
-- **Screenshot system** - Capture simulations with S key
-- **Complete camera system** - Pan, zoom, reset with smooth transitions
-- **Zoom-adaptive generation** - Body masses scale with zoom level
-- **Screen-constant growth** - Bodies grow at constant visual rate
-- **Mass-proportional energy** - Heavy bodies move realistically
-- **Fixed timestep physics** - Deterministic simulation (1/120s per step)
-- **Complete interpolation** - Position, velocity, force, and radius smoothly interpolated
-- **Visual collision detection** - Detects collisions on what you see
-- **Adaptive performance mode** - Maintains 120 FPS even with 100+ bodies
+Key features:
+
+- Pygame configuration panel with real-time parameter adjustment
+- Gravitational lensing grid (visual, Newtonian-inspired)
+- Fixed timestep physics (1/120s), deterministic simulation
+- Full interpolation (position, velocity, force, radius) for smooth rendering
+- Zoom-adaptive body generation, complete camera system (pan/zoom/reset)
+- Cross-platform file manager (dev + exe)
+- Rotating file logger for crash diagnostics
+- Adaptive performance mode: 120 FPS with 100+ bodies
 
 ---
 
-## What's New in v3.7
+## What's New in v3.8 — Logging Edition
 
-### Gravitational Lensing Grid
+### File Logging
 
-A background grid rendered in world space, deformed per-vertex by the gravitational field of all active bodies. This is a visual approximation inspired by gravitational lensing — not a GR ray-tracing solution.
+A rotating log system (`logger.py`) now records session events to `user_data/logs/gravityengine.log`. Purpose: diagnose crashes on `.exe` builds where the user has no console.
 
-Technical properties:
-- Each grid vertex is displaced using a Newtonian-inspired falloff: `falloff = soft² / (r² + soft²)`, which reaches ~1 near the body center and decays smoothly at distance, avoiding singularities.
-- Deformation amplitude scales with `√(camera.scale)` so the effect remains perceptually stable across zoom levels, without distorting geometry at large or small scales.
-- Softening is computed per body as `max(radius × 0.75, view_diagonal × 0.002, 8.0)` to prevent line crossings near dense bodies.
-- Adaptive polyline sampling (~8 px per segment) keeps curves smooth without excessive vertex count.
-- Minor grid (1/5 subdivisions) activates automatically when the major cell exceeds `grid_subdivide_px` in screen space.
-- All parameters are configurable live via the config panel and persist to `saves/config.json`.
-- Toggle: `B`. The `reversed_gravity` flag inverts deformation direction to match repulsion mode.
+The screenshot above shows the gravitational lensing grid (`B` to toggle), carried over from v3.7.
 
-### Code Reorganization
+- Initialized once in `Engine.__init__` via `Logger.setup()`
+- Standard levels: `info`, `warning`, `error`, `exception` (captures traceback automatically in `except` blocks)
+- Log rotation: 1 MB per file, 3 backups kept
+- No performance impact on the physics loop (file I/O only on discrete events, not per frame)
 
-`gravity_engine.py` (~3100 lines) has been fully decomposed into a flat module set. See [Architecture](#architecture) for the complete breakdown.
+### Stability fixes (carried over from v3.7 refactor)
+
+- Fixed `state` shadowing bug in `action_manager.py` and `circle.py` (local dict renamed to `istate`)
+- Fixed duplicate `circles` list in `engine.py` causing invisible bodies
 
 ---
 
@@ -148,6 +147,8 @@ Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._
 | Left click (on body) | Select body |
 | `Del` | Delete selected body |
 
+<p align="center"><img src="previews/preview_2.png" width="80%" alt="Selected body orbiting a star"></p>
+
 ### Simulation
 
 | Key | Action |
@@ -167,7 +168,9 @@ Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._
 
 ## Configuration Panel
 
-Press `C` to open. Parameters take effect immediately; simulation continues in the background.
+Press `C` to open. Parameters take effect immediately.
+
+<p align="center"><img src="previews/preview_4.png" width="80%" alt="Configuration panel"></p>
 
 **Simulation**
 
@@ -203,7 +206,7 @@ Press `C` to open. Parameters take effect immediately; simulation continues in t
 | Adaptive Substeps | toggle | off |
 | Substep Precision | +0–8 steps | 0 |
 
-**Persistence:** `Save Config` / `Load Last Config` serialize all parameters to `saves/config.json`. The file stores the engine version alongside parameters; a version mismatch triggers a warning but still applies compatible keys.
+**Persistence:** `Save Config` / `Load Last Config` serialize all parameters to `saves/config.json`. Version mismatch triggers a warning but still applies compatible keys.
 
 ---
 
@@ -215,6 +218,8 @@ Press `C` to open. Parameters take effect immediately; simulation continues in t
 F = G × m₁ × m₂ / r²      G = 6.6743 × 10⁻¹¹ N·m²/kg²
 ```
 
+<p align="center"><img src="previews/preview_3.png" width="80%" alt="Gravitational lensing grid"></p>
+
 ### Integration
 
 Fixed timestep (1/120 s), explicit Euler:
@@ -224,21 +229,19 @@ x(t+dt) = x(t) + v(t) × dt
 v(t+dt) = v(t) + (F/m) × dt
 ```
 
-The physics timestep is decoupled from render FPS. At each render frame, as many physics steps as needed are consumed from the time accumulator (up to 2 steps per frame to prevent spiral of death). Interpolation alpha `α = accumulator / timestep` bridges the gap for smooth rendering.
+Physics timestep is decoupled from render FPS. Each render frame consumes as many physics steps as needed from the accumulator (capped at 2 to avoid spiral of death). Interpolation alpha `α = accumulator / timestep` bridges the gap for rendering.
 
 ### Interpolated Rendering
-
-All visual positions are interpolated between the previous and current physics states:
 
 ```
 x_render = x_prev + (x - x_prev) × α
 ```
 
-This applies to position, velocity, force, and radius. Click detection uses interpolated positions, so body selection targets what is visually on screen.
+Applies to position, velocity, force, radius. Click detection uses interpolated positions, so selection targets what is visually on screen.
 
 ### Collision and Fusion
 
-Detection uses overlap of visual (interpolated) radii, confirmed on physical radii. Fusion applies momentum conservation:
+Detection uses overlap of visual (interpolated) radii, confirmed on physical radii. Momentum conservation only:
 
 ```
 v_merged = (m₁v₁ + m₂v₂) / (m₁ + m₂)
@@ -246,53 +249,55 @@ m_merged = m₁ + m₂
 r_merged = (3 × m_merged / (4π × density))^(1/3)
 ```
 
-Kinetic energy is not conserved — the collision is perfectly inelastic by design.
+Kinetic energy is not conserved — perfectly inelastic collision by design.
 
 ### Adaptive Substeps
 
-When enabled, each base physics step can be split into additional substeps based on relative body speeds and radii. This is a CCD-style mechanism to prevent fast-moving bodies from tunnelling through others. Controlled by `adaptive_substeps_max_extra` (0 = disabled, 8 = up to 9 substeps per base step).
+Each base physics step can split into extra substeps based on relative speed and radii (CCD-style, prevents tunnelling). Controlled by `adaptive_substeps_max_extra` (0 = disabled, 8 = up to 9 substeps).
 
 ---
 
 ## Architecture
 
-Flat module structure under `src/`. No package hierarchy — all modules share state via `state.py`.
+Flat module structure under `src/`. All modules share state via `state.py`.
 
 ```
 src/
 ├── engine.py               # Main loop, physics dispatch, render orchestration
 ├── state.py                # Shared globals: engine singleton + circles list
-├── circle.py               # Body class: physics state, attraction, integration
-├── camera.py               # World ↔ screen transforms, zoom, pan
-├── action_manager.py       # Input event handlers (mouse, keyboard)
-├── config_panel.py         # Overlay UI: sliders, checkboxes, buttons, scroll
-├── gravitational_grid.py   # Background grid with gravitational lensing deformation
-├── color.py                # Color class with arithmetic operators + Display palette
-├── temp_text.py            # Timed on-screen notifications
-├── utils.py                # Rendering helpers, aggregation (heaviest, oldest, mass_sum)
-├── atlas.py                # Cross-platform asset and user-data path resolution
-├── debugger.py             # Path diagnostics + physics unit tests
-└── (tester.py)             # Extended test suite (determinism, interpolation cache)
+├── circle.py                # Body class: physics state, attraction, integration
+├── camera.py                # World ↔ screen transforms, zoom, pan
+├── action_manager.py        # Input event handlers (mouse, keyboard)
+├── config_panel.py          # Overlay UI: sliders, checkboxes, buttons, scroll
+├── gravitational_grid.py    # Background grid with lensing deformation
+├── color.py                 # Color class with arithmetic operators + palette
+├── temp_text.py              # Timed on-screen notifications
+├── utils.py                  # Rendering helpers, aggregation (heaviest, oldest, mass_sum)
+├── atlas.py                  # Cross-platform asset and user-data path resolution
+├── logger.py                 # Rotating file logger (new in v3.8)
+└── debugger.py                # Path diagnostics + physics unit tests
 ```
 
 ### Shared State Pattern
-
-`state.py` exposes two mutable globals:
 
 ```python
 engine: Optional[Engine] = None
 circles: list[Circle] = []
 ```
 
-All modules import `state` and access `state.engine` / `state.circles` directly. This resolves circular imports (e.g. `Circle` needs engine settings, `Engine` holds `Circle` references) without rewriting to dependency injection. `circles` is always mutated in place — reassignment would silently break references held by other modules. Use `state.circles.clear()`, `append()`, `remove()`.
+All modules import `state` and access `state.engine` / `state.circles` directly. Resolves circular imports (`Circle` needs engine settings, `Engine` holds `Circle` references) without dependency injection. `circles` is always mutated in place — reassignment breaks references held elsewhere. Use `state.circles.clear()`, `append()`, `remove()`.
 
 ### Coordinate System
 
-The camera maintains a linear transform: `screen = world × scale + offset`. `camera.screen_to_world` and `camera.world_to_screen` are the single source of truth. All physics runs in world space (meters); rendering converts to screen space at draw time.
+`camera.screen_to_world` / `camera.world_to_screen` are the single source of truth for `screen = world × scale + offset`. Physics runs in world space (meters); rendering converts to screen space at draw time.
 
 ### File Management
 
-`Atlas` (`atlas.py`) handles dev/exe path differences transparently. In dev mode, user data goes to `user_data/` inside the project. In exe mode (PyInstaller), user data goes to `Documents/GravityEngine/`. Assets are always resolved via `fm.resource_path()`.
+`Atlas` (`atlas.py`) handles dev/exe path differences transparently. Dev mode: user data in `user_data/` inside the project. Exe mode (PyInstaller): user data in `Documents/GravityEngine/`. Assets always resolved via `fm.resource_path()`.
+
+### Logging
+
+`Logger` (`logger.py`) is a static wrapper around `logging.Logger`, initialized once via `Logger.setup(engine.logs_folder_path)`. Rotating file handler, 1 MB per file, 3 backups. Use `Logger.exception()` inside `except` blocks to capture the traceback automatically.
 
 ---
 
@@ -305,31 +310,29 @@ GravityEngine demonstrates:
 - Fixed timestep integration and determinism
 - Render/physics decoupling via linear interpolation
 - World-to-screen coordinate transformation
-- Zoom-adaptive scaling (body mass ∝ 1/scale²)
 - Gravitational lensing approximation (visual, Newtonian-inspired)
 - N-body problem (classical, O(n²) per step)
-- Custom UI design in Pygame (overlay panels, animated widgets)
-- Cross-platform file management (dev vs. exe detection)
+- Custom UI design in Pygame
 
 ---
 
 ## Troubleshooting
 
-**Config panel not opening:** press `C`, not `Ctrl+C`. Check console for import errors.
+**Config panel not opening:** press `C`, not `Ctrl+C`. Check console/log for import errors.
 
 **Font not found:** verify `assets/fonts/main_font.ttf` exists. Run `Debugger.default_debug()` to print path resolution.
 
-**Help overlay not showing:** hold `H` or `I` — releasing dismisses it.
+**Simulation too fast / slow:** open config (`C`), adjust Time Acceleration (default 2×10⁴).
 
-**Simulation too fast / slow:** open config (`C`), adjust Time Acceleration. Default is 2×10⁴.
+**Gravitational grid invisible:** check `grid_lens_amount > 0`. At extreme zoom-out, deformation may be sub-pixel — zoom in or increase lens strength.
 
-**Gravitational grid invisible:** check `grid_lens_amount > 0` in config. At zoom-out extremes, deformation may be sub-pixel — zoom in or increase lens strength.
+**Grid line crossings at high lens strength:** reduce `grid_lens_amount` (cap 10).
 
-**Grid line crossings at high lens strength:** reduce `grid_lens_amount` (cap is 10). Crossings occur when displacement exceeds half the softening radius.
-
-**Poor performance with grid enabled:** reduce `grid_max_lines` in source (default 64) or increase `grid_target_spacing_px` (fewer, wider lines).
+**Poor performance with grid enabled:** reduce `grid_max_lines` (default 64) or increase `grid_target_spacing_px`.
 
 **Screenshots not saving:** check `user_data/screenshots/` (dev) or `Documents/GravityEngine/screenshots/` (exe). Verify write permissions.
+
+**Crash with no visible error (exe build):** check `user_data/logs/gravityengine.log` (or `Documents/GravityEngine/logs/` in exe mode) for the traceback.
 
 ---
 
@@ -341,13 +344,13 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 | Version | Feature |
 |---|---|
+| v3.8.0 | Rotating file logger |
 | v3.7.0 | Gravitational lensing grid, code modularization |
-| v3.6.0 | Code modularization |
-| v3.5.0 | Configuration panel (Pygame overlay, custom widgets, save/load) |
+| v3.5.0 | Configuration panel (Pygame overlay, save/load) |
 | v3.3.0 | Interactive help overlay |
 | v3.2.0 | Camera system rewrite, zoom-adaptive body generation |
 
-### Current Focus (June 2026)
+### Current Focus
 
 | Priority | Feature |
 |---|---|
@@ -360,10 +363,14 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Quick version:
+
 1. Fork and clone the repository
 2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Test: `python src/engine.py`
-4. Commit: `git commit -m "Add: feature description"`
+4. Commit: `git commit -m "feat: description"`
 5. Open a pull request
 
 Priority areas: save/load system, scenario presets, performance profiling, data export.
@@ -372,7 +379,7 @@ Priority areas: save/load system, scenario presets, performance profiling, data 
 
 ## License
 
-**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**  
+**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
 Copyright (c) 2026 Nils DONTOT
 
 Non-commercial use and redistribution permitted with attribution. Derivative works must carry the same license.
@@ -381,6 +388,9 @@ See [LICENSE](LICENSE) — full terms at [creativecommons.org/licenses/by-nc-sa/
 
 ---
 
-**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
-**Issues:** [github.com/Nitr0xis/GravityEngine/issues](https://github.com/Nitr0xis/GravityEngine/issues)  
-*Last updated: June 2026 — v3.7.1*
+**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
+**Issues:** [github.com/Nitr0xis/GravityEngine/issues](https://github.com/Nitr0xis/GravityEngine/issues)
+
+Made with ❤ by Nils DONTOT.
+
+*Last updated: July 2026 — v3.8.0*

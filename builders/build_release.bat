@@ -59,7 +59,7 @@ pyinstaller --clean ^
     --name "GravityEngine" ^
     %ICON_PARAM% ^
     --add-data "assets;assets" ^
-    src/engine.py
+    src/main.py
 
 if errorlevel 1 (
     echo.

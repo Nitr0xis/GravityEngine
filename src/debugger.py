@@ -61,7 +61,7 @@ class Debugger:
         Check if the simulation is determinist.
         Two same runs.
         """
-        from engine import Engine
+        from main import Engine
 
         engine1 = Engine()
         engine2 = Engine()

@@ -130,7 +130,7 @@ echo  Running from source (Python)...
 echo.
 echo  ================================================
 echo.
-python src/gravity_engine.py
+python src/main.py
 echo.
 echo  ================================================
 echo.
@@ -246,26 +246,3 @@ echo  ================================================
 echo.
 timeout /t 2 >nul
 exit
-```
-
----
-
-## 📋 Created Files
-
-This is what you must have in the root of your project :
-```
-GravityEngine/
-├── src/
-│   └── gravity_engine.py
-├── assets/
-│   ├── font.ttf
-│   └── icon.ico (recommended)
-├── builders/
-│   ├── build.bat
-│   ├── build_release.bat
-│   └── clean.bat
-├── make.bat
-├── README.md
-├── LICENSE
-├── .gitignore
-└── .gitattributes

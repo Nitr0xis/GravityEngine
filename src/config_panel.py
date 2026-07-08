@@ -14,6 +14,8 @@ import pygame
 import json
 import math
 
+from logger import Logger
+
 
 # ==================================================================================
 # COLORS
@@ -320,10 +322,15 @@ class ConfigPanel:
                         duration=4.0,
                         line=1,
                     )
+            Logger.info(f"Config loaded: {path}")
         except Exception as e:
             print(f"✗ Load failed: {e}")
+            Logger.exception(f"Config load failed: {e}")
+            if hasattr(self.engine, "notify"):
+                self.engine.notify(f"Config load failed: {e}", duration=4.0, line=1)
     
     def toggle(self):
+        Logger.info(f"Config panel toggled: {self.visible}")
         self.visible = not self.visible
         if self.visible:
             self._build()  # Refresh values

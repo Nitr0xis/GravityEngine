@@ -6,6 +6,7 @@ from math import *
 from typing import Optional
 from color import Color, Display
 from utils import Utils
+from logger import Logger
 try:
     from math import cbrt
 except ImportError:
@@ -852,6 +853,8 @@ class Circle:
 
         # ===== INVALIDATE INTERPOLATION CACHE =====
         self._interpolated_cache['alpha'] = -1.0
+
+        Logger.info(f"Circle {self.number} fused with circle {other.number}")
 
     def is_colliding_with(self, other) -> bool:
         """
