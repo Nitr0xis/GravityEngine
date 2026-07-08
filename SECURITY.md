@@ -40,4 +40,8 @@ Expect acknowledgment within 48 hours and an initial assessment within 7 days. F
 - Never construct file paths by direct string interpolation of external input; resolve and check the path stays within the intended base directory.
 - Pin dependency versions in build/release configs where practical.
 
+## License
+
+This project is licensed under the **MIT License**. Security information may be shared freely, including in commercial contexts, without additional restriction.
+
 *Last updated: July 2026 — v3.8.0*

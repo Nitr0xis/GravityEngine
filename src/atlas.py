@@ -8,8 +8,7 @@ seamlessly in both development and PyInstaller executable environments.
 Author: Nils DONTOT
 Github Repository: https://github.com/Nitr0xis/Atlas
 Version: 1.1.0
-License: CC BY-NC-SA 4.0 (https://creativecommons.org/licenses/by-nc-sa/4.0)
-
+License: MIT License (https://opensource.org/licenses/MIT)
 Changelog v1.1.0:
     - Added project_root parameter for flexible root directory configuration
     - Auto-detects project root by default (goes up from module location)

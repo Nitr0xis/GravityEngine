@@ -6,7 +6,7 @@ Copyright (c) 2026 Nils DONTOT
 Email: nils.dontot.pro@gmail.com
 GitHub account: https://github.com/Nitr0xis/
 GitHub repository: https://github.com/Nitr0xis/GravityEngine/
-LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY-NC-SA 4.0 License
+LICENCE: MIT License (https://opensource.org/licenses/MIT)
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
 --- Dependencies ---
@@ -15,7 +15,7 @@ Atlas - My own file managing module:
     Email: nils.dontot.pro@gmail.com
     GitHub account: https://github.com/Nitr0xis/
     GitHub repository: https://github.com/Nitr0xis/Atlas/
-    LICENCE: https://creativecommons.org/licenses/by-nc-sa/4.0/, Creative Commons BY-NC-SA 4.0 License
+    LICENCE: MIT License (https://opensource.org/licenses/MIT)
     README: https://github.com/Nitr0xis/Atlas/blob/main/README.md
 
 CONTROLS:

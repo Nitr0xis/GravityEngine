@@ -8,7 +8,7 @@
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
 **Contact:** nils.dontot.pro@gmail.com
 
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Pygame](https://img.shields.io/badge/pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-Nitr0xis-181717?logo=github)](https://github.com/Nitr0xis)
@@ -61,6 +61,8 @@ Key features:
 ### File Logging
 
 A rotating log system (`logger.py`) now records session events to `user_data/logs/gravityengine.log`. Purpose: diagnose crashes on `.exe` builds where the user has no console.
+
+<p align="center"><img src="previews/preview_3.png" width="80%" alt="Gravitational lensing grid"></p>
 
 The screenshot above shows the gravitational lensing grid (`B` to toggle), carried over from v3.7.
 
@@ -217,8 +219,6 @@ Press `C` to open. Parameters take effect immediately.
 ```
 F = G × m₁ × m₂ / r²      G = 6.6743 × 10⁻¹¹ N·m²/kg²
 ```
-
-<p align="center"><img src="previews/preview_3.png" width="80%" alt="Gravitational lensing grid"></p>
 
 ### Integration
 
@@ -379,12 +379,12 @@ Priority areas: save/load system, scenario presets, performance profiling, data 
 
 ## License
 
-**Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)**
+**MIT License**
 Copyright (c) 2026 Nils DONTOT
 
-Non-commercial use and redistribution permitted with attribution. Derivative works must carry the same license.
+Permissive license: use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software freely, including in commercial contexts, provided the copyright notice and license text are retained.
 
-See [LICENSE](LICENSE) — full terms at [creativecommons.org/licenses/by-nc-sa/4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+See [LICENSE](LICENSE) — full terms at [opensource.org/licenses/MIT](https://opensource.org/licenses/MIT).
 
 ---
 

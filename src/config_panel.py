@@ -7,7 +7,7 @@ Press C to open, ESC or click outside to close.
 
 Author: Nils DONTOT
 Version: 1.0.0
-License: CC BY-NC-SA 4.0
+License: MIT License (https://opensource.org/licenses/MIT)
 """
 
 import pygame
