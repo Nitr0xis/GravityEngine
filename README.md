@@ -9,7 +9,7 @@
 **Contact:** nils.dontot.pro@gmail.com
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Pygame](https://img.shields.io/badge/pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-Nitr0xis-181717?logo=github)](https://github.com/Nitr0xis)
 
@@ -80,7 +80,7 @@ The screenshot above shows the gravitational lensing grid (`B` to toggle), carri
 
 ## Installation
 
-**Prerequisites:** Python 3.11+, pip
+**Prerequisites:** Python 3.13+, pip
 
 ```bash
 pip install pygame matplotlib
