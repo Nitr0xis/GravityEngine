@@ -263,7 +263,7 @@ Flat module structure under `src/`. All modules share state via `state.py`.
 
 ```
 src/
-├── engine.py               # Main loop, physics dispatch, render orchestration
+├── main.py               # Main loop, physics dispatch, render orchestration
 ├── state.py                # Shared globals: engine singleton + circles list
 ├── circle.py                # Body class: physics state, attraction, integration
 ├── camera.py                # World ↔ screen transforms, zoom, pan
