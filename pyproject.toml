@@ -1,0 +1,29 @@
+[project]
+name = "gravityengine"
+version = "3.9.0"
+description = "N-body gravitational simulator built with Python and Pygame"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "Nils DONTOT", email = "nils.dontot.pro@gmail.com"}
+]
+
+dependencies = [
+    "pygame>=2.0",
+    "numpy>=1.24",
+    "matplotlib>=3.5",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=6.0",
+]
+
+[project.urls]
+Repository = "https://github.com/Nitr0xis/GravityEngine"
+Issues = "https://github.com/Nitr0xis/GravityEngine/issues"
+
+[tool.setuptools]
+packages = ["core", "physics", "rendering"]
+package-dir = {"" = "src"}
