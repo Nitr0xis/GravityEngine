@@ -903,7 +903,8 @@ class Engine:
 
         # If there are bodies, compute forces and fusions
         if len(state.circles) > 0:
-            t_forces = time.perf_counter()
+            if self.debug_mode:
+                t_forces = time.perf_counter()
             compute_forces(
                 state.circles, self.gravity, self.reversed_gravity,
                 n_threshold=self.force_method_n_threshold,
@@ -911,23 +912,30 @@ class Engine:
                 hysteresis=100,
                 barnes_hut_theta=self.barnes_hut_theta,
             )
-            t_forces = time.perf_counter() - t_forces
+            if self.debug_mode:
+                t_forces = time.perf_counter() - t_forces
 
-            t_grid = time.perf_counter()
+            if self.debug_mode:
+                t_grid = time.perf_counter()
             grid = build_collision_grid(state.circles)
-            t_grid = time.perf_counter() - t_grid
+            if self.debug_mode:
+                t_grid = time.perf_counter() - t_grid
 
-            t_fusions = time.perf_counter()
+            if self.debug_mode:
+                t_fusions = time.perf_counter()
             for circle in state.circles:
                 for other_circle in grid.candidates_near(circle):
                     if circle is not other_circle:
                         circle.update_fusion(other_circle, dt_sim)
-            t_fusions = time.perf_counter() - t_fusions
+            if self.debug_mode:
+                t_fusions = time.perf_counter() - t_fusions
 
-        t_update = time.perf_counter()
+        if self.debug_mode:
+            t_update = time.perf_counter()
         for circle in state.circles:
             circle.physics_update(dt)
-        t_update = time.perf_counter() - t_update
+        if self.debug_mode:
+            t_update = time.perf_counter() - t_update
 
         self.simulation_time += dt
         
