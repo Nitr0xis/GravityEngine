@@ -182,7 +182,7 @@ Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._
 
 Press `C` to open. Parameters take effect immediately.
 
-<p align="center"><img src="previews/preview_4.png" width="80%" alt="Configuration panel"></p>
+<p align="center"><img src="previews/preview_3.png" width="80%" alt="Configuration panel"></p>
 
 **Simulation**
 
@@ -223,6 +223,8 @@ Press `C` to open. Parameters take effect immediately.
 ---
 
 ## Physics
+
+<p align="center"><img src="previews/preview_4.png" width="80%" alt="Multiple bodies with velocity/force vectors"></p>
 
 ### Gravitational Force
 
@@ -338,6 +340,8 @@ All modules import `state` and access `state.engine` / `state.circles` directly.
 
 ## Educational Use
 
+<p align="center"><img src="previews/preview_5.png" width="80%" alt="Multiple bodies with velocity/force vectors"></p>
+
 GravityEngine demonstrates:
 
 - Newton's law of universal gravitation (F = Gm₁m₂/r²)
@@ -346,8 +350,8 @@ GravityEngine demonstrates:
 - Render/physics decoupling via linear interpolation
 - World-to-screen coordinate transformation
 - Gravitational lensing approximation (visual, Newtonian-inspired)
-- N-body problem (classical, O(n²) per step)
-- Custom UI design in Pygame
+- N-body problem (classical, O(n²) per step, or quadtree method)
+- Custom UI design with python using pygame
 
 ---
 
