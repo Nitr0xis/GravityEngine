@@ -8,7 +8,7 @@
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
 **Contact:** nils.dontot.pro@gmail.com
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![Pygame](https://img.shields.io/badge/pygame-2.0+-green.svg)](https://www.pygame.org/)
 [![GitHub](https://img.shields.io/badge/GitHub-Nitr0xis-181717?logo=github)](https://github.com/Nitr0xis)
@@ -419,12 +419,15 @@ Priority areas: save/load system, scenario presets, performance profiling, data 
 
 ## License
 
-**MIT License**
+**GNU General Public License v3.0**
+
 Copyright (c) 2026 Nils DONTOT
 
-Permissive license: use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software freely, including in commercial contexts, provided the copyright notice and license text are retained.
+Copyleft license: you may use, study, modify, and redistribute this software freely, including commercially. Any distributed modified version must remain licensed under GPL-3.0 and its source code must be made available to recipients.
 
-See [LICENSE](LICENSE) — full terms at [opensource.org/licenses/MIT](https://opensource.org/licenses/MIT).
+Preservation of reasonable legal notices or author attributions, as permitted by Section 7(b), is required: if you modify this Program, or any covered work, and distribute a modified version, you must preserve reasonable attribution to the original author (Nils DONTOT) in any "About", credits screen, or README file of the resulting work.
+
+See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.gnu.org/licenses/gpl-3.0).
 
 ---
 

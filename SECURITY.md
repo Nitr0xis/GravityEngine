@@ -42,6 +42,12 @@ Expect acknowledgment within 48 hours and an initial assessment within 7 days. F
 
 ## License
 
-This project is licensed under the **MIT License**. Security information may be shared freely, including in commercial contexts, without additional restriction.
+Copyright (c) 2026 Nils DONTOT
 
-*Last updated: July 2026 — v3.8.0*
+Copyleft license: you may use, study, modify, and redistribute this software freely, including commercially. Any distributed modified version must remain licensed under GPL-3.0 and its source code must be made available to recipients.
+
+Preservation of reasonable legal notices or author attributions, as permitted by Section 7(b), is required: if you modify this Program, or any covered work, and distribute a modified version, you must preserve reasonable attribution to the original author (Nils DONTOT) in any "About", credits screen, or README file of the resulting work.
+
+See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.gnu.org/licenses/gpl-3.0).
+
+*Last updated: August 2026 — v3.9.0*

@@ -8,6 +8,7 @@ See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 
 ## Table of Contents
 
+- [Attribution and Crediting](#attribution-and-crediting)
 - [How to Contribute](#how-to-contribute)
 - [Getting Started](#getting-started)
 - [Coding Standards](#coding-standards)
@@ -17,6 +18,33 @@ See [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community standards.
 - [Testing](#testing)
 
 ---
+
+## Attribution and Crediting
+
+GravityEngine is licensed under GPL-3.0, with an additional term under
+Section 7 requiring preservation of reasonable author attribution (see
+[LICENSE](LICENSE)). Concretely, this means:
+
+- If you fork or distribute a modified version of GravityEngine, you
+  must preserve attribution to the original author (Nils DONTOT) in
+  any "About" screen, credits section, or README of the resulting work.
+- Modified versions must be clearly marked as such, with the date of
+  modification, per GPL-3.0 Section 5(a).
+- Please do not present a modified fork as the official GravityEngine
+  project.
+
+### Your contributions
+
+By submitting a pull request, you agree that your contribution will be
+licensed under the project's GPL-3.0 license, and you retain copyright
+over your own contributed code. Significant contributors (substantial
+features, sustained involvement) may be added to a `CONTRIBUTORS.md`
+file on request — open an issue or mention it in your PR if you'd like
+to be credited there.
+
+Minor contributions (typo fixes, small bug fixes) are credited via the
+Git commit history and GitHub's contributor graph, which is sufficient
+and requires no additional action on your part.
 
 ## How to Contribute
 
@@ -153,4 +181,4 @@ Issues: [github.com/Nitr0xis/GravityEngine/issues](https://github.com/Nitr0xis/G
 
 Core maintainer: Nils DONTOT ([@Nitr0xis](https://github.com/Nitr0xis))
 
-*Last updated: July 2026 — v3.8.0*
+*Last updated: August 2026 — v3.9.0*
