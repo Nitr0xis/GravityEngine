@@ -130,7 +130,7 @@ echo  Running from source (Python)...
 echo.
 echo  ================================================
 echo.
-python src/main.py
+python src/run.py
 echo.
 echo  ================================================
 echo.

@@ -46,7 +46,7 @@ pyinstaller --clean ^
     --onefile ^
     --name "GravityEngine_Dev" ^
     --add-data "assets;assets" ^
-    src/main.py
+    src/run.py
 
 if errorlevel 1 (
     echo.

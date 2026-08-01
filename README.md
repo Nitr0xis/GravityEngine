@@ -2,7 +2,7 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.8.0** — *Logging Edition*
+**v3.9.0** — *Performance & Refactor Edition*
 
 **Author:** Nils DONTOT
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
@@ -22,7 +22,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.8](#whats-new-in-v38)
+- [What's New in v3.9](#whats-new-in-v39)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -56,25 +56,35 @@ Key features:
 
 ---
 
-## What's New in v3.8 — Logging Edition
+## What's New in v3.9 — Performance & Refactor Edition
 
-### File Logging
+### Force computation: automatic NumPy / Barnes-Hut switching
 
-A rotating log system (`logger.py`) now records session events to `user_data/logs/gravityengine.log`. Purpose: diagnose crashes on `.exe` builds where the user has no console.
+Two force algorithms are now available and selected automatically at runtime based on body count:
 
-<p align="center"><img src="previews/preview_3.png" width="80%" alt="Gravitational lensing grid"></p>
+- **NumPy vectorized O(n²)** — faster for small-to-medium simulations (low constant overhead)
+- **Barnes-Hut O(n log n)** — faster past a few hundred bodies (theta-based approximation)
 
-The screenshot above shows the gravitational lensing grid (`B` to toggle), carried over from v3.7.
+The switching threshold is **calibrated automatically at startup** (`physics/calibration.py`): a handful of benchmark runs on synthetic bodies determine which method wins on the current machine, with hysteresis to avoid oscillating near the threshold.
 
-- Initialized once in `Engine.__init__` via `Logger.setup()`
-- Standard levels: `info`, `warning`, `error`, `exception` (captures traceback automatically in `except` blocks)
-- Log rotation: 1 MB per file, 3 backups kept
-- No performance impact on the physics loop (file I/O only on discrete events, not per frame)
+### Collision broad-phase: spatial hash grid
 
-### Stability fixes (carried over from v3.7 refactor)
+Fusion detection no longer scans all body pairs. A spatial hash grid (`physics/collision_grid.py`) restricts fusion checks to nearby cells, reducing the average case from O(n²) to near O(n).
 
-- Fixed `state` shadowing bug in `action_manager.py` and `circle.py` (local dict renamed to `istate`)
-- Fixed duplicate `circles` list in `engine.py` causing invisible bodies
+### Codebase reorganized into packagesn
+
+```
+src/
+├── run.py                  # entry point
+├── core/                   # engine loop, state, logging, utils
+├── physics/                # circle, quadtree, collision grid, force dispatch
+├── rendering/              # camera, config panel, grid, colors
+└── tools/                  # dev-only calibration script
+```
+
+### Measured impact
+
+On the reference dev machine: force computation at n=1000 dropped from ~97ms (NumPy alone, previous approach) or ~68ms (Barnes-Hut alone) to whichever is faster automatically — no manual tuning required as the simulation grows or shrinks.
 
 ---
 
@@ -91,7 +101,7 @@ pip install pygame matplotlib
 ```bash
 git clone https://github.com/Nitr0xis/GravityEngine.git
 cd GravityEngine
-python src/engine.py
+python src/run.py
 ```
 
 **Pre-built binary (Windows):** download `GravityEngine.exe` from [Releases](https://github.com/Nitr0xis/GravityEngine/releases). No Python required.
@@ -103,7 +113,7 @@ python -m venv venv
 venv\Scripts\activate      # Windows
 source venv/bin/activate   # macOS/Linux
 pip install pygame matplotlib
-python src/engine.py
+python src/run.py
 ```
 
 ---
@@ -121,7 +131,7 @@ builders/clean.bat           # Clean dist/build artifacts
 Manual PyInstaller command:
 
 ```bash
-pyinstaller --onefile --windowed --add-data "assets;assets" --name GravityEngine src/engine.py
+pyinstaller --onefile --windowed --add-data "assets;assets" --name GravityEngine src/run.py
 ```
 
 Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._MEIPASS` detection at runtime.
@@ -259,24 +269,49 @@ Each base physics step can split into extra substeps based on relative speed and
 
 ## Architecture
 
-Flat module structure under `src/`. All modules share state via `state.py`.
+## Architecture
+
+Modular structure under `src/`, organized by responsibility. All modules share state via `core/state.py`.
 
 ```
 src/
-├── main.py               # Main loop, physics dispatch, render orchestration
-├── state.py                # Shared globals: engine singleton + circles list
-├── circle.py                # Body class: physics state, attraction, integration
-├── camera.py                # World ↔ screen transforms, zoom, pan
-├── action_manager.py        # Input event handlers (mouse, keyboard)
-├── config_panel.py          # Overlay UI: sliders, checkboxes, buttons, scroll
-├── gravitational_grid.py    # Background grid with lensing deformation
-├── color.py                 # Color class with arithmetic operators + palette
-├── temp_text.py              # Timed on-screen notifications
-├── utils.py                  # Rendering helpers, aggregation (heaviest, oldest, mass_sum)
-├── atlas.py                  # Cross-platform asset and user-data path resolution
-├── logger.py                 # Rotating file logger (new in v3.8)
-└── debugger.py                # Path diagnostics + physics unit tests
+├── run.py                    # Entry point: pygame init, engine startup, crash handling
+├── core/
+│ ├── main.py                 # Main loop, physics dispatch, render orchestration
+│ ├── state.py                # Shared globals: engine singleton + circles list
+│ ├── action_manager.py       # Input event handlers (mouse, keyboard)
+│ ├── atlas.py                # Cross-platform asset and user-data path resolution
+│ ├── logger.py               # Rotating file logger
+│ ├── utils.py                # Rendering helpers, aggregation
+│ └── debugger.py             # Path diagnostics + physics unit tests
+├── physics/
+│ ├── circle.py               # Body class: physics state, attraction, integration
+│ ├── quadtree.py             # Barnes-Hut spatial tree
+│ ├── collision_grid.py       # Spatial hash grid for fusion broad-phase
+│ ├── forces_manager.py       # NumPy / Barnes-Hut dispatch
+│ └── calibration.py          # Automatic method-threshold calibration
+├── rendering/
+│ ├── camera.py               # World ↔ screen transforms, zoom, pan
+│ ├── config_panel.py         # Overlay UI: sliders, checkboxes, buttons, scroll
+│ ├── gravitational_grid.py   # Background grid with lensing deformation
+│ ├── color.py                # Color class with arithmetic operators + palette
+│ └── temp_text.py            # Timed on-screen notifications
+└── tools/
+└── calibrate_threshold.py    # Dev script: NumPy vs Barnes-Hut benchmarking
 ```
+
+### Force Computation Strategy
+
+`physics/forces_manager.py` dispatches between two algorithms based on body count, using a threshold calibrated once at startup (`physics/calibration.py`) against the running machine's actual performance:
+
+- **n below threshold:** NumPy vectorized pairwise computation, O(n²) but low per-pair overhead
+- **n above threshold:** Barnes-Hut quadtree approximation, O(n log n), theta-controlled accuracy/speed tradeoff
+
+A hysteresis margin around the threshold prevents rapid switching when body count oscillates near the boundary (e.g., during fusion cascades).
+
+### Collision Broad-Phase
+
+`physics/collision_grid.py` partitions bodies into a spatial hash grid sized by the largest body's radius, so fusion checks only scan nearby cells instead of every pair.
 
 ### Shared State Pattern
 
@@ -344,6 +379,7 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 | Version | Feature |
 |---|---|
+| v3.9.0 | Barnes-Hut + NumPy force dispatch, spatial hash collision grid, package reorganization |
 | v3.8.0 | Rotating file logger |
 | v3.7.0 | Gravitational lensing grid, code modularization |
 | v3.5.0 | Configuration panel (Pygame overlay, save/load) |
@@ -369,7 +405,7 @@ Quick version:
 
 1. Fork and clone the repository
 2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Test: `python src/engine.py`
+3. Test: `python src/run.py`
 4. Commit: `git commit -m "feat: description"`
 5. Open a pull request
 
@@ -393,4 +429,4 @@ See [LICENSE](LICENSE) — full terms at [opensource.org/licenses/MIT](https://o
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: July 2026 — v3.8.0*
+*Last updated: August 2026 — v3.9.0*
