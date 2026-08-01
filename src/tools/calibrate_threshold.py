@@ -1,7 +1,7 @@
 import time
 import random
-from quadtree import build_quadtree
-from forces_manager import compute_forces_vectorized
+from physics.quadtree import build_quadtree
+from physics.forces_manager import compute_forces_vectorized
 
 class FakeCircle:
     def __init__(self, x, y, mass, radius):

@@ -11,7 +11,7 @@ class QuadNode:
         self.com_x = 0.0
         self.com_y = 0.0
         self.children = None
-        self.bodies = []       # liste des corps si feuille (1 en temps normal)
+        self.bodies = []       # list of bodies if this is a leaf (normally contains 1)
         self.is_leaf = True
 
     def _quadrant_index(self, x, y):
@@ -46,19 +46,18 @@ class QuadNode:
             self.com_x, self.com_y = body.x, body.y
             return
 
-        # Critère d'arrêt physique : si ce nœud est déjà plus petit que le
-        # rayon des corps qu'il contient, subdiviser davantage n'a plus de
-        # sens géométrique (les corps occupent déjà toute la cellule).
-        # On les garde ensemble dans une feuille "dense", traitée en exact
-        # (pairwise) lors du calcul de force — coût négligeable car cette
-        # situation ne concerne que des corps quasi-superposés.
+        # Physical stopping criterion: if this node is already smaller than the
+        # radii of the bodies it contains, subdividing further makes no geometric
+        # sense (the bodies already fill the cell). We keep them together in a "dense" 
+        # leaf, which is then treated exactly (pairwise) when computing forces — negligible 
+        # cost because this only happens for nearly overlapping bodies.
         smallest_radius = min(b.radius for b in self.bodies + [body])
         if self.half <= max(smallest_radius, 1e-9):
             self._accumulate(body)
             self.bodies.append(body)
             return
 
-        # Sinon : subdivision normale
+        # Otherwise: normal subdivision
         old_bodies = self.bodies
         self.bodies = []
         self.children = [None, None, None, None]
@@ -81,7 +80,7 @@ class QuadNode:
             return 0.0, 0.0
 
         if self.children is None:
-            # Feuille : somme exacte sur les (rares) corps qu'elle contient
+            # Leaf: do exact sum over the (rare) bodies it contains
             fx_total, fy_total = 0.0, 0.0
             for other in self.bodies:
                 if other is on_body:
@@ -137,4 +136,3 @@ def build_quadtree(circles):
     for c in circles:
         root.insert(c)
     return root
-    
