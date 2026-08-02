@@ -189,7 +189,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.9.0"
+        self.project_version = "3.9.1"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -260,7 +260,7 @@ class Engine:
         # Default density for new bodies (mass per unit volume)
         # This determines how large a body will be for a given mass
         self.default_density = 5.514e3  # 1000 <=> 1000 kg/m^3, by default on 5.514 (Earth density)
-        self.use_interpolation = True
+        self.use_interpolation = False
         self.barnes_hut_theta = 0.5  # 0 = exact (brute force), higher = faster/less accurate
 
         self.force_method_n_threshold: int = 800
@@ -910,7 +910,7 @@ class Engine:
                 n_threshold=self.force_method_n_threshold,
                 method_state=self.force_method_state,
                 hysteresis=100,
-                barnes_hut_theta=self.barnes_hut_theta,
+                barnes_hut_theta=self.barnes_hut_theta
             )
             if self.debug_mode:
                 t_forces = time.perf_counter() - t_forces

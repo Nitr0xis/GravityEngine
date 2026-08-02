@@ -16,16 +16,17 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Grille de fond infinie avec déformation type lentille gravitationnelle.
+Infinite background grid with gravitational lensing-like deformation.
 
-La grille est définie dans l'espace monde, recadrée par la caméra, avec un pas
-qui s'adapte au zoom (subdivision progressive). Chaque point est déplacé selon
-un champ inspiré du potentiel newtonien (effet visuel, pas une ray-tracing GR).
+The grid is defined in world space, clipped by the camera, with a step
+that adapts to zoom (progressive subdivision). Each point is moved according
+to a field inspired by the Newtonian potential (visual effect, not GR ray-tracing).
 """
 
 from __future__ import annotations
 
 import math
+import numpy as np
 from typing import Any, List, Tuple
 
 import pygame
@@ -37,28 +38,10 @@ def _interpolated_xy(obj: Any, alpha: float) -> Tuple[float, float]:
     return px, py
 
 
-def _gather_lens_sources(
-    engine: Any,
-    alpha: float,
-    circles: List[Any],
-    visible_diagonal: float,
-) -> List[Tuple[float, float, float, float]]:
-    """
-    Retourne une liste de (wx, wy, masse, adoucissement_m) pour chaque source.
+def _gather_lens_sources(engine, alpha, circles):
+    sources = []
 
-    Seuls les corps présents dans ``circles`` (déjà créés / simulés) sont pris
-    en compte — pas le ``temp_circle`` en cours de création à la souris.
-
-    L'adoucissement évite la singularité au centre tout en restant **petit**
-    devant l'étendue visible du jeu. Une valeur engine ``grid_lens_softening_world``
-    > 0 force un plancher absolu ; sinon on utilise une fraction de la diagonale
-    visible + le rayon du corps.
-    """
-    sources: List[Tuple[float, float, float, float]] = []
-
-    diag = max(visible_diagonal, 1.0)
     cfg_soft = float(getattr(engine, "grid_lens_softening_world", 0.0))
-    floor_from_view = diag * 0.002
 
     for c in circles:
         if getattr(c, "suicide", False):
@@ -71,78 +54,48 @@ def _gather_lens_sources(
         if cfg_soft > 0:
             soft = max(cfg_soft, rad * 0.5, 1.0)
         else:
-            soft = max(rad * 0.75, floor_from_view, 8.0)
+            # Only the physical radius of the object, plus a tiny absolute floor to avoid the singularity at r=0.
+            soft = max(rad * 0.75, 1.0)
         sources.append((wx, wy, m, soft))
 
     return sources
 
 
-def _deflect(
-    wx: float,
-    wy: float,
-    sources: List[Tuple[float, float, float, float]],
-    engine: Any,
-    visible_diagonal: float,
-    cam_scale: float,
-) -> Tuple[float, float]:
-    """
-    Déplace (wx, wy) vers les masses (effet type lentille faible).
+def _deflect_batch(points, sources, amount, cam_scale, mass_ref, target_px, inv_sign):
+    if amount <= 0.0 or sources.shape[0] == 0:
+        return points
 
-    Principe : on veut un déplacement **visible en pixels** après projection,
-    quelle que soit la constante ``camera.scale`` (zoom). La caméra fait
-    ``screen_delta = world_delta * scale`` ; on impose donc un déplacement
-    monde ``world_delta ≈ (cible en px) / scale``.
-
-    Pour chaque masse : contribution radiale ``(dx, dy)/r`` fois une amplitude
-    ``A * (m/M_ref) * falloff(r)`` où ``falloff = soft² / (r² + soft²)`` vaut
-    ~1 près du centre et décroît loin (évite singularité). ``M_ref`` est la
-    masse max parmi les sources pour normaliser les corps légers / lourds.
-
-    ``visible_diagonal`` borne l'amplitude max (avec ``cap_world``) pour éviter
-    des sauts énormes si beaucoup de masses se superposent.
-    """
-    if not sources:
-        return wx, wy
-
-    amount = max(0.0, float(getattr(engine, "grid_lens_amount", 1.0)))
-    if amount <= 0.0:
-        return wx, wy
-
-    cam_scale = max(float(cam_scale), 1e-15)
-    mass_ref = max(float(getattr(engine, "grid_lens_mass_ref", 1e6)), 1.0)
-    target_px = float(getattr(engine, "grid_target_spacing_px", 72.0))
-    inv_sign = -1.0 if getattr(engine, "reversed_gravity", False) else 1.0
-
-    # sqrt(scale) : zoom in → plus visible, zoom out → moins visible
-    # Garantit l'absence de croisement si soft ≥ amount/(2*sqrt(scale))
-    # Avec soft ≥ 12 et amount ≤ ~24, condition toujours satisfaite.
+    cam_scale = max(cam_scale, 1e-15)
     zoom_factor = math.sqrt(cam_scale)
-    cap_world = 0.38 * target_px / cam_scale  # sécurité pour amount élevé
+    cap_world = 0.38 * target_px / cam_scale
 
-    gx = 0.0
-    gy = 0.0
-    for cx, cy, mass, soft in sources:
-        dx = cx - wx
-        dy = cy - wy
-        r2_eps = dx * dx + dy * dy + soft * soft
-        r = math.sqrt(r2_eps)
-        if r < 1e-15:
-            continue
+    px = points[:, 0][:, None]
+    py = points[:, 1][:, None]
+    sx = sources[:, 0][None, :]
+    sy = sources[:, 1][None, :]
+    mass = sources[:, 2][None, :]
+    soft = sources[:, 3][None, :]
 
-        falloff = (soft * soft) / r2_eps
-        w = mass / mass_ref
+    dx = sx - px
+    dy = sy - py
+    r = np.sqrt(dx * dx + dy * dy)
+    r_safe = np.maximum(r, 1e-15)
 
-        disp_px = amount * zoom_factor * w * falloff
-        mag_world = min(disp_px / cam_scale, cap_world)
+    # Decay as 1/(r+soft): correct form (~ 1/b like Einstein's formula), softening is only to avoid the singularity at r=0.
+    falloff = soft / (r + soft)
+    w = mass / mass_ref
 
-        gx += inv_sign * mag_world * dx / r
-        gy += inv_sign * mag_world * dy / r
+    disp_px = amount * zoom_factor * w * falloff
+    mag_world = np.minimum(disp_px / cam_scale, cap_world)
 
-    return wx + gx, wy + gy
+    gx = inv_sign * np.sum(mag_world * dx / r_safe, axis=1)
+    gy = inv_sign * np.sum(mag_world * dy / r_safe, axis=1)
+
+    return points + np.stack([gx, gy], axis=1)
 
 
 def _nice_world_cell(rough: float) -> float:
-    """Arrondit le pas monde à 1, 2 ou 5 × 10^k pour une grille lisible."""
+    """Rounds the world grid step to 1, 2, or 5 × 10^k for a clean, readable grid."""
     if rough <= 0 or not math.isfinite(rough):
         return 1.0
     exp10 = math.floor(math.log10(rough))
@@ -163,7 +116,7 @@ def draw_gravitational_grid(
     alpha: float,
     circles: List[Any],
 ) -> None:
-    """Dessine la grille derrière les corps (appeler après le fond, avant les astres)."""
+    """Draws the grid behind the bodies (call after the background, before celestial bodies)."""
     if not getattr(engine, "gravitational_grid_enabled", False):
         return
 
@@ -171,7 +124,7 @@ def draw_gravitational_grid(
     sh = screen.get_height()
     cam = engine.camera
 
-    # Coins écran → monde (rectangle visible)
+    # Screen corners → world (visible rectangle)
     corners = [
         cam.screen_to_world(0, 0),
         cam.screen_to_world(sw, 0),
@@ -183,15 +136,13 @@ def draw_gravitational_grid(
     w_min, w_max = min(wxs), max(wxs)
     h_min, h_max = min(wys), max(wys)
 
-    # Marge pour que les lignes courbes restent visibles près des bords
+    # Margin so that curved lines remain visible near the edges
     span = max(w_max - w_min, h_max - h_min, 1.0)
     margin = span * 0.35
     w_min -= margin
     w_max += margin
     h_min -= margin
     h_max += margin
-
-    visible_diagonal = math.hypot(w_max - w_min, h_max - h_min)
 
     target_px = float(getattr(engine, "grid_target_spacing_px", 72.0))
     scale = float(cam.scale)
@@ -214,7 +165,7 @@ def draw_gravitational_grid(
     j0 = int(math.floor(h_min / cell_major))
     j1 = int(math.ceil(h_max / cell_major))
 
-    # Limite stricte sur le nombre de lignes pour les perfs
+    # Strict limit on number of lines for performance
     if (i1 - i0) > max_lines:
         mid = (i0 + i1) // 2
         half = max_lines // 2
@@ -224,7 +175,7 @@ def draw_gravitational_grid(
         half = max_lines // 2
         j0, j1 = mid - half, mid + half
 
-    sources = _gather_lens_sources(engine, alpha, circles, visible_diagonal)
+    sources = _gather_lens_sources(engine, alpha, circles)
 
     dark = getattr(engine, "screen_mode", "dark") == "dark"
     if dark:
@@ -238,34 +189,19 @@ def draw_gravitational_grid(
     subdivide = major_px > float(getattr(engine, "grid_subdivide_px", 96.0))
     cell_minor = cell_major / 5.0 if subdivide else None
 
-    # Pas d'échantillonnage le long d'une ligne (monde) : ~8 px à l'écran
+    # Sampling interval along a line (in world units): ~8 px on the screen
     sample_world = max(8.0 / scale, cell_major * 0.08, 1.0)
 
-    def world_to_screen(wx: float, wy: float) -> Tuple[int, int]:
-        px, py = _deflect(wx, wy, sources, engine, visible_diagonal, scale)
-        sx, sy = cam.world_to_screen(px, py)
-        return int(round(sx)), int(round(sy))
+    mass_ref = max(float(getattr(engine, "grid_lens_mass_ref", 1e6)), 1.0)
+    amount = max(0.0, float(getattr(engine, "grid_lens_amount", 1.0)))
+    inv_sign = -1.0 if getattr(engine, "reversed_gravity", False) else 1.0
 
-    def draw_polyline_world(
-        get_xy,
-        t_min: float,
-        t_max: float,
-        color: Tuple[int, int, int],
-        width: int = 1,
-    ) -> None:
-        if t_max < t_min:
-            t_min, t_max = t_max, t_min
-        n = max(2, int(math.ceil((t_max - t_min) / sample_world)) + 1)
-        step = (t_max - t_min) / (n - 1) if n > 1 else 0.0
-        pts: List[Tuple[int, int]] = []
-        for k in range(n):
-            t = t_min + k * step
-            wx, wy = get_xy(t)
-            pts.append(world_to_screen(wx, wy))
-        if len(pts) >= 2:
-            pygame.draw.lines(screen, color, False, pts, width)
+    sources_arr = (np.array(sources, dtype=np.float64)
+                   if sources else np.zeros((0, 4)))
 
-    # --- Grille mineure (1/5 du pas principal si zoom suffisant) ---
+    # --- Build line specs (major + minor), without drawing yet ---
+    line_specs: List[Tuple[Any, float, float, Tuple[int, int, int], int]] = []
+
     if cell_minor is not None and cell_minor > 0:
         mi0 = int(math.floor(w_min / cell_minor))
         mi1 = int(math.ceil(w_max / cell_minor))
@@ -277,17 +213,49 @@ def draw_gravitational_grid(
                 xw = ii * cell_minor
                 if abs(xw / cell_major - round(xw / cell_major)) < 1e-6:
                     continue
-                draw_polyline_world(lambda t, x=xw: (x, t), h_min, h_max, col_minor, 1)
+                line_specs.append((lambda t, x=xw: (x, t), h_min, h_max, col_minor, 1))
             for jj in range(mj0, mj1 + 1):
                 yw = jj * cell_minor
                 if abs(yw / cell_major - round(yw / cell_major)) < 1e-6:
                     continue
-                draw_polyline_world(lambda t, y=yw: (t, y), w_min, w_max, col_minor, 1)
+                line_specs.append((lambda t, y=yw: (t, y), w_min, w_max, col_minor, 1))
 
-    # --- Grille majeure ---
     for ii in range(i0, i1 + 1):
         xw = ii * cell_major
-        draw_polyline_world(lambda t, x=xw: (x, t), h_min, h_max, col_major, 1)
+        line_specs.append((lambda t, x=xw: (x, t), h_min, h_max, col_major, 1))
     for jj in range(j0, j1 + 1):
         yw = jj * cell_major
-        draw_polyline_world(lambda t, y=yw: (t, y), w_min, w_max, col_major, 1)
+        line_specs.append((lambda t, y=yw: (t, y), w_min, w_max, col_major, 1))
+
+    # --- Sample all points, only once ---
+    all_points: List[Tuple[float, float]] = []
+    line_slices: List[Tuple[int, int, Tuple[int, int, int], int]] = []
+
+    for get_xy, t_min, t_max, color, width in line_specs:
+        if t_max < t_min:
+            t_min, t_max = t_max, t_min
+        n = max(2, int(math.ceil((t_max - t_min) / sample_world)) + 1)
+        step = (t_max - t_min) / (n - 1) if n > 1 else 0.0
+        start = len(all_points)
+        for k in range(n):
+            all_points.append(get_xy(t_min + k * step))
+        line_slices.append((start, len(all_points), color, width))
+
+    if not all_points:
+        return
+
+    points_arr = np.array(all_points, dtype=np.float64)
+    deflected = _deflect_batch(points_arr, sources_arr, amount, scale,
+                                mass_ref, target_px, inv_sign)
+
+    # --- Drawing: reproject to screen + draw line by line ---
+    cam_x, cam_y = cam.cam_x, cam.cam_y
+    for start, end, color, width in line_slices:
+        seg = deflected[start:end]
+        screen_pts = [
+            (int(round(x * scale + cam_x)), int(round(y * scale + cam_y)))
+            for x, y in seg
+        ]
+        if len(screen_pts) >= 2:
+            pygame.draw.lines(screen, color, False, screen_pts, width)
+    

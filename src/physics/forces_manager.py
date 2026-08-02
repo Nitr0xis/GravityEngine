@@ -20,7 +20,7 @@ from physics.quadtree import build_quadtree
 
 
 def compute_forces(circles, G, reversed_gravity, n_threshold, method_state,
-                    hysteresis=100, barnes_hut_theta=0.5):
+                    hysteresis=100, barnes_hut_theta=0.5, force_barnes_hut=False):
     n = len(circles)
     if n == 0:
         return
@@ -29,7 +29,9 @@ def compute_forces(circles, G, reversed_gravity, n_threshold, method_state,
         circles[0].attract_forces.append((0.0, 0.0))
         return
 
-    if method_state['last'] == 'numpy':
+    if force_barnes_hut:
+        use_bh = True
+    elif method_state['last'] == 'numpy':
         use_bh = n > n_threshold + hysteresis
     else:
         use_bh = n > n_threshold - hysteresis

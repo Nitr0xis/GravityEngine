@@ -155,7 +155,7 @@ class Circle:
         # Vector visualization properties
         self.vector_width = 1  # Line width for velocity vectors
         self.global_speed_vector_scale = 5e3  # in px/m/s
-        self.force_vector_scale = 4e2  # in px/N
+        self.force_vector_scale = 1.5e2  # in px/N
 
         # Vector colors
         self.GSV_color = Display.RED  # Global Speed Vector (total velocity)

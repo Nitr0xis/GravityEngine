@@ -153,3 +153,4 @@ def build_quadtree(circles):
     for c in circles:
         root.insert(c)
     return root
+    

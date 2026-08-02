@@ -40,4 +40,10 @@ if __name__ == '__main__':
     except Exception as e:
         Logger.exception(f"Engine crashed in main loop: {e}")
         raise e
+
+"""
+TODO list:
+    - Patch interpolation (BH?)
+    - Patch lens grid
+"""
         
