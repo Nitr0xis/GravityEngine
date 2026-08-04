@@ -16,7 +16,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Gravity Engine 3.9 by Nitr0xis (Nils DONTOT) - Real-time N-body Gravity Simulator
+Gravity Engine 3.9 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -67,7 +67,6 @@ PHYSICS:
 import importlib.util  # For dynamic module checking
 import os  # For file system operations
 import subprocess  # For installing missing modules
-import random  # For random number generation
 import time  # For time tracking and delays
 import sys  # For system-specific parameters and functions
 from typing import Optional  # For args typing
@@ -189,7 +188,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.9.1"
+        self.project_version = "3.9.3"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -272,11 +271,14 @@ class Engine:
         self.vectors_in_front = True
         self.vector_scale = 1
 
-        # Grille de fond (lentille gravitationnelle, infinie, sensible à la caméra)
+        self.vector_time_acceleration_ref = 2e4  # reference time_acceleration value at which the current scale (1e4) is calibrated
+
+        # Background grid (gravitational lensing effect, infinite, camera-sensitive)
         self.gravitational_grid_enabled: bool = False
-        self.grid_lens_amount: float = 3.5  # intensité de la déformation (0 = pas d'effet)
-        self.grid_target_spacing_px: float = 72.0  # espacement cible à l'écran (px)
+        self.grid_lens_amount: float = 3.5  # deformation intensity (0 = no effect)
+        self.grid_target_spacing_px: float = 72.0  # target on-screen spacing (px)
         self.grid_max_lines: int = 64
+ 
         self.grid_subdivide_px: float = 96.0  # au-delà, sous-grille 1/5 du pas majeur
         self.grid_lens_softening_world: float = 0.0  # 0 = auto (rayon + fraction de la vue)
         # When enabled, each fixed physics step can be subdivided into
@@ -753,73 +755,6 @@ class Engine:
         self.txt_size = original_txt_size
         self.txt_gap = original_txt_gap
 
-    def generate_environment(self, count: int = 50, temptext: bool = False):
-        """
-        Generate a random environment with multiple bodies.
-        
-        Bodies are spawned across the visible world area,
-        with masses proportional to the camera zoom level.
-
-        Args:
-            count: Ignored parameter, kept for compatibility.
-        """
-        count = self.random_environment_number
-        
-        # ===== CALCULATE VISIBLE WORLD AREA =====
-        # Top-left corner of the screen in world coordinates
-        world_x_min, world_y_min = self.camera.screen_to_world(0, 0)
-        
-        # Bottom-right corner of the screen in world coordinates
-        world_x_max, world_y_max = self.camera.screen_to_world(
-            self.screen.get_width(),
-            self.screen.get_height()
-        )
-        
-        # ===== CALCULATE MASS RANGE BASED ON ZOOM =====
-        # The more you zoom out, the more massive the bodies must be to remain visible
-        zoom_factor = self.camera.scale  # 1.0 = normal, 0.1 = very zoomed out
-        
-        # Adjust the mass range inversely to the zoom
-        # Zoom 1.0 -> normal mass
-        # Zoom 0.1 -> mass ×10
-        # Zoom 10.0 -> mass /10
-        mass_multiplier = 1.0 / zoom_factor ** 2
-        
-        min_mass = self.minimum_mass * mass_multiplier
-        max_mass = self.random_mass_field * mass_multiplier
-        
-        # ===== GENERATE BODIES =====
-        for _ in range(count):
-            # Random position in the visible world space
-            world_x = random.uniform(world_x_min, world_x_max)
-            world_y = random.uniform(world_y_min, world_y_max)
-            
-            # Random mass adapted to the zoom
-            # Masse selon distribution logarithmique
-            log_min = log10(min_mass)
-            log_max = log10(max_mass)
-            log_mass = random.uniform(log_min, log_max)
-            mass = 10 ** log_mass
-            
-            new = Circle(
-                x=world_x,
-                y=world_y,
-                density=self.default_density,
-                mass=mass
-            )
-            state.circles.append(new)
-        
-        # ===== USER FEEDBACK =====
-        if temptext:
-            TempText(
-                f"Generated {count} bodies (zoom: {zoom_factor:.2e}x)",
-                2.0,
-                (int((self.screen.get_width() / 2) - 200),
-                self.info_y - self.txt_gap - self.txt_size),
-                line=2
-            )
-        Logger.info(f"Generated {count} bodies (zoom: {zoom_factor:.2e}x)")
-
     def get_frequency(self) -> float:
         """
         Calculate and return current frame frequency (FPS).
@@ -1226,7 +1161,7 @@ class Engine:
             pygame.K_b: ActionManager.toggle_gravitational_grid,
             pygame.K_r: ActionManager.toggle_random_mode,
             pygame.K_g: ActionManager.toggle_reversed_gravity,
-            pygame.K_p: self.generate_environment,
+            pygame.K_p: ActionManager.generate_environment,
             pygame.K_DELETE: ActionManager.delete_selected_circle,
             pygame.K_ESCAPE: ActionManager.quit_engine,
             # ===== CAMERA =====

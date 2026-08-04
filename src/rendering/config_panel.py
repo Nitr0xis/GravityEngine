@@ -24,7 +24,6 @@ Press C to open, ESC or click outside to close.
 
 Author: Nils DONTOT
 Version: 1.0.0
-License: MIT License (https://opensource.org/licenses/MIT)
 """
 
 import pygame
@@ -219,7 +218,7 @@ class ConfigPanel:
         y = self._slider(x, y, w, "Target FPS", "FPS_TARGET",
                          30, 240, False, "{:.0f} FPS")
         y = self._slider(x, y, w, "Time Acceleration", "time_acceleration",
-                         1e3, 1e5, True, "{:.2e}x")
+                         1e0, 5e5, True, "{:.2e}x")
         
         # === PHYSICS ===
         y = self._sec(x, y, "Physics")
@@ -230,6 +229,8 @@ class ConfigPanel:
         y = self._checkbox(x, y, "Enable Body Fusions", "fusions")
         y = self._slider(x, y, w, "Barnes-Hut Theta", "barnes_hut_theta",
                  0.0, 1.5, False, "{:.2f}")
+        y = self._slider(x, y, w, "Random Environement Generation Bodies Number", "random_environment_number",
+                 1, 200, False, "{:.0f} bodies")
         
         # === VISUAL ===
         y = self._sec(x, y, "Visual")

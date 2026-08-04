@@ -19,7 +19,8 @@ import sys
 import os
 import time
 import pygame
-from math import fabs, sqrt
+from math import fabs, sqrt, log10
+import random
 
 from core import state
 from typing import Optional
@@ -298,3 +299,71 @@ class ActionManager:
             state.engine.config_panel = ConfigPanel(state.engine, state.engine.screen, state.engine.used_font)
         
         state.engine.config_panel.toggle()
+
+    @staticmethod
+    def generate_environment(count: int = 50, temptext: bool = False):
+        """
+        Generate a random environment with multiple bodies.
+        
+        Bodies are spawned across the visible world area,
+        with masses proportional to the camera zoom level.
+
+        Args:
+            count: Ignored parameter, kept for compatibility.
+        """
+        count = int(state.engine.random_environment_number)
+        
+        # ===== CALCULATE VISIBLE WORLD AREA =====
+        # Top-left corner of the screen in world coordinates
+        world_x_min, world_y_min = state.engine.camera.screen_to_world(0, 0)
+        
+        # Bottom-right corner of the screen in world coordinates
+        world_x_max, world_y_max = state.engine.camera.screen_to_world(
+            state.engine.screen.get_width(),
+            state.engine.screen.get_height()
+        )
+        
+        # ===== CALCULATE MASS RANGE BASED ON ZOOM =====
+        # The more you zoom out, the more massive the bodies must be to remain visible
+        zoom_factor = state.engine.camera.scale  # 1.0 = normal, 0.1 = very zoomed out
+        
+        # Adjust the mass range inversely to the zoom
+        # Zoom 1.0 -> normal mass
+        # Zoom 0.1 -> mass ×10
+        # Zoom 10.0 -> mass /10
+        mass_multiplier = 1.0 / zoom_factor ** 2
+        
+        min_mass = state.engine.minimum_mass * mass_multiplier
+        max_mass = state.engine.random_mass_field * mass_multiplier
+        
+        # ===== GENERATE BODIES =====
+        for _ in range(count):
+            # Random position in the visible world space
+            world_x = random.uniform(world_x_min, world_x_max)
+            world_y = random.uniform(world_y_min, world_y_max)
+            
+            # Random mass adapted to the zoom
+            # Masse selon distribution logarithmique
+            log_min = log10(min_mass)
+            log_max = log10(max_mass)
+            log_mass = random.uniform(log_min, log_max)
+            mass = 10 ** log_mass
+            
+            new = Circle(
+                x=world_x,
+                y=world_y,
+                density=state.engine.default_density,
+                mass=mass
+            )
+            state.circles.append(new)
+        
+        # ===== USER FEEDBACK =====
+        if temptext:
+            TempText(
+                f"Generated {count} bodies (zoom: {zoom_factor:.2e}x)",
+                2.0,
+                (int((state.engine.screen.get_width() / 2) - 200),
+                state.engine.info_y - state.engine.txt_gap - state.engine.txt_size),
+                line=2
+            )
+        Logger.info(f"Generated {count} bodies (zoom: {zoom_factor:.2e}x)")

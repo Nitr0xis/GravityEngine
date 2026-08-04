@@ -233,9 +233,13 @@ class Circle:
         # ===== CONVERT TO SCREEN COORDINATES =====
         screen_x1, screen_y1 = state.engine.camera.world_to_screen(world_x, world_y)
         
-        # Calculer la position de fin du vecteur dans le monde
-        world_x2 = world_x + render_vx * self.global_speed_vector_scale
-        world_y2 = world_y + render_vy * self.global_speed_vector_scale
+        # Calculate the end position of the vector in world coordinates
+         
+        effective_scale = self.global_speed_vector_scale * (
+            state.engine.time_acceleration / state.engine.vector_time_acceleration_ref
+        )
+        world_x2 = world_x + render_vx * effective_scale
+        world_y2 = world_y + render_vy * effective_scale
 
         # Convert to screen coordinates
         screen_x2, screen_y2 = state.engine.camera.world_to_screen(world_x2, world_y2)
@@ -340,13 +344,17 @@ class Circle:
         render_vy = istate['vy']  # <- Interpolated Y Speed
 
         # ===== CALCULATE VECTOR ENDPOINTS IN WORLD COORDINATES =====
+        effective_scale = self.global_speed_vector_scale * (
+            state.engine.time_acceleration / state.engine.vector_time_acceleration_ref
+        )
+
         # X component (horizontal)
         world_x1 = world_x
-        world_x2 = world_x + render_vx * self.global_speed_vector_scale
+        world_x2 = world_x + render_vx * effective_scale
         
         # Y component (vertical)
         world_y1 = world_y
-        world_y2 = world_y + render_vy * self.global_speed_vector_scale
+        world_y2 = world_y + render_vy * effective_scale
         
         # ===== CONVERT TO SCREEN COORDINATES =====
         # For X component (horizontal line)
