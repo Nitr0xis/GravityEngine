@@ -234,7 +234,7 @@ class ConfigPanel:
         # === VISUAL ===
         y = self._sec(x, y, "Visual")
         y = self._slider(x, y, w, "Camera Zoom", "camera_zoom",
-                         1e-7, 100.0, True, "{:.2e}x")
+                         self.engine.camera.min_scale, self.engine.camera.max_scale, True, "{:.2e}x")
         y = self._checkbox(x, y, "Show Vectors", "vectors_printed")
         y = self._slider(x, y, w, "Vector Scale", "vector_scale",
                          0.1, 10.0, False, "{:.2f}x")

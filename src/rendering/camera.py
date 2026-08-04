@@ -29,7 +29,7 @@ class Camera:
         self.scale_step = scale_step  # Zoom multiplier (1.1 = +10% per step)
         
         # ===== LIMITS =====
-        self.min_scale = 1e-7  # Minimum zoom (very zoomed out)
+        self.min_scale = 1e-8  # Minimum zoom (very zoomed out)
         self.max_scale = 100.0  # Maximum zoom (very zoomed in)
         
         # ===== PANNING =====
