@@ -1,11 +1,12 @@
 {
-  "version": "3.8.0",
+  "version": "3.9.3",
   "config": {
     "time_acceleration": 20000.0,
     "FPS_TARGET": 120,
     "default_density": 5514.0,
     "fusions": true,
     "barnes_hut_theta": 0.5,
+    "random_environment_number": 20,
     "vectors_printed": false,
     "force_vectors": true,
     "vector_scale": 1,

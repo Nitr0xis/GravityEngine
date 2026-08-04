@@ -281,7 +281,7 @@ class ConfigPanel:
     
     def _save(self):
         cfg = {k: getattr(self.engine, k) for k in [
-            "time_acceleration", "FPS_TARGET", "default_density", "fusions", "barnes_hut_theta",
+            "time_acceleration", "FPS_TARGET", "default_density", "fusions", "barnes_hut_theta", "random_environment_number",
             "vectors_printed", "force_vectors", "vector_scale", "camera_zoom",
             "adaptive_substeps", "adaptive_substeps_max_extra", "force_method_n_threshold",
             "reversed_gravity", "random_mode",
