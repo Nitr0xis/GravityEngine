@@ -565,10 +565,10 @@ class Engine:
                 y), Display.BLUE, 0)
 
         text = "Hold H or I to display the help box"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 0)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), (150, 0, 0), 0)
 
         text = "Press C to show the config menu"
-        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), Color(150, 0, 0), 1)
+        Utils.write_screen(text, (self.screen.get_width() - 20 - (self.font.size(text)[0]), y), (150, 0, 0), 1)
 
         # Display time acceleration factor (bottom right)
         text = f"Time factor : ×{self.time_acceleration:.2e}"

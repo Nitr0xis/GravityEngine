@@ -23,7 +23,7 @@ from math import *
 from typing import Optional
 from rendering.color import Color, Display
 from core.utils import Utils
-from core.logger import Logger
+
 try:
     from math import cbrt
 except ImportError:
