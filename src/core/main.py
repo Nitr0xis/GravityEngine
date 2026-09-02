@@ -76,7 +76,7 @@ from math import *
 
 
 # Required external modules for the simulation
-EXTERNAL_REQUIRED_MODULES: set[str] = {"pygame", "matplotlib"}
+EXTERNAL_REQUIRED_MODULES: set[str] = {"pygame"}
 
 for module in EXTERNAL_REQUIRED_MODULES:
     if importlib.util.find_spec(module) is None:
@@ -98,10 +98,10 @@ except ImportError:
     raise ImportError("\"pygame\" module is not installed")
 
 # For future ideas:
-try:
+"""try:
     import matplotlib.pyplot as plt
 except ImportError:
-    raise ImportError("\"matplotlib\" module is not installed")
+    raise ImportError("\"matplotlib\" module is not installed")"""
 
 # Import my own modules
 from core import state
