@@ -15,11 +15,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-import pygame
 
-from core import state
-from core.main import Engine
-from core.logger import Logger
+import importlib.util
+import subprocess
+import sys
+import warnings
+
+
+def _ensure_dependencies(required: list[str] = None):
+    """Vérifie et installe les dépendances manquantes avant le lancement."""
+    if required is None:
+        required = ["pygame", "numpy", "matplotlib"]
+
+    missing = [pkg for pkg in required if importlib.util.find_spec(pkg) is None]
+
+    if not missing:
+        return
+
+    print(f"Installing missing dependencies: {', '.join(missing)}")
+
+    try:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", *missing])
+        importlib.invalidate_caches()
+    except subprocess.CalledProcessError:
+        warnings.warn(
+            f"Automatic installation failed. Install manually with: "
+            f"{sys.executable} -m pip install {' '.join(missing)}",
+            stacklevel=1,
+        )
+        return
+
+    # Vérification finale après installation
+    still_missing = [pkg for pkg in missing if importlib.util.find_spec(pkg) is None]
+    if still_missing:
+        warnings.warn(
+            f"Modules still missing after install attempt: {', '.join(still_missing)}. "
+            f"Install manually with: {sys.executable} -m pip install {' '.join(still_missing)}",
+            stacklevel=1,
+        )
 
 
 if __name__ == '__main__':
@@ -29,10 +62,16 @@ if __name__ == '__main__':
     Initializes pygame, sets up color constants, creates the engine instance,
     and starts the simulation loop.
     """
-    # Initialize pygame modules
-    pygame.init()
+    REQUIRED_DEPENDENCIES: list[str] = ["pygame", "numpy"]
+    if not hasattr(sys, '_MEIPASS'):
+        _ensure_dependencies(REQUIRED_DEPENDENCIES)
 
-    # Create and run the simulation engine
+    import pygame
+    from core import state
+    from core.main import Engine
+    from core.logger import Logger
+
+    pygame.init()
     state.engine = Engine()
 
     try:
@@ -41,9 +80,8 @@ if __name__ == '__main__':
         Logger.exception(f"Engine crashed in main loop: {e}")
         raise e
 
-"""
-TODO list:
-    - Patch interpolation (BH?)
-    - Patch lens grid
-"""
+
+# TODO list:
+#   - Patch interpolation (BH?)
+#   - Patch lens grid
         

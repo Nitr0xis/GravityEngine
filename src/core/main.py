@@ -64,49 +64,19 @@ PHYSICS:
 
 
 # Standard library imports
-import importlib.util  # For dynamic module checking
 import os  # For file system operations
-import subprocess  # For installing missing modules
 import time  # For time tracking and delays
-import sys  # For system-specific parameters and functions
 from typing import Optional  # For args typing
-import warnings  # Used to display warning messages about deprecated features or potential issues
 
 from math import *
 
+import pygame
 
-# Required external modules for the simulation
-EXTERNAL_REQUIRED_MODULES: set[str] = {"pygame"}
-
-for module in EXTERNAL_REQUIRED_MODULES:
-    if importlib.util.find_spec(module) is None:
-        print(f"Installing module {module}...")
-        # Install module using pip if not found
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", module])
-        except subprocess.CalledProcessError:
-            warnings.warn(f"The pre-installation of the module {module} has failed.")
-            warnings.warn(
-                f"Module '{module}' is not installed. Install with: {sys.executable} -m pip install {module}",
-                stacklevel=1,
-            )
-
-# Import modules after ensuring it's installed
-try:
-    import pygame
-except ImportError:
-    raise ImportError("\"pygame\" module is not installed")
-
-# For future ideas:
-"""try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    raise ImportError("\"matplotlib\" module is not installed")"""
 
 # Import my own modules
 from core import state
 from core.logger import Logger
-from rendering.color import Color, Display
+from rendering.color import Display
 from rendering.camera import Camera
 from physics.circle import Circle
 from rendering.temp_text import TempText
@@ -188,7 +158,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.9.3"
+        self.project_version = "3.9.4"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -692,7 +662,7 @@ class Engine:
                     ("G", "Toggle reversed gravity (repulsion)"),
                     ("P", f"Generate random environment ({self.random_environment_number} bodies, zoom-adaptive)"),
                     ("S", "Take a screenshot"), ("", f"Saved in {self.screenshots_folder_path}"),
-                    ("Delete", "Delete selected body"),
+                    ("Delete/Backspace", "Delete selected body"),
                     ("H / I", "Toggle this help overlay"),
                     ("C", "Toggle the config panel"),
                     ("Escape/Alt+F4", "Exit program"),
@@ -1163,6 +1133,7 @@ class Engine:
             pygame.K_g: ActionManager.toggle_reversed_gravity,
             pygame.K_p: ActionManager.generate_environment,
             pygame.K_DELETE: ActionManager.delete_selected_circle,
+            pygame.K_BACKSPACE: ActionManager.delete_selected_circle,
             pygame.K_ESCAPE: ActionManager.quit_engine,
             # ===== CAMERA =====
             pygame.K_a: ActionManager.zoom_in,      # A to zoom in

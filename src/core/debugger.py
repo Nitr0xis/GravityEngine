@@ -77,7 +77,7 @@ class Debugger:
         Check if the simulation is determinist.
         Two same runs.
         """
-        from main import Engine
+        from core.main import Engine
 
         engine1 = Engine()
         engine2 = Engine()
@@ -215,7 +215,7 @@ class Debugger:
     @staticmethod
     def test_barnes_hut_matches_brute_force():
         """theta=0 doit reproduire exactement la somme des forces brutes."""
-        from quadtree import build_quadtree
+        from physics.quadtree import build_quadtree
 
         bodies = [
             Circle(x=0, y=0, density=5515, mass=1e24),
@@ -238,7 +238,7 @@ class Debugger:
 
     @staticmethod
     def test_vectorized_matches_brute_force():
-        from forces_numpy import compute_forces_vectorized
+        from physics.forces_manager import compute_forces_vectorized
 
         bodies = [
             Circle(x=0, y=0, density=5515, mass=1e24),
