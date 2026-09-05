@@ -23,7 +23,7 @@ import warnings
 
 
 def _ensure_dependencies(required: list[str] = None):
-    """Vérifie et installe les dépendances manquantes avant le lancement."""
+    """Checks and installs missing dependencies before launching."""
     if required is None:
         required = ["pygame", "numpy", "matplotlib"]
 
