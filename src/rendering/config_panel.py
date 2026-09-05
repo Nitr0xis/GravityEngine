@@ -229,7 +229,7 @@ class ConfigPanel:
         y = self._checkbox(x, y, "Enable Body Fusions", "fusions")
         y = self._slider(x, y, w, "Barnes-Hut Theta", "barnes_hut_theta",
                  0.0, 1.5, False, "{:.2f}")
-        y = self._slider(x, y, w, "Random Environement Generation Bodies Number", "random_environment_number",
+        y = self._slider(x, y, w, "Random Environment Generation Bodies Number", "random_environment_number",
                  1, 200, False, "{:.0f} bodies")
         
         # === VISUAL ===

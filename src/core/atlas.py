@@ -23,7 +23,7 @@ A standalone, platform-independent file management system that works
 seamlessly in both development and PyInstaller executable environments.
 
 Author: Nils DONTOT
-Github Repository: https://github.com/Nitr0xis/Atlas
+GitHub Repository: https://github.com/Nitr0xis/Atlas
 Version: 1.1.0
 License: MIT License (https://opensource.org/licenses/MIT)
 Changelog v1.1.0:
@@ -84,20 +84,20 @@ class FileManager:
                           If False, uses executable's directory
 
         Examples:
-            >>> # Auto-detect (atlas.py in src/, goes to parent)
-            >>> fm = FileManager(project_name="GravityEngine")
-            
-            >>> # Manual root (custom structure)
-            >>> fm = FileManager(
-            ...     project_name="MyGame",
-            ...     project_root="/custom/project/path"
-            ... )
-            
-            >>> # Custom data folder
-            >>> fm = FileManager(
-            ...     project_name="MyGame",
-            ...     dev_data_folder="data"
-            ... )
+            # >>> # Auto-detect (atlas.py in src/, goes to parent)
+            # >>> fm = FileManager(project_name="GravityEngine")
+            #
+            # >>> # Manual root (custom structure)
+            # >>> fm = FileManager(
+            # ...     project_name="MyGame",
+            # ...     project_root="/custom/project/path"
+            # ... )
+            #
+            # >>> # Custom data folder
+            # >>> fm = FileManager(
+            # ...     project_name="MyGame",
+            # ...     dev_data_folder="data"
+            # ... )
         """
         self.project_name = project_name
         self.dev_data_folder = dev_data_folder
@@ -129,7 +129,7 @@ class FileManager:
             Absolute path to the resource
 
         Examples:
-            >>> fm.resource_path('assets/font.ttf')
+            # >>> fm.resource_path('assets/font.ttf')
             'C:/Projects/MyProject/assets/font.ttf'  # Dev
             'C:/Users/.../Temp/_MEI123/assets/font.ttf'  # PyInstaller
         """
@@ -158,11 +158,11 @@ class FileManager:
             Absolute path to user data location
 
         Examples:
-            >>> fm.user_data_path()
+            # >>> fm.user_data_path()
             'C:/Project/user_data/'  # Dev
             'C:/Users/Account/Documents/MyProject/'  # Exe
 
-            >>> fm.user_data_path('screenshots/image.png')
+            # >>> fm.user_data_path('screenshots/image.png')
             'C:/Project/user_data/screenshots/image.png'  # Dev
         """
         if self.is_frozen:
@@ -219,16 +219,16 @@ class FileManager:
             Absolute path to created folder, or None on error
 
         Examples:
-            >>> # Create in user_data
-            >>> fm.create_folder('screenshots')
+            # >>> # Create in user_data
+            # >>> fm.create_folder('screenshots')
             'C:/Project/user_data/screenshots/'
 
-            >>> # Create relative to project root
-            >>> fm.create_folder('logs', use_user_data=False)
+            # >>> # Create relative to project root
+            # >>> fm.create_folder('logs', use_user_data=False)
             'C:/Project/logs/'
 
-            >>> # Create at absolute path
-            >>> fm.create_folder('C:/temp/test', use_user_data=False)
+            # >>> # Create at absolute path
+            # >>> fm.create_folder('C:/temp/test', use_user_data=False)
             'C:/temp/test/'
         """
         try:
@@ -263,12 +263,12 @@ class FileManager:
             Absolute path to created file, or None on error
 
         Examples:
-            >>> # Create in user_data
-            >>> fm.create_file('config.txt', 'setting=value')
+            # >>> # Create in user_data
+            # >>> fm.create_file('config.txt', 'setting=value')
             'C:/Project/user_data/config.txt'
 
-            >>> # Create relative to project root
-            >>> fm.create_file('README.md', '# Project', use_user_data=False)
+            # >>> # Create relative to project root
+            # >>> fm.create_file('README.md', '# Project', use_user_data=False)
             'C:/Project/README.md'
         """
         try:

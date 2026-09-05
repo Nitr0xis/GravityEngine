@@ -21,7 +21,7 @@ import warnings
 import random
 from math import *
 from typing import Optional
-from rendering.color import Color, Display
+from rendering.color import Display
 from core.utils import Utils
 
 try:
@@ -498,7 +498,7 @@ class Circle:
         
         return istate
 
-    def attract(self, other, effective: bool = True) -> tuple[float, float]:
+    def attract(self, other) -> tuple[float, float]:
         """
         Calculate gravitational attraction force with another body.
         
@@ -507,7 +507,6 @@ class Circle:
         
         Args:
             other: The other Circle object to calculate attraction with
-            effective: If True, apply the force to velocity. If False, only return force vector.
         
         Returns:
             Tuple (fx, fy) representing force components in x and y directions
@@ -633,6 +632,7 @@ class Circle:
         for all visual properties (position, radius).
         
         Args:
+            interpolate_radius: If radius must be interpolated or not
             screen: Pygame screen surface
             alpha: Interpolation factor (0 = previous state, 1 = current state)
         """
@@ -643,8 +643,7 @@ class Circle:
         
         world_x = istate['x']
         world_y = istate['y']
-        if interpolate_radius:
-            world_radius = istate['radius']
+        world_radius = istate['radius']
         
         # ===== CONVERT WORLD → SCREEN =====
         screen_x, screen_y = state.engine.camera.world_to_screen(world_x, world_y)

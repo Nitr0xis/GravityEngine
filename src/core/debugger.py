@@ -64,7 +64,7 @@ class Debugger:
         ]
         
         # Calculate the resulting force
-        body.update()
+        body.physics_update(1 / 120)
         
         # Verify that the force is 30, not 10
         assert body.force[0] == 30.0, f"Force should be 30, got {body.force[0]}"

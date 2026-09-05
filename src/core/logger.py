@@ -34,7 +34,6 @@ Usage:
 import logging
 import os
 import sys
-import time
 from logging.handlers import RotatingFileHandler
 from typing import Optional
 

@@ -25,7 +25,7 @@ class SpatialHashGrid:
         self.cells = defaultdict(list)
 
     def _cell_of(self, x, y):
-        return (math.floor(x / self.cell_size), math.floor(y / self.cell_size))
+        return math.floor(x / self.cell_size), math.floor(y / self.cell_size)
 
     def insert(self, body):
         self.cells[self._cell_of(body.x, body.y)].append(body)

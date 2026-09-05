@@ -796,8 +796,6 @@ class Engine:
         #
         # Args:
         #     dt: Fixed timestep duration (usually self.physics_timestep)
-        if self.debug_mode:
-            t0 = time.perf_counter()
 
         dt_sim = dt * self.time_acceleration
 
@@ -808,8 +806,6 @@ class Engine:
 
         # If there are bodies, compute forces and fusions
         if len(state.circles) > 0:
-            if self.debug_mode:
-                t_forces = time.perf_counter()
             compute_forces(
                 state.circles, self.gravity, self.reversed_gravity,
                 n_threshold=self.force_method_n_threshold,
@@ -817,38 +813,18 @@ class Engine:
                 hysteresis=100,
                 barnes_hut_theta=self.barnes_hut_theta
             )
-            if self.debug_mode:
-                t_forces = time.perf_counter() - t_forces
 
-            if self.debug_mode:
-                t_grid = time.perf_counter()
             grid = build_collision_grid(state.circles)
-            if self.debug_mode:
-                t_grid = time.perf_counter() - t_grid
 
-            if self.debug_mode:
-                t_fusions = time.perf_counter()
             for circle in state.circles:
                 for other_circle in grid.candidates_near(circle):
                     if circle is not other_circle:
                         circle.update_fusion(other_circle, dt_sim)
-            if self.debug_mode:
-                t_fusions = time.perf_counter() - t_fusions
 
-        if self.debug_mode:
-            t_update = time.perf_counter()
         for circle in state.circles:
             circle.physics_update(dt)
-        if self.debug_mode:
-            t_update = time.perf_counter() - t_update
 
         self.simulation_time += dt
-        
-        if self.debug_mode:
-            t_total = time.perf_counter() - t0
-        if len(state.circles) > 0 and self.debug_mode:
-            Logger.info(f"n={len(state.circles)} | forces:{t_forces*1000:.2f}ms | fusions:{t_fusions*1000:.2f}ms | update:{t_update*1000:.2f}ms | TOTAL:{t_total*1000:.2f}ms")
-            print(f"n={len(state.circles)} | forces:{t_forces*1000:.2f}ms | fusions:{t_fusions*1000:.2f}ms | update:{t_update*1000:.2f}ms | TOTAL:{t_total*1000:.2f}ms")
 
     def physics_step_with_substeps(self, dt: float) -> None:
         """
@@ -903,8 +879,7 @@ class Engine:
                 1 = exactly at current state
         """
 
-        if self.debug_mode:
-            t_render_start = time.perf_counter()
+        t_render_start = time.perf_counter()
         if self.use_interpolation and self._check_visual_collisions(alpha):
             # Visual collision detected!
         

@@ -18,7 +18,7 @@
 from core import state
 import pygame
 from typing import Optional
-from rendering.color import Color, Display
+from rendering.color import Color
 
 
 class Utils:
