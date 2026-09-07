@@ -162,7 +162,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.10.0"
+        self.project_version = "3.10.1"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -339,6 +339,8 @@ class Engine:
 
         self.focused_circle_number: Optional[int] = None
         self.body_frame_active = False
+        self.focus_ox = 0.0
+        self.focus_oy = 0.0
 
         # ==================== INPUT HANDLING ====================
         self.inputs: dict = {}
@@ -405,27 +407,40 @@ class Engine:
                 return circle
         return None
 
+    def world_to_screen(self, wx, wy):
+        """Screen projection with optional focus offset. Camera math stays vanilla."""
+        return self.camera.world_to_screen(wx - self.focus_ox, wy - self.focus_oy)
+
+    def screen_to_world(self, sx, sy):
+        """Inverse projection; returns true world coordinates even in focus mode."""
+        wx, wy = self.camera.screen_to_world(sx, sy)
+        return wx + self.focus_ox, wy + self.focus_oy
+
     def enter_body_frame(self, body) -> None:
-        """Attach the visual frame to `body` without changing world coordinates."""
+        """Follow `body` via a display offset. Physics coordinates are unchanged."""
         if self.body_frame_active:
             self.exit_body_frame()
         self.body_frame_active = True
         self.focused_circle_number = body.number
-        self.camera.set_view_origin(float(body.x), float(body.y), float(body.vx), float(body.vy))
-        self.camera.center_on(float(body.x), float(body.y),
-                              self.screen.get_width(), self.screen.get_height())
+        self.focus_ox = float(body.x)
+        self.focus_oy = float(body.y)
+        self.camera.cam_x = self.screen.get_width() / 2
+        self.camera.cam_y = self.screen.get_height() / 2
 
     def exit_body_frame(self) -> None:
-        """Return the camera to the world frame, keeping the same view."""
+        """Drop the display offset and bake it into the camera so the view does not jump."""
         if not self.body_frame_active:
             self.focused_circle_number = None
             return
-        self.camera.clear_view_origin()
+        self.camera.cam_x -= self.focus_ox * self.camera.scale
+        self.camera.cam_y -= self.focus_oy * self.camera.scale
+        self.focus_ox = 0.0
+        self.focus_oy = 0.0
         self.body_frame_active = False
         self.focused_circle_number = None
 
     def _sync_body_frame(self, alpha: float) -> None:
-        """Follow the focused body in the visual frame, or drop focus if it is gone."""
+        """Update the display origin to the focused body's interpolated position."""
         if not self.body_frame_active:
             return
         body = self._find_focused()
@@ -433,7 +448,8 @@ class Engine:
             self.exit_body_frame()
             return
         istate = body.get_interpolated_state(alpha)
-        self.camera.set_view_origin(istate["x"], istate["y"], istate["vx"], istate["vy"])
+        self.focus_ox = istate["x"]
+        self.focus_oy = istate["y"]
 
     def handle_input(self, event: pygame.event.Event = None) -> None:
         """
@@ -457,7 +473,7 @@ class Engine:
 
         for circle in state.circles:
             istate = circle.get_interpolated_state(alpha)
-            sx, sy = cam.world_to_screen(istate['x'], istate['y'])
+            sx, sy = self.world_to_screen(istate['x'], istate['y'])
             r = istate['radius'] * cam.scale
 
             # Frustum cull (rayon inclus)

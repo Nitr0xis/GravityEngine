@@ -106,10 +106,11 @@ class ActionManager:
                         state.engine.default_density,
                         mass=state.engine.minimum_mass)
         if state.engine.body_frame_active:
-            cam = state.engine.camera
-            circle.vx = circle.prev_vx = cam.origin_vx
-            circle.vy = circle.prev_vy = cam.origin_vy
-            circle.speed = sqrt(circle.vx ** 2 + circle.vy ** 2)
+            focused = state.engine._find_focused()
+            if focused is not None:
+                circle.vx = circle.prev_vx = focused.vx
+                circle.vy = circle.prev_vy = focused.vy
+                circle.speed = sqrt(circle.vx ** 2 + circle.vy ** 2)
         return circle
 
     @staticmethod
@@ -147,7 +148,7 @@ class ActionManager:
             
             # Convert screen position to world coordinates
             screen_x, screen_y = pygame.mouse.get_pos()
-            world_x, world_y = state.engine.camera.screen_to_world(screen_x, screen_y)
+            world_x, world_y = state.engine.screen_to_world(screen_x, screen_y)
             
             if len(state.circles) > 0:
                 alpha = state.engine.current_alpha
@@ -241,6 +242,11 @@ class ActionManager:
     @staticmethod
     def reset_camera():
         """Reset camera to default position and zoom."""
+        if state.engine.body_frame_active:
+            state.engine.focus_ox = 0.0
+            state.engine.focus_oy = 0.0
+            state.engine.body_frame_active = False
+            state.engine.focused_circle_number = None
         state.engine.camera.reset()
         TempText("Camera reset",
                 1.5,
@@ -350,10 +356,10 @@ class ActionManager:
         
         # ===== CALCULATE VISIBLE WORLD AREA =====
         # Top-left corner of the screen in world coordinates
-        world_x_min, world_y_min = state.engine.camera.screen_to_world(0, 0)
+        world_x_min, world_y_min = state.engine.screen_to_world(0, 0)
         
         # Bottom-right corner of the screen in world coordinates
-        world_x_max, world_y_max = state.engine.camera.screen_to_world(
+        world_x_max, world_y_max = state.engine.screen_to_world(
             state.engine.screen.get_width(),
             state.engine.screen.get_height()
         )

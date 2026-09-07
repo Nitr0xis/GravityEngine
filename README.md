@@ -2,7 +2,7 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.10.0** — *Camera Focus Mode Edition*
+**v3.10.1** — *Camera Focus Mode Edition*
 
 **Author:** Nils DONTOT
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
@@ -65,12 +65,12 @@ Follow a selected body as if the camera sat in its rest frame — without rewrit
 
 Focus no longer recenters the camera on interpolated coordinates every frame (that jittered). It also does **not** zero the body's `x` / `y` / `vx` / `vy`. World physics stay in the inertial frame.
 
-Instead, the camera uses a **visual origin** equal to the focused body's interpolated position (and velocity for vector drawing):
+Instead, rendering subtracts the focused body's interpolated position **before** the camera projection (`engine.world_to_screen`). The camera itself stays `screen = world × scale + offset` and is not recentered every frame.
 
 - The followed body stays still on screen
 - Other bodies move relative to it
 - The info panel still shows real world coordinates
-- Velocity arrows are drawn in the focused body's rest frame
+- Velocity arrows keep their world magnitude
 - Bodies created while focused are born comoving (they appear at rest in the view)
 
 Leave focus with `F`, the HUD button, a pan, or by deselecting / losing the body. The view returns to the world frame without a jump.
@@ -332,7 +332,7 @@ All modules import `state` and access `state.engine` / `state.circles` directly.
 
 ### Coordinate System
 
-`camera.screen_to_world` / `camera.world_to_screen` are the single source of truth for `screen = world × scale + offset`. Physics runs in world space (meters); rendering converts to screen space at draw time.
+`camera.screen_to_world` / `camera.world_to_screen` implement `screen = world × scale + offset`. Drawing and picking go through `engine.world_to_screen` / `engine.screen_to_world`, which apply an optional focus display offset (`focus_ox`, `focus_oy`) without changing physics coordinates.
 
 ### File Management
 
@@ -443,4 +443,4 @@ See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: September 2026 — v3.10.0*
+*Last updated: September 2026 — v3.10.1*

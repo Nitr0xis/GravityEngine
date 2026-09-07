@@ -38,13 +38,6 @@ class Camera:
         self.pan_start_x = 0  # Pan start position X
         self.pan_start_y = 0
 
-        # Visual reference-frame origin (world meters / m/s). Physics coords are unchanged;
-        # rendering and picking are expressed relative to this origin.
-        self.origin_x = 0.0
-        self.origin_y = 0.0
-        self.origin_vx = 0.0
-        self.origin_vy = 0.0
-
     def zoom_at_mouse(self, zoom_in: bool):
         """
         Zoom centered on the mouse position.
@@ -54,15 +47,7 @@ class Camera:
         """
         mx, my = pygame.mouse.get_pos()
         self.zoom_anchored(zoom_in, (mx, my))
-
-    def screen_to_view(self, sx, sy):
-        """Screen pixels → coordinates relative to the visual frame origin."""
-        return (sx - self.cam_x) / self.scale, (sy - self.cam_y) / self.scale
-
-    def view_to_screen(self, vx, vy):
-        """Visual-frame coordinates → screen pixels."""
-        return vx * self.scale + self.cam_x, vy * self.scale + self.cam_y
-
+    
     def screen_to_world(self, sx, sy):
         """
         Convert screen coordinates → world coordinates.
@@ -73,8 +58,9 @@ class Camera:
         Returns:
             wx, wy: World coordinates (meters)
         """
-        vx, vy = self.screen_to_view(sx, sy)
-        return vx + self.origin_x, vy + self.origin_y
+        wx = (sx - self.cam_x) / self.scale
+        wy = (sy - self.cam_y) / self.scale
+        return wx, wy
 
     def world_to_screen(self, wx, wy):
         """
@@ -86,23 +72,9 @@ class Camera:
         Returns:
             sx, sy: Screen coordinates (pixels)
         """
-        return self.view_to_screen(wx - self.origin_x, wy - self.origin_y)
-
-    def set_view_origin(self, ox: float, oy: float, ovx: float = 0.0, ovy: float = 0.0) -> None:
-        """Set the visual frame origin without moving bodies."""
-        self.origin_x = ox
-        self.origin_y = oy
-        self.origin_vx = ovx
-        self.origin_vy = ovy
-
-    def clear_view_origin(self) -> None:
-        """Return picking/rendering to the world frame, keeping the current view."""
-        self.cam_x -= self.origin_x * self.scale
-        self.cam_y -= self.origin_y * self.scale
-        self.origin_x = 0.0
-        self.origin_y = 0.0
-        self.origin_vx = 0.0
-        self.origin_vy = 0.0
+        sx = wx * self.scale + self.cam_x
+        sy = wy * self.scale + self.cam_y
+        return sx, sy
     
     def start_pan(self, mouse_x, mouse_y):
         """Start panning the view."""
@@ -134,23 +106,19 @@ class Camera:
         self.cam_x = 0
         self.cam_y = 0
         self.scale = 1.0
-        self.origin_x = 0.0
-        self.origin_y = 0.0
-        self.origin_vx = 0.0
-        self.origin_vy = 0.0
 
     def center_on(self, wx: float, wy: float, screen_w: int, screen_h: int):
-        """Recenter the camera so that world point (wx, wy) is at the screen center."""
-        self.cam_x = screen_w / 2 - (wx - self.origin_x) * self.scale
-        self.cam_y = screen_h / 2 - (wy - self.origin_y) * self.scale
+        """Recenter the camera so that (wx, wy) is at the center of the screen, with scale unchanged."""
+        self.cam_x = screen_w / 2 - wx * self.scale
+        self.cam_y = screen_h / 2 - wy * self.scale
 
     def zoom_anchored(self, zoom_in: bool, anchor_screen_pos: tuple[float, float]):
         """
-        Zoom while keeping a given screen point fixed in the visual frame.
-        Generalizes zoom_at_mouse: the anchor can be the mouse (normal behavior) or the screen center (focus mode).
+        Zoom while keeping a given screen point fixed in world position.
+        The anchor can be the mouse (normal behavior) or the screen center (focus mode).
         """
         ax, ay = anchor_screen_pos
-        vx, vy = self.screen_to_view(ax, ay)
+        wx, wy = self.screen_to_world(ax, ay)
 
         if zoom_in:
             self.scale *= self.scale_step
@@ -158,5 +126,5 @@ class Camera:
             self.scale /= self.scale_step
         self.scale = max(self.min_scale, min(self.scale, self.max_scale))
 
-        self.cam_x = ax - vx * self.scale
-        self.cam_y = ay - vy * self.scale
+        self.cam_x = ax - wx * self.scale
+        self.cam_y = ay - wy * self.scale

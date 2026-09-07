@@ -227,12 +227,11 @@ class Circle:
         
         world_x = istate['x']
         world_y = istate['y']
-        cam = state.engine.camera
-        render_vx = istate['vx'] - cam.origin_vx
-        render_vy = istate['vy'] - cam.origin_vy
+        render_vx = istate['vx']
+        render_vy = istate['vy']
         
         # ===== CONVERT TO SCREEN COORDINATES =====
-        screen_x1, screen_y1 = state.engine.camera.world_to_screen(world_x, world_y)
+        screen_x1, screen_y1 = state.engine.world_to_screen(world_x, world_y)
         
         # Calculate the end position of the vector in world coordinates
          
@@ -243,7 +242,7 @@ class Circle:
         world_y2 = world_y + render_vy * effective_scale
 
         # Convert to screen coordinates
-        screen_x2, screen_y2 = state.engine.camera.world_to_screen(world_x2, world_y2)
+        screen_x2, screen_y2 = state.engine.world_to_screen(world_x2, world_y2)
 
         if in_terminal:
             speed_magnitude = sqrt(render_vx ** 2 + render_vy ** 2)
@@ -306,8 +305,8 @@ class Circle:
         world_end_y = world_y + vector_y
         
         # ===== CONVERT TO SCREEN COORDINATES =====
-        screen_x1, screen_y1 = state.engine.camera.world_to_screen(world_x, world_y)
-        screen_x2, screen_y2 = state.engine.camera.world_to_screen(world_end_x, world_end_y)
+        screen_x1, screen_y1 = state.engine.world_to_screen(world_x, world_y)
+        screen_x2, screen_y2 = state.engine.world_to_screen(world_end_x, world_end_y)
 
         if in_terminal:
             angle_deg = atan2(render_fy, render_fx) * 180 / pi
@@ -341,9 +340,8 @@ class Circle:
         
         world_x = istate['x']
         world_y = istate['y']
-        cam = state.engine.camera
-        render_vx = istate['vx'] - cam.origin_vx
-        render_vy = istate['vy'] - cam.origin_vy
+        render_vx = istate['vx']
+        render_vy = istate['vy']
 
         # ===== CALCULATE VECTOR ENDPOINTS IN WORLD COORDINATES =====
         effective_scale = self.global_speed_vector_scale * (
@@ -360,12 +358,12 @@ class Circle:
         
         # ===== CONVERT TO SCREEN COORDINATES =====
         # For X component (horizontal line)
-        screen_x1, screen_y1 = state.engine.camera.world_to_screen(world_x1, world_y)
-        screen_x2, screen_y2 = state.engine.camera.world_to_screen(world_x2, world_y)
+        screen_x1, screen_y1 = state.engine.world_to_screen(world_x1, world_y)
+        screen_x2, screen_y2 = state.engine.world_to_screen(world_x2, world_y)
         
         # For Y component (vertical line)
-        screen_x3, screen_y3 = state.engine.camera.world_to_screen(world_x, world_y1)
-        screen_x4, screen_y4 = state.engine.camera.world_to_screen(world_x, world_y2)
+        screen_x3, screen_y3 = state.engine.world_to_screen(world_x, world_y1)
+        screen_x4, screen_y4 = state.engine.world_to_screen(world_x, world_y2)
 
         if in_terminal:
             print(f"N{self.number} Cardinal vectors at alpha={alpha:.3f}:")
@@ -648,7 +646,7 @@ class Circle:
         world_radius = istate['radius']
         
         # ===== CONVERT WORLD → SCREEN =====
-        screen_x, screen_y = state.engine.camera.world_to_screen(world_x, world_y)
+        screen_x, screen_y = state.engine.world_to_screen(world_x, world_y)
         
         # ===== CALCULATE VISIBLE RADIUS =====
         # Apply camera scale to radius

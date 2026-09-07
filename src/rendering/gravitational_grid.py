@@ -124,12 +124,12 @@ def draw_gravitational_grid(
     sh = screen.get_height()
     cam = engine.camera
 
-    # Screen corners → world (visible rectangle)
+    # Screen corners → world (visible rectangle, includes focus offset)
     corners = [
-        cam.screen_to_world(0, 0),
-        cam.screen_to_world(sw, 0),
-        cam.screen_to_world(sw, sh),
-        cam.screen_to_world(0, sh),
+        engine.screen_to_world(0, 0),
+        engine.screen_to_world(sw, 0),
+        engine.screen_to_world(sw, sh),
+        engine.screen_to_world(0, sh),
     ]
     wxs = [c[0] for c in corners]
     wys = [c[1] for c in corners]
@@ -249,11 +249,13 @@ def draw_gravitational_grid(
                                 mass_ref, target_px, inv_sign)
 
     # --- Drawing: reproject to screen + draw line by line ---
+    ox = float(getattr(engine, "focus_ox", 0.0))
+    oy = float(getattr(engine, "focus_oy", 0.0))
     cam_x, cam_y = cam.cam_x, cam.cam_y
     for start, end, color, width in line_slices:
         seg = deflected[start:end]
         screen_pts = [
-            (int(round(x * scale + cam_x)), int(round(y * scale + cam_y)))
+            (int(round((x - ox) * scale + cam_x)), int(round((y - oy) * scale + cam_y)))
             for x, y in seg
         ]
         if len(screen_pts) >= 2:
