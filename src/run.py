@@ -71,6 +71,9 @@ if __name__ == '__main__':
     from core.main import Engine
     from core.logger import Logger
 
+    import os
+    os.environ["SDL_WINDOWS_DPI_AWARENESS"] = "permonitorv2"
+
     pygame.init()
     state.engine = Engine()
 

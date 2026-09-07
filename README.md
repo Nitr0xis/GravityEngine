@@ -2,10 +2,10 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.10.1** — *Camera Focus Mode Edition*
+**v3.11.0** — *High Resolution Edition*
 
-**Author:** Nils DONTOT
-**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
+**Author:** Nils DONTOT  
+**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
 **Contact:** nils.dontot.pro@gmail.com
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -22,7 +22,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.10](#whats-new-in-v310)
+- [What's New in v3.11](#whats-new-in-v311)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -54,41 +54,30 @@ Key features:
 - Cross-platform file manager (dev + exe)
 - Rotating file logger for crash diagnostics
 - Adaptive performance mode: 120 FPS with 100+ bodies
+- **High-DPI rendering support:** sharp visuals and UI at any screen scale *(new in v3.11)*
 
 ---
 
-## What's New in v3.10 — Camera Focus Mode Edition
+## What's New in v3.11 — High Resolution Edition
 
-Follow a selected body as if the camera sat in its rest frame — without rewriting the simulation.
+GravityEngine is now crisp and sharp on 4K, Retina, and any high-DPI display — both simulation and UI.
 
-### Visual body frame (not a fake world origin)
+### High-DPI Rendering
 
-Focus no longer recenters the camera on interpolated coordinates every frame (that jittered). It also does **not** zero the body's `x` / `y` / `vx` / `vy`. World physics stay in the inertial frame.
+All rendering is now natively high resolution on displays with DPI scaling (Windows, macOS, Linux):
 
-Instead, rendering subtracts the focused body's interpolated position **before** the camera projection (`engine.world_to_screen`). The camera itself stays `screen = world × scale + offset` and is not recentered every frame.
+- Automatic detection and support for system DPI
+- All graphics, text, UI widgets, and screenshots are rendered at native pixel density
+- No blur or scaling artifacts: simulation visuals and UI remain perfectly sharp, regardless of operating system or display
+- "Super-res" screenshots: saved screenshots now match the true display DPI and can be larger than the window in logical pixels
 
-- The followed body stays still on screen
-- Other bodies move relative to it
-- The info panel still shows real world coordinates
-- Velocity arrows keep their world magnitude
-- Bodies created while focused are born comoving (they appear at rest in the view)
+### Additional Changes
 
-Leave focus with `F`, the HUD button, a pan, or by deselecting / losing the body. The view returns to the world frame without a jump.
+- The configuration panel, HUD, and tooltips scale smoothly with UI resolution.
+- Font rendering and icons are pin-sharp even at 200%, 300%, 400% scaling.
+- No more blurry circles or antialiased artifacts on Retina/HiDPI screens.
 
-### HUD and controls
-
-| Input | Action |
-|---|---|
-| `F` or **Focus** button | Toggle focus on the selected body |
-| Mouse wheel (while focused) | Zoom about the screen center |
-
-The Focus / Unfocus button is a shared HUD widget: it only appears when a body is selected (`visible_if`).
-
-### Config panel: two-way toggle
-
-The panel can show a two-option control (`_toggle`) bound to an engine attribute, with custom labels and values (default `False` / `True`) — same binding pattern as checkboxes.
-
-v3.9 (automatic NumPy / Barnes-Hut force dispatch, spatial hash collisions, package layout) is unchanged underneath.
+No change to simulation logic, physics accuracy, or compatibility. All previous features (focus mode, quadtree, config panel, etc.) remain. Rendering is now future-proofed for modern displays.
 
 ---
 
@@ -277,8 +266,6 @@ Each base physics step can split into extra substeps based on relative speed and
 
 ## Architecture
 
-## Architecture
-
 Modular structure under `src/`, organized by responsibility. All modules share state via `core/state.py`.
 
 ```
@@ -357,11 +344,15 @@ GravityEngine demonstrates:
 - World-to-screen coordinate transformation
 - Gravitational lensing approximation (visual, Newtonian-inspired)
 - N-body problem (classical, O(n²) per step, or quadtree method)
-- Custom UI design with python using pygame
+- Custom UI design with Python using Pygame
+- **DPI-awareness:** HiDPI best practices for educational and presentation screens
 
 ---
 
 ## Troubleshooting
+
+**Blurry graphics or UI:**  
+Check that "HiDPI" or scaling is enabled for your OS. If your display is scaled (e.g., 150%, 200%), all visuals should appear crisp. If not, update your video drivers or try latest Pygame version.
 
 **Config panel not opening:** press `C`, not `Ctrl+C`. Check console/log for import errors.
 
@@ -389,6 +380,7 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 | Version | Feature |
 |---|---|
+| v3.11.0 | Native High-DPI rendering: sharp display and UI at any resolution |
 | v3.10.0 | Camera Focus mode (visual body-centered frame), HUD button visibility, two-way config toggle |
 | v3.9.0 | Barnes-Hut + NumPy force dispatch, spatial hash collision grid, package reorganization |
 | v3.8.0 | Rotating file logger |
@@ -420,7 +412,7 @@ Quick version:
 4. Commit: `git commit -m "feat: description"`
 5. Open a pull request
 
-Priority areas: save/load system, scenario presets, performance profiling, data export.
+Priority areas: High-DPI tweaks (if needed), save/load system, scenario presets, performance profiling, data export.
 
 ---
 
@@ -438,9 +430,9 @@ See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.
 
 ---
 
-**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
+**Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
 **Issues:** [github.com/Nitr0xis/GravityEngine/issues](https://github.com/Nitr0xis/GravityEngine/issues)
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: September 2026 — v3.10.1*
+*Last updated: September 2026 — v3.11.0*

@@ -16,7 +16,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Gravity Engine 3.10 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
+Gravity Engine 3.11 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -162,7 +162,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.10.1"
+        self.project_version = "3.11.0"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -178,7 +178,7 @@ class Engine:
         available_screen_modes: list[tuple[int, int]] = pygame.display.list_modes()
         
         if self.FULLSCREEN:
-            self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.FULLSCREEN)
+            self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.NOFRAME)
         else:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         
@@ -210,9 +210,11 @@ class Engine:
         self.growing_speed = 0.1   # Body growth speed when creating
         
         # ==================== UI SETTINGS ====================
+        self.scale_coefficient = self.screen.get_height() / 1200
+
         self.used_font = self.fm.resource_path('assets/fonts/main_font.ttf')
-        self.txt_size = 30
-        self.txt_gap: int = 15
+        self.txt_size: int = int(30 * self.scale_coefficient)
+        self.txt_gap: int = int(15 * self.scale_coefficient)
         self.font = pygame.font.Font(self.used_font, self.txt_size)
         self.info_y: int = 20
         
@@ -220,7 +222,10 @@ class Engine:
         self.temp_texts: list[TempText] = []
 
         self.focus_button = Button(
-            x=(self.screen.get_width() - 140) // 2, y=(self.screen.get_height() - 32 - 2 * self.txt_gap - self.txt_size), w=140, h=32,
+            x=(self.screen.get_width() - 140 * self.scale_coefficient) // 2,
+            y=(self.screen.get_height() - 32 * self.scale_coefficient - 2 * self.txt_gap - self.txt_size),
+            w=int(140 * self.scale_coefficient),
+            h=int(32 * self.scale_coefficient),
             text="Focus", font=self.font,
             cb=ActionManager.toggle_focus_selected,
             visible_if=lambda: self.circle_selected,
@@ -685,17 +690,17 @@ class Engine:
         original_txt_size = self.txt_size
         original_txt_gap = self.txt_gap
         
-        self.txt_size = 20  # Smaller text for help overlay
-        self.txt_gap = 5    # Smaller gap for compact display
+        self.txt_size = int(20 * self.scale_coefficient)  # Smaller text for help overlay
+        self.txt_gap = int(5 * self.scale_coefficient)  # Smaller gap for compact display
         self.font = pygame.font.Font(self.used_font, self.txt_size)
         
-        # Calculate positions
-        center_x = self.screen.get_width() // 2
-        left_margin = center_x - 350
-        key_col_x = center_x - 330
-        sep_col_x = center_x - 120
-        desc_col_x = center_x - 80
-        start_y = 80
+        # Key position calculations for displaying the help panel:
+        center_x = self.screen.get_width() // 2      # Horizontal center of the screen (for centering the panel)
+        left_margin = center_x - 350                 # Left margin of the help panel (visual panel width)
+        key_col_x = center_x - 330                   # Column position for shortcuts/keys
+        sep_col_x = center_x - 50                    # Separator column position (visual, vertical line)
+        desc_col_x = center_x - 0                    # Description column position for shortcuts
+        start_y = 80                                 # Initial vertical position (panel title at the top)
         
         # ===== TITLE =====
         title = "GRAVITY ENGINE - CONTROLS GUIDE"
@@ -1080,9 +1085,9 @@ class Engine:
         start_time = time.time()
         
         # Create a larger font for the splash screen
-        splash_font_large = pygame.font.Font(self.splash_screen_font, 60)
-        splash_font_medium = pygame.font.Font(self.splash_screen_font, 40)
-        splash_font_small = pygame.font.Font(self.splash_screen_font, 30)
+        splash_font_large = pygame.font.Font(self.splash_screen_font, int(60 * state.engine.scale_coefficient))
+        splash_font_medium = pygame.font.Font(self.splash_screen_font, int(40 * state.engine.scale_coefficient))
+        splash_font_small = pygame.font.Font(self.splash_screen_font, int(30 * state.engine.scale_coefficient))
         
         # Main splash screen loop
         running = True
@@ -1108,7 +1113,7 @@ class Engine:
             # Render author name (first name + last name)
             author_text = f"{self.author_first_name} {self.author_last_name}"
             author_surface = splash_font_large.render(author_text, True, Display.BLUE)
-            author_rect = author_surface.get_rect(center=(screen_width // 2, screen_height // 2 - 80))
+            author_rect = author_surface.get_rect(center=(screen_width // 2, int(screen_height // 2 - 80 * state.engine.scale_coefficient)))
             self.screen.blit(author_surface, author_rect)
             
             # Render project description
@@ -1119,7 +1124,7 @@ class Engine:
             # Render copyright/version info (optional)
             version_text = "Copyright (c) 2026"
             version_surface = splash_font_small.render(version_text, True, Display.DARK_GREY)
-            version_rect = version_surface.get_rect(center=(screen_width // 2, screen_height // 2 + 60))
+            version_rect = version_surface.get_rect(center=(screen_width // 2, int(screen_height // 2 + 60 * state.engine.scale_coefficient)))
             self.screen.blit(version_surface, version_rect)
             
             # Update display
@@ -1285,6 +1290,8 @@ class Engine:
             
             # ===== SELECTION MANAGEMENT =====
             # Ensure only one body is selected at a time
+            if len(state.circles) == 0:
+                self.circle_selected = False
             for circle in state.circles:
                 if circle.is_selected:
                     self.circle_selected = True

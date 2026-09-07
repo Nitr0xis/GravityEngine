@@ -28,9 +28,9 @@ Version: 1.0.0
 
 import pygame
 import json
-import math
 
 from core.logger import Logger
+from core import state
 from rendering.ui_widgets import C, Widget, SectionTitle, Checkbox, Toggle, Slider, Button
 
 
@@ -41,15 +41,15 @@ from rendering.ui_widgets import C, Widget, SectionTitle, Checkbox, Toggle, Slid
 class ConfigPanel:
     def __init__(self, engine, screen, font_path):
         self.engine, self.screen = engine, screen
-        self.font_big = pygame.font.Font(font_path, 28)
-        self.font_med = pygame.font.Font(font_path, 20)
-        self.font_sm = pygame.font.Font(font_path, 16)
+        self.font_big = pygame.font.Font(font_path, int(28 * state.engine.scale_coefficient))
+        self.font_med = pygame.font.Font(font_path, int(20 * state.engine.scale_coefficient))
+        self.font_sm = pygame.font.Font(font_path, int(16 * state.engine.scale_coefficient))
         
         self.visible = False
         self.widgets = []
         
         # Panel rect
-        self.pw, self.ph = 650, 750
+        self.pw, self.ph = int(650 * state.engine.scale_coefficient), int(750 * state.engine.scale_coefficient)
         self.px = (screen.get_width() - self.pw) // 2
         self.py = (screen.get_height() - self.ph) // 2
         self.panel_rect = pygame.Rect(self.px, self.py, self.pw, self.ph)
@@ -62,8 +62,10 @@ class ConfigPanel:
     
     def _build(self):
         self.widgets.clear()
-        x, y = self.px + 25, self.py + 70
-        w = self.pw - 50
+        # Espace laissé en haut pour le titre et la barre — à synchroniser avec le draw() ci-dessous
+        y_offset_top = int(70 * state.engine.scale_coefficient)
+        x, y = self.px + 25, self.py + y_offset_top
+        w = (self.pw - 50)
         
         # === SIMULATION ===
         y = self._sec(x, y, "Simulation")
@@ -121,13 +123,13 @@ class ConfigPanel:
     def _sec(self, x, y, txt):
         y += 12
         self.widgets.append(SectionTitle(x, y, txt, self.font_med))
-        return y + 26
+        return y + 26 * state.engine.scale_coefficient
     
     def _checkbox(self, x, y, label, attr):
         self.widgets.append(Checkbox(x, y, label, self.font_sm,
                                      getattr(self.engine, attr),
                                      lambda v: setattr(self.engine, attr, v)))
-        return y + 30
+        return y + 30 * state.engine.scale_coefficient
 
     def _toggle(self, x, y, w, label, attr, label_a, label_b,
                 value_a=False, value_b=True):
@@ -136,21 +138,53 @@ class ConfigPanel:
                                    label_a, label_b,
                                    lambda v: setattr(self.engine, attr, v),
                                    value_a, value_b))
-        return y + 36
+        return y + 36 * state.engine.scale_coefficient
     
     def _slider(self, x, y, w, label, attr, mn, mx, log, fmt):
         self.widgets.append(Slider(x, y, w, label, self.font_sm, mn, mx,
                                    getattr(self.engine, attr), log, fmt,
                                    lambda v: setattr(self.engine, attr, v)))
-        return y + 60
+        return y + 60 * state.engine.scale_coefficient
     
     def _save(self):
         cfg = {k: getattr(self.engine, k) for k in [
-            "time_acceleration", "FPS_TARGET", "default_density", "fusions", "barnes_hut_theta", "random_environment_number",
-            "vectors_printed", "force_vectors", "vector_scale", "camera_zoom",
-            "adaptive_substeps", "adaptive_substeps_max_extra", "force_method_n_threshold",
-            "reversed_gravity", "random_mode",
-            "gravitational_grid_enabled", "grid_lens_amount", "grid_target_spacing_px",
+            # Complete list of parameters shown in the config panel (Physics, Camera, Random, Rendering, UI, Advanced)
+            "time_acceleration", 
+            "FPS_TARGET", 
+            "default_density",
+            "fusions", 
+            "barnes_hut_theta", 
+            "minimum_mass",
+            "use_interpolation", 
+            "physics_timestep",
+            "adaptive_substeps", 
+            "adaptive_substeps_max_extra", 
+            "force_method_n_threshold",
+
+            "camera_zoom",
+            "camera_speed",
+
+            "random_environment_number",
+            "random_mode",
+            "random_energy_per_kg",
+            "random_mass_field",
+
+            "vectors_printed", 
+            "force_vectors", 
+            "cardinal_vectors",
+            "vectors_in_front",
+            "vector_scale",
+            "vector_time_acceleration_ref",
+
+            "gravitational_grid_enabled", 
+            "grid_lens_amount", 
+            "grid_target_spacing_px", 
+            "grid_max_lines",
+            "grid_subdivide_px",
+            "grid_lens_softening_world",
+
+            "screen_mode",
+     
         ]}
         payload = {
             "version": getattr(self.engine, "project_version", "unknown"),
@@ -244,7 +278,7 @@ class ConfigPanel:
             w.rect.y -= self.scroll
             w.update(events)
             w.rect.y = original_y
-    
+
     def draw(self):
         if not self.visible:
             return
@@ -258,19 +292,26 @@ class ConfigPanel:
         pygame.draw.rect(self.screen, C.PANEL, self.panel_rect, border_radius=10)
         pygame.draw.rect(self.screen, C.TRACK, self.panel_rect, 3, border_radius=10)
         
-        # Title
+        # Title area
         title = self.font_big.render("Configuration", True, C.GREEN)
-        self.screen.blit(title, (self.panel_rect.centerx - title.get_width()//2, self.py + 20))
+        title_y = self.py + int(20 * state.engine.scale_coefficient)
+        self.screen.blit(title, (self.panel_rect.centerx - title.get_width()//2, title_y))
         
-        # Line
+        # Line area
+        line_y = self.py + int(60 * state.engine.scale_coefficient)
         pygame.draw.line(self.screen, C.TRACK, 
-                        (self.px + 25, self.py + 60),
-                        (self.px + self.pw - 25, self.py + 60), 2)
-        
-        # Widgets (with scroll)
+                        (self.px + 25, line_y),
+                        (self.px + self.pw - 25, line_y), 2)
+
+        # Définir la zone scrollable pour les widgets — on ne veut pas qu'ils débordent sur le titre ou la barre
+        panel_top = self.py + int(70 * state.engine.scale_coefficient)
+        panel_bottom = self.py + self.ph
+
         for w in self.widgets:
             w.rect.y -= self.scroll
-            if self.py < w.rect.y < self.py + self.ph:
+            widget_top = w.rect.y
+            widget_bottom = w.rect.y + w.rect.height
+            # On ne dessine le widget que s'il est entièrement visible DANS LA ZONE SCROLLABLE (en dessous du titre/barre)
+            if widget_top >= panel_top and widget_bottom <= panel_bottom:
                 w.draw(self.screen)
             w.rect.y += self.scroll
-            

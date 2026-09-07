@@ -27,6 +27,8 @@ consistent across the whole app.
 import math
 import pygame
 
+from core import state
+
 
 class C:
     OVERLAY = (0, 0, 0, 200)
@@ -191,13 +193,13 @@ class Slider(Widget):
         surf.blit(txt, (self.rect.x, self.rect.y))
         val_txt = self.font.render(self.fmt.format(self.val), True, C.GREEN)
         surf.blit(val_txt, (self.rect.right - val_txt.get_width(), self.rect.y))
-        track_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.rect.width, 6)
+        track_r = pygame.Rect(self.rect.x, self.rect.y + int(25 * state.engine.scale_coefficient), self.rect.width, 6)
         pygame.draw.rect(surf, C.TRACK, track_r, border_radius=3)
         if self.handle_x > self.rect.x:
-            fill_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.handle_x - self.rect.x, 6)
+            fill_r = pygame.Rect(self.rect.x, self.rect.y + int(25 * state.engine.scale_coefficient), self.handle_x - self.rect.x, 6)
             pygame.draw.rect(surf, C.GREEN, fill_r, border_radius=3)
         col = (38, 221, 109) if self.hovered or self.dragging else C.GREEN
-        pygame.draw.circle(surf, col, (self.handle_x, self.rect.y + 28), 8)
+        pygame.draw.circle(surf, col, (self.handle_x, self.rect.y + int(28 * state.engine.scale_coefficient)), 8)
 
 
 class Button(Widget):
