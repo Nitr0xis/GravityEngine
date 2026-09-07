@@ -16,7 +16,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Gravity Engine 3.9 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
+Gravity Engine 3.10 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
 Copyright (c) 2026 Nils DONTOT
 
 --- Informations ---
@@ -76,19 +76,23 @@ import pygame
 # Import my own modules
 from core import state
 from core.logger import Logger
-from rendering.color import Display
-from rendering.camera import Camera
-from physics.circle import Circle
-from rendering.temp_text import TempText
 from core.utils import Utils
 from core.action_manager import ActionManager
-from rendering.config_panel import ConfigPanel
-from rendering.gravitational_grid import draw_gravitational_grid
 from core.atlas import FileManager
 from core.debugger import Debugger
+
 from physics.collision_grid import build_collision_grid
 from physics.forces_manager import compute_forces
 from physics.calibration import calibrate_force_threshold
+from physics.circle import Circle
+
+from rendering.color import Display
+from rendering.camera import Camera
+from rendering.temp_text import TempText
+from rendering.config_panel import ConfigPanel
+from rendering.gravitational_grid import draw_gravitational_grid
+from rendering.ui_widgets import Button
+
 
 # Global reference expected by Circle, TempText, ActionManager, Utils, etc.
 engine: Optional["Engine"] = None
@@ -158,7 +162,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.9.4"
+        self.project_version = "3.10.0"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -214,6 +218,17 @@ class Engine:
         
         # Temporary texts
         self.temp_texts: list[TempText] = []
+
+        self.focus_button = Button(
+            x=(self.screen.get_width() - 140) // 2, y=(self.screen.get_height() - 32 - 2 * self.txt_gap - self.txt_size), w=140, h=32,
+            text="Focus", font=self.font,
+            cb=ActionManager.toggle_focus_selected,
+            visible_if=lambda: self.circle_selected,
+        )
+
+        self.buttons: list[Button] = [
+            self.focus_button
+        ]
 
         # ==================== DEBUG SETTINGS ====================
         self.debug_mode = False
@@ -322,6 +337,9 @@ class Engine:
                         )
         self.camera_speed = 10
 
+        self.focused_circle_number: Optional[int] = None
+        self.body_frame_active = False
+
         # ==================== INPUT HANDLING ====================
         self.inputs: dict = {}
         self.INPUT_MAP = {}
@@ -377,6 +395,45 @@ class Engine:
         # Clamp to the camera allowed range
         value = max(self.camera.min_scale, min(value, self.camera.max_scale))
         self.camera.scale = value
+
+    def _find_focused(self):
+        n = self.focused_circle_number
+        if n is None:
+            return None
+        for circle in state.circles:
+            if circle.number == n:
+                return circle
+        return None
+
+    def enter_body_frame(self, body) -> None:
+        """Attach the visual frame to `body` without changing world coordinates."""
+        if self.body_frame_active:
+            self.exit_body_frame()
+        self.body_frame_active = True
+        self.focused_circle_number = body.number
+        self.camera.set_view_origin(float(body.x), float(body.y), float(body.vx), float(body.vy))
+        self.camera.center_on(float(body.x), float(body.y),
+                              self.screen.get_width(), self.screen.get_height())
+
+    def exit_body_frame(self) -> None:
+        """Return the camera to the world frame, keeping the same view."""
+        if not self.body_frame_active:
+            self.focused_circle_number = None
+            return
+        self.camera.clear_view_origin()
+        self.body_frame_active = False
+        self.focused_circle_number = None
+
+    def _sync_body_frame(self, alpha: float) -> None:
+        """Follow the focused body in the visual frame, or drop focus if it is gone."""
+        if not self.body_frame_active:
+            return
+        body = self._find_focused()
+        if body is None or not body.is_selected:
+            self.exit_body_frame()
+            return
+        istate = body.get_interpolated_state(alpha)
+        self.camera.set_view_origin(istate["x"], istate["y"], istate["vx"], istate["vy"])
 
     def handle_input(self, event: pygame.event.Event = None) -> None:
         """
@@ -656,6 +713,7 @@ class Engine:
                     ("↑ ← ↓ →", "Pan camera with arrow keys"),
                     ("", ""),
                     ("Space", "Pause / Unpause simulation"),
+                    ("F", "Toggle focus on a selected body"),
                     ("V", "Toggle vectors display (red: velocity vectors, blue: force vectors)"),
                     ("B", "Toggle gravitational lensing grid (infinite background)"),
                     ("R", "Toggle random velocity mode (mass-proportional)"),
@@ -878,8 +936,8 @@ class Engine:
                 0 = exactly at previous state
                 1 = exactly at current state
         """
-
         t_render_start = time.perf_counter()
+
         if self.use_interpolation and self._check_visual_collisions(alpha):
             # Visual collision detected!
         
@@ -913,6 +971,8 @@ class Engine:
         
             # STEP 4: Reset alpha to 0 (start again from the saved visual position)
             alpha = 0
+
+        self._sync_body_frame(alpha)
 
         draw_gravitational_grid(self.screen, self, alpha, state.circles)
 
@@ -950,6 +1010,9 @@ class Engine:
                     circle.print_info(circle.info_y)
         else:
             self.show_help_overlay()
+
+        for button in self.buttons:
+            button.draw(self.screen)
             
         if self.debug_mode:
             t_render_total = time.perf_counter() - t_render_start
@@ -1114,6 +1177,7 @@ class Engine:
             pygame.K_a: ActionManager.zoom_in,      # A to zoom in
             pygame.K_e: ActionManager.zoom_out,    # E to zoom out
             pygame.K_t: ActionManager.reset_camera,    # T to reset
+            pygame.K_f: ActionManager.toggle_focus_selected,    # F to focus/unfocus a circle
             # ===== CONFIGURATION PANEL =====
             pygame.K_c: lambda: ActionManager.open_config_panel(),
             # Arrows to move
@@ -1214,6 +1278,11 @@ class Engine:
                     break
                 else:
                     self.circle_selected = False
+
+            # ===== HUD BUTTONS =====
+            self.focus_button.text = "Unfocus" if self.focused_circle_number is not None else "Focus"
+            for button in self.buttons:
+                button.update(events_list)
             
             # ===== MOUSE HOLD BEHAVIOR (body creation) =====
             if self.mouse_down and self.temp_circle:

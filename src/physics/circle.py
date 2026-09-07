@@ -227,8 +227,9 @@ class Circle:
         
         world_x = istate['x']
         world_y = istate['y']
-        render_vx = istate['vx']  # <- Interpolated Speed
-        render_vy = istate['vy']  # <- Interpolated Speed
+        cam = state.engine.camera
+        render_vx = istate['vx'] - cam.origin_vx
+        render_vy = istate['vy'] - cam.origin_vy
         
         # ===== CONVERT TO SCREEN COORDINATES =====
         screen_x1, screen_y1 = state.engine.camera.world_to_screen(world_x, world_y)
@@ -340,8 +341,9 @@ class Circle:
         
         world_x = istate['x']
         world_y = istate['y']
-        render_vx = istate['vx']  # <- Interpolated X Speed
-        render_vy = istate['vy']  # <- Interpolated Y Speed
+        cam = state.engine.camera
+        render_vx = istate['vx'] - cam.origin_vx
+        render_vy = istate['vy'] - cam.origin_vy
 
         # ===== CALCULATE VECTOR ENDPOINTS IN WORLD COORDINATES =====
         effective_scale = self.global_speed_vector_scale * (

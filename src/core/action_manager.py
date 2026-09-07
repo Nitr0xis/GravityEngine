@@ -100,6 +100,19 @@ class ActionManager:
         Logger.info(f"Deleted selected circle : ID={circle.number}")
 
     @staticmethod
+    def _new_circle_at(world_x, world_y):
+        """Create a body at a world position; in focus mode it is born comoving with the view."""
+        circle = Circle(world_x, world_y,
+                        state.engine.default_density,
+                        mass=state.engine.minimum_mass)
+        if state.engine.body_frame_active:
+            cam = state.engine.camera
+            circle.vx = circle.prev_vx = cam.origin_vx
+            circle.vy = circle.prev_vy = cam.origin_vy
+            circle.speed = sqrt(circle.vx ** 2 + circle.vy ** 2)
+        return circle
+
+    @staticmethod
     def handle_mouse_button_down(event: pygame.event):
         """Handle mouse button press with camera transformation."""
         # Don't handle circle creation if in info mode
@@ -110,8 +123,17 @@ class ActionManager:
         if state.engine.config_panel is not None and state.engine.config_panel.visible:
             return
 
+        # Don't start pan/creation when clicking a visible HUD button
+        mouse_pos = pygame.mouse.get_pos()
+        for button in state.engine.buttons:
+            if button.is_visible() and button.rect.collidepoint(mouse_pos):
+                return
+
         # Right click to pan
         if event.button == 3:  # Right click
+            if state.engine.body_frame_active:
+                state.engine.exit_body_frame()
+                Logger.info("Camera focus broken by manual pan")
             mx, my = pygame.mouse.get_pos()
             state.engine.camera.start_pan(mx, my)
             return
@@ -162,22 +184,20 @@ class ActionManager:
                     state.engine.can_create_circle = True
 
                 if state.engine.can_create_circle:
-                    # Create in world coordinates
-                    state.engine.temp_circle = Circle(world_x, world_y, 
-                                            state.engine.default_density, 
-                                            mass=state.engine.minimum_mass)
+                    state.engine.temp_circle = ActionManager._new_circle_at(world_x, world_y)
                     state.engine.can_create_circle = False
             else:
-                # Create in world coordinates
-                state.engine.temp_circle = Circle(world_x, world_y, 
-                                        state.engine.default_density, 
-                                        mass=state.engine.minimum_mass)
+                state.engine.temp_circle = ActionManager._new_circle_at(world_x, world_y)
 
         # Handle mouse wheel for zoom.
         if event.button == 4:  # Scroll up
-            state.engine.camera.zoom_at_mouse(zoom_in=True)
+            anchor = (state.engine.screen.get_width() / 2, state.engine.screen.get_height() / 2) \
+                if state.engine.focused_circle_number is not None else pygame.mouse.get_pos()
+            state.engine.camera.zoom_anchored(zoom_in=True, anchor_screen_pos=anchor)
         elif event.button == 5:  # Scroll down
-            state.engine.camera.zoom_at_mouse(zoom_in=False)
+            anchor = (state.engine.screen.get_width() / 2, state.engine.screen.get_height() / 2) \
+                if state.engine.focused_circle_number is not None else pygame.mouse.get_pos()
+            state.engine.camera.zoom_anchored(zoom_in=False, anchor_screen_pos=anchor)
 
     @staticmethod
     def handle_mouse_button_up(event: pygame.event):
@@ -209,29 +229,14 @@ class ActionManager:
     @staticmethod
     def zoom_in():
         """Zoom in centered on screen center."""
-        screen_center_x = state.engine.screen.get_width() // 2
-        screen_center_y = state.engine.screen.get_height() // 2
-        
-        # Save mouse position
-        old_mouse_pos = pygame.mouse.get_pos()
-        
-        # Simulate mouse in the middle
-        pygame.mouse.set_pos(screen_center_x, screen_center_y)
-        state.engine.camera.zoom_at_mouse(zoom_in=True)
-        
-        # Reload mouse position
-        pygame.mouse.set_pos(old_mouse_pos)
+        screen_center = (state.engine.screen.get_width() / 2, state.engine.screen.get_height() / 2)
+        state.engine.camera.zoom_anchored(zoom_in=True, anchor_screen_pos=screen_center)
 
     @staticmethod
     def zoom_out():
         """Zoom out centered on screen center."""
-        screen_center_x = state.engine.screen.get_width() // 2
-        screen_center_y = state.engine.screen.get_height() // 2
-        
-        old_mouse_pos = pygame.mouse.get_pos()
-        pygame.mouse.set_pos(screen_center_x, screen_center_y)
-        state.engine.camera.zoom_at_mouse(zoom_in=False)
-        pygame.mouse.set_pos(old_mouse_pos)
+        screen_center = (state.engine.screen.get_width() / 2, state.engine.screen.get_height() / 2)
+        state.engine.camera.zoom_anchored(zoom_in=False, anchor_screen_pos=screen_center)
 
     @staticmethod
     def reset_camera():
@@ -248,6 +253,9 @@ class ActionManager:
     @staticmethod
     def pan_camera(dx, dy):
         """Pan camera by offset."""
+        if state.engine.body_frame_active:
+            state.engine.exit_body_frame()
+            Logger.info("Camera focus broken by manual pan")
         state.engine.camera.cam_x += dx
         state.engine.camera.cam_y += dy
 
@@ -299,6 +307,33 @@ class ActionManager:
             state.engine.config_panel = ConfigPanel(state.engine, state.engine.screen, state.engine.used_font)
         
         state.engine.config_panel.toggle()
+
+    @staticmethod
+    def toggle_focus_selected():
+        """Toggle camera focus on the currently selected body."""
+   
+        if state.engine.body_frame_active:
+            state.engine.exit_body_frame()
+            TempText("Camera focus disabled", 1.5,
+                    (20, state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size)))
+            Logger.info("Camera focus disabled")
+            return
+
+        selected = None
+        for circle in state.circles:
+            if circle.is_selected:
+                selected = circle
+                break
+
+        if selected is None:
+            TempText("No body is selected", 1.5,
+                    (20, state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size)))
+            return
+
+        state.engine.enter_body_frame(selected)
+        TempText(f"Camera focus enabled on body {selected.number}", 1.5,
+                (20, state.engine.screen.get_height() - 2 * (state.engine.txt_gap + state.engine.txt_size)))
+        Logger.info(f"Camera focus enabled on body {selected.number}")
 
     @staticmethod
     def generate_environment(count: int = 50, temptext: bool = False):

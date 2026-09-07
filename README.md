@@ -2,7 +2,7 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.9.4** — *Performance & Refactor Edition*
+**v3.10.0** — *Camera Focus Mode Edition*
 
 **Author:** Nils DONTOT
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)
@@ -22,7 +22,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.9](#whats-new-in-v39)
+- [What's New in v3.10](#whats-new-in-v310)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -50,41 +50,45 @@ Key features:
 - Fixed timestep physics (1/120s), deterministic simulation
 - Full interpolation (position, velocity, force, radius) for smooth rendering
 - Zoom-adaptive body generation, complete camera system (pan/zoom/reset)
+- Body-centered **focus mode** (visual reference frame, world coordinates unchanged)
 - Cross-platform file manager (dev + exe)
 - Rotating file logger for crash diagnostics
 - Adaptive performance mode: 120 FPS with 100+ bodies
 
 ---
 
-## What's New in v3.9 — Performance & Refactor Edition
+## What's New in v3.10 — Camera Focus Mode Edition
 
-### Force computation: automatic NumPy / Barnes-Hut switching
+Follow a selected body as if the camera sat in its rest frame — without rewriting the simulation.
 
-Two force algorithms are now available and selected automatically at runtime based on body count:
+### Visual body frame (not a fake world origin)
 
-- **NumPy vectorized O(n²)** — faster for small-to-medium simulations (low constant overhead)
-- **Barnes-Hut O(n log n)** — faster past a few hundred bodies (theta-based approximation)
+Focus no longer recenters the camera on interpolated coordinates every frame (that jittered). It also does **not** zero the body's `x` / `y` / `vx` / `vy`. World physics stay in the inertial frame.
 
-The switching threshold is **calibrated automatically at startup** (`physics/calibration.py`): a handful of benchmark runs on synthetic bodies determine which method wins on the current machine, with hysteresis to avoid oscillating near the threshold.
+Instead, the camera uses a **visual origin** equal to the focused body's interpolated position (and velocity for vector drawing):
 
-### Collision broad-phase: spatial hash grid
+- The followed body stays still on screen
+- Other bodies move relative to it
+- The info panel still shows real world coordinates
+- Velocity arrows are drawn in the focused body's rest frame
+- Bodies created while focused are born comoving (they appear at rest in the view)
 
-Fusion detection no longer scans all body pairs. A spatial hash grid (`physics/collision_grid.py`) restricts fusion checks to nearby cells, reducing the average case from O(n²) to near O(n).
+Leave focus with `F`, the HUD button, a pan, or by deselecting / losing the body. The view returns to the world frame without a jump.
 
-### Codebase reorganized into packagesn
+### HUD and controls
 
-```
-src/
-├── run.py                  # entry point
-├── core/                   # engine loop, state, logging, utils
-├── physics/                # circle, quadtree, collision grid, force dispatch
-├── rendering/              # camera, config panel, grid, colors
-└── tools/                  # dev-only calibration script
-```
+| Input | Action |
+|---|---|
+| `F` or **Focus** button | Toggle focus on the selected body |
+| Mouse wheel (while focused) | Zoom about the screen center |
 
-### Measured impact
+The Focus / Unfocus button is a shared HUD widget: it only appears when a body is selected (`visible_if`).
 
-On the reference dev machine: force computation at n=1000 dropped from ~97ms (NumPy alone, previous approach) or ~68ms (Barnes-Hut alone) to whichever is faster automatically — no manual tuning required as the simulation grows or shrinks.
+### Config panel: two-way toggle
+
+The panel can show a two-option control (`_toggle`) bound to an engine attribute, with custom labels and values (default `False` / `True`) — same binding pattern as checkboxes.
+
+v3.9 (automatic NumPy / Barnes-Hut force dispatch, spatial hash collisions, package layout) is unchanged underneath.
 
 ---
 
@@ -145,10 +149,11 @@ Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._
 | Input | Action |
 |---|---|
 | Right click + drag | Pan |
-| Mouse wheel | Zoom in / out (cursor-centered) |
+| Mouse wheel | Zoom in / out (cursor-centered; screen-centered in focus mode) |
 | `A` / `E` | Zoom in / out (screen-centered) |
 | Arrow keys | Pan |
 | `T` | Reset camera |
+| `F` | Toggle focus on the selected body |
 
 ### Bodies
 
@@ -168,6 +173,7 @@ Assets are bundled via `--add-data "assets;assets"`. Path resolution uses `sys._
 | `Space` | Pause / resume |
 | `V` | Toggle velocity / force vectors |
 | `B` | Toggle gravitational lensing grid |
+| `F` | Toggle focus mode on a selected circle |
 | `G` | Toggle reversed gravity (repulsion) |
 | `R` | Toggle random velocity mode |
 | `P` | Generate 20 random bodies (zoom-adaptive) |
@@ -383,6 +389,7 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 | Version | Feature |
 |---|---|
+| v3.10.0 | Camera Focus mode (visual body-centered frame), HUD button visibility, two-way config toggle |
 | v3.9.0 | Barnes-Hut + NumPy force dispatch, spatial hash collision grid, package reorganization |
 | v3.8.0 | Rotating file logger |
 | v3.7.0 | Gravitational lensing grid, code modularization |
@@ -436,4 +443,4 @@ See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: September 2026 — v3.9.4*
+*Last updated: September 2026 — v3.10.0*

@@ -82,6 +82,6 @@ if __name__ == '__main__':
 
 
 # TODO list:
+#   - Prepare right click
 #   - Patch interpolation (BH?)
 #   - Patch lens grid
-        

@@ -31,155 +31,7 @@ import json
 import math
 
 from core.logger import Logger
-
-
-# ==================================================================================
-# COLORS
-# ==================================================================================
-
-class C:
-    OVERLAY = (0, 0, 0, 200)
-    PANEL = (25, 25, 30)
-    SECTION = (35, 35, 40)
-    GREEN = (28, 201, 89)
-    BLUE = (10, 124, 235)
-    WHITE = (255, 255, 255)
-    GREY = (180, 180, 180)
-    DARK = (100, 100, 100)
-    TRACK = (60, 60, 65)
-
-
-# ==================================================================================
-# WIDGETS
-# ==================================================================================
-
-class Widget:
-    def __init__(self, x, y, w, h):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.hovered = False
-    def update(self, events):
-        self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
-    def draw(self, surf):
-        pass
-
-
-class SectionTitle(Widget):
-    """Titre de section (texte seul, non interactif)."""
-
-    def __init__(self, x, y, text, font):
-        super().__init__(x, y, 1, 22)
-        self.text = text
-        self.font = font
-
-    def update(self, events):
-        pass
-
-    def draw(self, surf):
-        t = self.font.render(self.text, True, C.BLUE)
-        surf.blit(t, (self.rect.x, self.rect.y))
-
-
-class Checkbox(Widget):
-    def __init__(self, x, y, label, font, val, cb):
-        super().__init__(x, y, 20, 20)
-        self.label, self.font, self.val, self.cb = label, font, val, cb
-        self.anim = 1.0 if val else 0.0
-    
-    def update(self, events):
-        super().update(events)
-        for e in events:
-            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.rect.collidepoint(e.pos):
-                self.val = not self.val
-                if self.cb: self.cb(self.val)
-        self.anim += (( 1.0 if self.val else 0.0) - self.anim) * 0.2
-    
-    def draw(self, surf):
-        pygame.draw.rect(surf, C.SECTION if not self.hovered else (38,221,109), self.rect, border_radius=3)
-        pygame.draw.rect(surf, C.TRACK, self.rect, 2, border_radius=3)
-        if self.anim > 0.01:
-            s = int(12 * self.anim)
-            r = pygame.Rect(self.rect.x + (20-s)//2, self.rect.y + (20-s)//2, s, s)
-            pygame.draw.rect(surf, C.GREEN, r, border_radius=2)
-        txt = self.font.render(self.label, True, C.WHITE)
-        surf.blit(txt, (self.rect.x + 30, self.rect.y - 2))
-
-
-class Slider(Widget):
-    def __init__(self, x, y, w, label, font, mn, mx, val, log, fmt, cb):
-        super().__init__(x, y, w, 50)
-        self.label, self.font, self.mn, self.mx, self.val = label, font, mn, mx, val
-        self.log, self.fmt, self.cb = log, fmt, cb
-        self.dragging = False
-        self._update_pos()
-    
-    def _update_pos(self):
-        if self.log:
-            t = (math.log10(self.val) - math.log10(self.mn)) / (math.log10(self.mx) - math.log10(self.mn))
-        else:
-            t = (self.val - self.mn) / (self.mx - self.mn)
-        self.handle_x = self.rect.x + int(t * self.rect.width)
-    
-    def _val_from_x(self, mx):
-        t = max(0, min(1, (mx - self.rect.x) / self.rect.width))
-        if self.log:
-            lv = math.log10(self.mn) + t * (math.log10(self.mx) - math.log10(self.mn))
-            return 10 ** lv
-        return self.mn + t * (self.mx - self.mn)
-    
-    def update(self, events):
-        super().update(events)
-        mx = pygame.mouse.get_pos()[0]
-        for e in events:
-            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-                track_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.rect.width, 10)
-                if track_r.collidepoint(e.pos):
-                    self.dragging = True
-                    self.val = self._val_from_x(mx)
-                    self._update_pos()
-                    if self.cb: self.cb(self.val)
-            elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:
-                self.dragging = False
-            elif e.type == pygame.MOUSEMOTION and self.dragging:
-                self.val = self._val_from_x(mx)
-                self._update_pos()
-                if self.cb: self.cb(self.val)
-    
-    def draw(self, surf):
-        # Label
-        txt = self.font.render(self.label, True, C.WHITE)
-        surf.blit(txt, (self.rect.x, self.rect.y))
-        # Value
-        val_txt = self.font.render(self.fmt.format(self.val), True, C.GREEN)
-        surf.blit(val_txt, (self.rect.right - val_txt.get_width(), self.rect.y))
-        # Track
-        track_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.rect.width, 6)
-        pygame.draw.rect(surf, C.TRACK, track_r, border_radius=3)
-        # Fill
-        if self.handle_x > self.rect.x:
-            fill_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.handle_x - self.rect.x, 6)
-            pygame.draw.rect(surf, C.GREEN, fill_r, border_radius=3)
-        # Handle
-        col = (38,221,109) if self.hovered or self.dragging else C.GREEN
-        pygame.draw.circle(surf, col, (self.handle_x, self.rect.y + 28), 8)
-
-
-class Button(Widget):
-    def __init__(self, x, y, w, h, text, font, cb):
-        super().__init__(x, y, w, h)
-        self.text, self.font, self.cb = text, font, cb
-    
-    def update(self, events):
-        super().update(events)
-        for e in events:
-            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.rect.collidepoint(e.pos):
-                if self.cb: self.cb()
-    
-    def draw(self, surf):
-        col = (38,221,109) if self.hovered else C.SECTION
-        pygame.draw.rect(surf, col, self.rect, border_radius=5)
-        pygame.draw.rect(surf, C.TRACK, self.rect, 2, border_radius=5)
-        txt = self.font.render(self.text, True, C.WHITE)
-        surf.blit(txt, (self.rect.centerx - txt.get_width()//2, self.rect.centery - txt.get_height()//2))
+from rendering.ui_widgets import C, Widget, SectionTitle, Checkbox, Toggle, Slider, Button
 
 
 # ==================================================================================
@@ -244,6 +96,10 @@ class ConfigPanel:
                          0.0, 10, False, "{:.2f}x")
         y = self._slider(x, y, w, "Grid spacing (screen px)", "grid_target_spacing_px",
                          40.0, 160.0, False, "{:.0f} px")
+        
+        # === UI ===
+        y = self._sec(x, y, "UI")
+        y = self._toggle(x, y, w, "Screen mode", "screen_mode", "Light", "Dark", "light", "dark")
 
         # === ADVANCED / CCD ===
         y = self._sec(x, y, "Advanced (Collisions)")
@@ -272,6 +128,15 @@ class ConfigPanel:
                                      getattr(self.engine, attr),
                                      lambda v: setattr(self.engine, attr, v)))
         return y + 30
+
+    def _toggle(self, x, y, w, label, attr, label_a, label_b,
+                value_a=False, value_b=True):
+        self.widgets.append(Toggle(x, y, w, label, self.font_sm,
+                                   getattr(self.engine, attr),
+                                   label_a, label_b,
+                                   lambda v: setattr(self.engine, attr, v),
+                                   value_a, value_b))
+        return y + 36
     
     def _slider(self, x, y, w, label, attr, mn, mx, log, fmt):
         self.widgets.append(Slider(x, y, w, label, self.font_sm, mn, mx,
