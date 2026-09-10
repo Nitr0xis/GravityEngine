@@ -57,6 +57,9 @@ class ConfigPanel:
         # Scroll
         self.scroll = 0
         self.max_scroll = 0
+
+        # Save
+        self._build_param_keys = []
         
         self._build()
     
@@ -66,14 +69,17 @@ class ConfigPanel:
         y_offset_top = int(70 * state.engine.scale_coefficient)
         x, y = self.px + 25, self.py + y_offset_top
         w = (self.pw - 50)
-        
+
+        # Garder la liste de tous les paramètres effectivement présents dans le panel, dans l'ordre
+        self._build_param_keys = []
+
         # === SIMULATION ===
         y = self._sec(x, y, "Simulation")
         y = self._slider(x, y, w, "Target FPS", "FPS_TARGET",
                          30, 240, False, "{:.0f} FPS")
         y = self._slider(x, y, w, "Time Acceleration", "time_acceleration",
                          1e0, 5e5, True, "{:.2e}x")
-        
+
         # === PHYSICS ===
         y = self._sec(x, y, "Physics")
         y = self._checkbox(x, y, "Enable Reversed Gravity", "reversed_gravity")
@@ -85,24 +91,25 @@ class ConfigPanel:
                  0.0, 1.5, False, "{:.2f}")
         y = self._slider(x, y, w, "Random Environment Generation Bodies Number", "random_environment_number",
                  1, 200, False, "{:.0f} bodies")
-        
+
         # === VISUAL ===
         y = self._sec(x, y, "Visual")
         y = self._slider(x, y, w, "Camera Zoom", "camera_zoom",
                          self.engine.camera.min_scale, self.engine.camera.max_scale, True, "{:.2e}x")
         y = self._checkbox(x, y, "Show Vectors", "vectors_printed")
         y = self._slider(x, y, w, "Vector Scale", "vector_scale",
-                         0.1, 10.0, False, "{:.2f}x")
+                         0.1, 10.0, False, "{:.1f}×")
         y = self._checkbox(x, y, "Gravitational lensing grid", "gravitational_grid_enabled")
         y = self._slider(x, y, w, "Grid lens strength", "grid_lens_amount",
-                         0.0, 10, False, "{:.2f}x")
+                         0.0, 10.0, False, "{:.1f}×")
         y = self._slider(x, y, w, "Grid spacing (screen px)", "grid_target_spacing_px",
                          40.0, 160.0, False, "{:.0f} px")
-        
+
         # === UI ===
         y = self._sec(x, y, "UI")
         y = self._toggle(x, y, w, "Screen mode", "screen_mode", "Light", "Dark", "light", "dark")
-
+        """y = self._slider(x, y, w, "UI scale", "scale_coefficient", 0.5, 4.0, True, "{:.1f}×"); self._build_param_keys.append("scale_coefficient")"""
+   
         # === ADVANCED / CCD ===
         y = self._sec(x, y, "Advanced (Collisions)")
         y = self._checkbox(x, y, "Enable Adaptive Substeps", "adaptive_substeps")
@@ -110,25 +117,26 @@ class ConfigPanel:
                          0.0, 8.0, False, "+{:.0f} steps")
         y = self._slider(x, y, w, "Force Method Threshold (n)", "force_method_n_threshold",
                  50, 2000, True, "{:.0f} bodies")
-        
+
         # === BUTTONS ===
         y += 20
         bw = (w - 20) // 3
         self.widgets.append(Button(x, y, bw, 35, "Save Config", self.font_sm, self._save))
         self.widgets.append(Button(x + bw + 10, y, bw, 35, "Load Last Config", self.font_sm, self._load))
         self.widgets.append(Button(x + 2*(bw+10), y, bw, 35, "Close (Escape)", self.font_sm, self.toggle))
-        
+
         self.max_scroll = max(0, y + 50 - (self.py + self.ph))
-    
+
     def _sec(self, x, y, txt):
         y += 12
         self.widgets.append(SectionTitle(x, y, txt, self.font_med))
         return y + 26 * state.engine.scale_coefficient
-    
+
     def _checkbox(self, x, y, label, attr):
         self.widgets.append(Checkbox(x, y, label, self.font_sm,
                                      getattr(self.engine, attr),
                                      lambda v: setattr(self.engine, attr, v)))
+        self._build_param_keys.append(attr)
         return y + 30 * state.engine.scale_coefficient
 
     def _toggle(self, x, y, w, label, attr, label_a, label_b,
@@ -138,54 +146,21 @@ class ConfigPanel:
                                    label_a, label_b,
                                    lambda v: setattr(self.engine, attr, v),
                                    value_a, value_b))
+        self._build_param_keys.append(attr)
         return y + 36 * state.engine.scale_coefficient
-    
+
     def _slider(self, x, y, w, label, attr, mn, mx, log, fmt):
         self.widgets.append(Slider(x, y, w, label, self.font_sm, mn, mx,
                                    getattr(self.engine, attr), log, fmt,
                                    lambda v: setattr(self.engine, attr, v)))
+        self._build_param_keys.append(attr)
         return y + 60 * state.engine.scale_coefficient
-    
+
     def _save(self):
-        cfg = {k: getattr(self.engine, k) for k in [
-            # Complete list of parameters shown in the config panel (Physics, Camera, Random, Rendering, UI, Advanced)
-            "time_acceleration", 
-            "FPS_TARGET", 
-            "default_density",
-            "fusions", 
-            "barnes_hut_theta", 
-            "minimum_mass",
-            "use_interpolation", 
-            "physics_timestep",
-            "adaptive_substeps", 
-            "adaptive_substeps_max_extra", 
-            "force_method_n_threshold",
-
-            "camera_zoom",
-            "camera_speed",
-
-            "random_environment_number",
-            "random_mode",
-            "random_energy_per_kg",
-            "random_mass_field",
-
-            "vectors_printed", 
-            "force_vectors", 
-            "cardinal_vectors",
-            "vectors_in_front",
-            "vector_scale",
-            "vector_time_acceleration_ref",
-
-            "gravitational_grid_enabled", 
-            "grid_lens_amount", 
-            "grid_target_spacing_px", 
-            "grid_max_lines",
-            "grid_subdivide_px",
-            "grid_lens_softening_world",
-
-            "screen_mode",
-     
-        ]}
+        # Seuls les paramètres réellement présents dans le panel sont sauvegardés
+        # On utilise self._build_param_keys qui est généré lors du dernier _build
+        param_keys = getattr(self, "_build_param_keys", [])
+        cfg = {k: getattr(self.engine, k) for k in param_keys}
         payload = {
             "version": getattr(self.engine, "project_version", "unknown"),
             "config": cfg,

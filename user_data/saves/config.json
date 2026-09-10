@@ -1,23 +1,23 @@
 {
-  "version": "3.9.3",
+  "version": "3.11.1",
   "config": {
-    "time_acceleration": 20000.0,
     "FPS_TARGET": 120,
+    "time_acceleration": 20000.0,
+    "reversed_gravity": false,
+    "random_mode": false,
     "default_density": 5514.0,
     "fusions": true,
     "barnes_hut_theta": 0.5,
     "random_environment_number": 20,
-    "vectors_printed": false,
-    "force_vectors": true,
-    "vector_scale": 1,
     "camera_zoom": 1.0,
-    "adaptive_substeps": false,
-    "adaptive_substeps_max_extra": 0.0,
-    "force_method_n_threshold": 800,
-    "reversed_gravity": false,
-    "random_mode": false,
+    "vectors_printed": false,
+    "vector_scale": 1,
     "gravitational_grid_enabled": false,
     "grid_lens_amount": 3.5,
-    "grid_target_spacing_px": 72.0
+    "grid_target_spacing_px": 72.0,
+    "screen_mode": "dark",
+    "adaptive_substeps": false,
+    "adaptive_substeps_max_extra": 0.0,
+    "force_method_n_threshold": 800
   }
 }

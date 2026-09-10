@@ -157,10 +157,13 @@ class Slider(Widget):
         self._update_pos()
 
     def _update_pos(self):
+        # Clamp value to bounds before calculating position
+        self.val = min(max(self.val, self.mn), self.mx)
         if self.log:
             t = (math.log10(self.val) - math.log10(self.mn)) / (math.log10(self.mx) - math.log10(self.mn))
         else:
             t = (self.val - self.mn) / (self.mx - self.mn)
+        t = min(max(t, 0), 1)
         self.handle_x = self.rect.x + int(t * self.rect.width)
 
     def _val_from_x(self, mx):
@@ -172,19 +175,19 @@ class Slider(Widget):
 
     def update(self, events):
         super().update(events)
-        mx = pygame.mouse.get_pos()[0]
         for e in events:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
-                track_r = pygame.Rect(self.rect.x, self.rect.y + 25, self.rect.width, 10)
+                # Correction: calculer dynamiquement la zone du slider (barre)
+                track_r = pygame.Rect(self.rect.x, self.rect.y + int(25 * state.engine.scale_coefficient), self.rect.width, 6)
                 if track_r.collidepoint(e.pos):
                     self.dragging = True
-                    self.val = self._val_from_x(mx)
+                    self.val = self._val_from_x(e.pos[0])
                     self._update_pos()
                     if self.cb: self.cb(self.val)
             elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:
                 self.dragging = False
             elif e.type == pygame.MOUSEMOTION and self.dragging:
-                self.val = self._val_from_x(mx)
+                self.val = self._val_from_x(e.pos[0])
                 self._update_pos()
                 if self.cb: self.cb(self.val)
 

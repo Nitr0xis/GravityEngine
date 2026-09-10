@@ -1,6 +1,6 @@
 [project]
 name = "gravityengine"
-version = "3.10.0"
+version = "3.11.1"
 description = "N-body gravitational simulator built with Python and Pygame"
 readme = "README.md"
 requires-python = ">=3.13"

@@ -2,7 +2,7 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.11.0** — *High Resolution Edition*
+**v3.11.1** — *High Resolution Edition*
 
 **Author:** Nils DONTOT  
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
@@ -435,4 +435,4 @@ See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: September 2026 — v3.11.0*
+*Last updated: September 2026 — v3.11.1*

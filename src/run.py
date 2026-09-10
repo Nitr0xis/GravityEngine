@@ -85,6 +85,7 @@ if __name__ == '__main__':
 
 
 # TODO list:
+#   - add a visual trail mode
 #   - Prepare right click
 #   - Patch interpolation (BH?)
 #   - Patch lens grid

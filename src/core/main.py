@@ -162,7 +162,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.11.0"
+        self.project_version = "3.11.1"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -854,7 +854,7 @@ class Engine:
                 pygame.mixer.music.queue(m3)
                 pygame.mixer.music.play(loop, start, fade_ms)
             except (FileNotFoundError, OSError, pygame.error, AttributeError):
-                pass
+                Logger.error(f"Music files not found in {mus_dir}")
     
     ### A passer en GO
     def physics_step(self, dt):
