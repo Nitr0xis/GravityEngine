@@ -84,12 +84,12 @@ class ConfigPanel:
         y = self._sec(x, y, "Physics")
         y = self._checkbox(x, y, "Enable Reversed Gravity", "reversed_gravity")
         y = self._checkbox(x, y, "Enable Random Speed Mode", "random_mode")
-        y = self._slider(x, y, w, "Corpses Density", "default_density",
+        y = self._slider(x, y, w, "Bodies Density", "default_density",
                          1e0, 1e5, True, "{:.2e} kg/m³")
         y = self._checkbox(x, y, "Enable Body Fusions", "fusions")
         y = self._slider(x, y, w, "Barnes-Hut Theta", "barnes_hut_theta",
                  0.0, 1.5, False, "{:.2f}")
-        y = self._slider(x, y, w, "Random Environment Generation Bodies Number", "random_environment_number",
+        y = self._slider(x, y, w, "Random-Generated Bodies Count", "random_environment_number",
                  1, 200, False, "{:.0f} bodies")
 
         # === VISUAL ===
@@ -107,10 +107,10 @@ class ConfigPanel:
         y = self._checkbox(x, y, "Show Vectors", "vectors_printed")
         y = self._slider(x, y, w, "Vector Scale", "vector_scale",
                          0.1, 10.0, False, "{:.1f}×")
-        y = self._checkbox(x, y, "Gravitational lensing grid", "gravitational_grid_enabled")
-        y = self._slider(x, y, w, "Grid lens strength", "grid_lens_amount",
+        y = self._checkbox(x, y, "Gravitational Lensing Grid", "gravitational_grid_enabled")
+        y = self._slider(x, y, w, "Grid Lens Strength", "grid_lens_amount",
                          0.0, 10.0, False, "{:.1f}×")
-        y = self._slider(x, y, w, "Grid spacing (screen px)", "grid_target_spacing_px",
+        y = self._slider(x, y, w, "Grid Spacing (screen px)", "grid_target_spacing_px",
                          40.0, 160.0, False, "{:.0f} px")
 
         # === UI ===

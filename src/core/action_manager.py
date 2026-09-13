@@ -287,7 +287,7 @@ class ActionManager:
             pygame.image.save(surf, full_path)
             shown = os.path.basename(full_path)
             TempText(
-                text=f"Screenshot enregistré : {shown}",
+                text=f"Screenshot saved : {shown}",
                 duration=3.0,
                 dest=(
                     20,

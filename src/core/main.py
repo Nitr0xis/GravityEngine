@@ -490,13 +490,13 @@ class Engine:
             sx, sy = self.world_to_screen(istate['x'], istate['y'])
             r = istate['radius'] * cam.scale
 
-            # Frustum cull (rayon inclus)
+            # Frustum culling (inclusive of radius)
             if sx + r < 0 or sx - r > sw or sy + r < 0 or sy - r > sh:
                 continue
             visible.append((circle, sx, sy, r))
 
-        # Le test d'occlusion a lui-même un coût : ne le déclencher
-        # que si assez de corps sont visibles pour que ça rapporte.
+        # Occlusion testing is computationally expensive; only trigger
+        # if enough bodies are visible for the cost to be worthwhile.
         if len(visible) > 50:
             visible = self._occlusion_cull(visible)
 
@@ -505,7 +505,7 @@ class Engine:
     def _occlusion_cull(self, visible):
         from collections import defaultdict
 
-        visible.sort(key=lambda v: v[3], reverse=True)  # plus grand d'abord
+        visible.sort(key=lambda v: v[3], reverse=True)  # largest radius first
         max_r = visible[0][3] if visible else 1.0
         cell_size = max(2 * max_r, 1.0)
 
