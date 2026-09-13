@@ -31,7 +31,7 @@ from core import state
 
 
 class C:
-    OVERLAY = (0, 0, 0, 200)
+    OVERLAY = (0, 0, 0, 100)
     PANEL = (25, 25, 30)
     SECTION = (35, 35, 40)
     GREEN = (28, 201, 89)

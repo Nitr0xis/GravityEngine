@@ -162,14 +162,14 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.11.2"
+        self.project_version = "3.11.3"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
-        self.FULLSCREEN = True
+        self.screen_size_mode: Optional[str] = "FULLSCREEN"  # Between "FULLSCREEN" (Recommended), "FULLWINDOW" or None (if None, modify screen_size)
         self.screen_mode: str = "dark"  # "dark" or "light"
         
-        WIDTH: int = 0
+        WIDTH: int = 0  # Modify only if you chose None for self.screen_size_mode
         HEIGHT: int = 0
         
         # Initialize screen
@@ -177,10 +177,13 @@ class Engine:
         screen_size: tuple[int, int] = (self.info.current_w, self.info.current_h)
         available_screen_modes: list[tuple[int, int]] = pygame.display.list_modes()
         
-        if self.FULLSCREEN:
-            self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.NOFRAME)
-        else:
-            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        match self.screen_size_mode:
+            case "FULLWINDOW":
+                self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.NOFRAME)
+            case "FULLSCREEN":
+                self.screen = pygame.display.set_mode(available_screen_modes[0], pygame.FULLSCREEN)
+            case _:
+                self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         
         pygame.display.set_caption(f'Gravity Engine {self.project_version} by {self.author_first_name} {self.author_last_name}')
 
@@ -275,7 +278,7 @@ class Engine:
         # Background grid (gravitational lensing effect, infinite, camera-sensitive)
         self.gravitational_grid_enabled: bool = False
         self.grid_lens_amount: float = 3.5  # deformation intensity (0 = no effect)
-        self.grid_target_spacing_px: float = 72.0  # target on-screen spacing (px)
+        self.grid_target_spacing_px: float = 120.0  # target on-screen spacing (px)
         self.grid_max_lines: int = 64
  
         self.grid_subdivide_px: float = 96.0  # au-delà, sous-grille 1/5 du pas majeur
