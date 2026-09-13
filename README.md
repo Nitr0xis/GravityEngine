@@ -290,7 +290,8 @@ src/
 │ ├── config_panel.py         # Overlay UI: sliders, checkboxes, buttons, scroll
 │ ├── gravitational_grid.py   # Background grid with lensing deformation
 │ ├── color.py                # Color class with arithmetic operators + palette
-│ └── temp_text.py            # Timed on-screen notifications
+│ ├── temp_text.py            # Timed on-screen notifications
+│ └── ui_widgets.py           # Base widgets (sliders, buttons, etc...)
 └── tools/
 └── calibrate_threshold.py    # Dev script: NumPy vs Barnes-Hut benchmarking
 ```
