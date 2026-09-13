@@ -640,20 +640,32 @@ class Circle:
         # This makes movement appear smooth even with fixed physics timestep
         # ===== GET INTERPOLATED STATE =====
         istate = self.get_interpolated_state(alpha)
-        
+
         world_x = istate['x']
         world_y = istate['y']
         world_radius = istate['radius']
-        
-        # ===== CONVERT WORLD → SCREEN =====
+
         screen_x, screen_y = state.engine.world_to_screen(world_x, world_y)
-        
-        # ===== CALCULATE VISIBLE RADIUS =====
-        # Apply camera scale to radius
+
         if interpolate_radius:
             screen_radius = world_radius * state.engine.camera.scale
         else:
             screen_radius = self.radius * state.engine.camera.scale
+
+        sw, sh = screen.get_width(), screen.get_height()
+        diagonal = sqrt(sw ** 2 + sh ** 2)
+
+        # ===== GEOMETRIC RECTIFICATION THRESHOLD =====
+        # Beyond this radius, the deviation between the real arc and a straight
+        # line is less than 1 pixel across the whole screen diagonal: curvature
+        # is visually indistinguishable. Switch to a simplified rendering
+        # (plane/line) rather than trying to draw a circle whose radius
+        # exceeds the capabilities of pygame.draw.circle anyway.
+        straight_line_threshold = (diagonal ** 2) / 8.0
+
+        if screen_radius > straight_line_threshold:
+            self._draw_as_flat_surface(screen, screen_x, screen_y, screen_radius)
+            return
         visible_radius = max(1, int(screen_radius))
         
         # ===== SECURITY CHECKS =====
@@ -722,6 +734,106 @@ class Circle:
                                     (int(screen_x), int(screen_y)), 
                                     visible_radius)
 
+    def _draw_as_flat_surface(self, screen, cx, cy, radius):
+        """
+        Simplified rendering for extreme apparent radius: the body's edge
+        at this scale is indistinguishable from a straight line. Faithfully
+        reproduces the same color/selection/shadow logic as draw_interpolated,
+        replacing each circle with a half-plane at equivalent distance
+        from the center.
+        """
+        sw, sh = screen.get_width(), screen.get_height()
+
+        screen_center_x, screen_center_y = sw / 2, sh / 2
+        dx = screen_center_x - cx
+        dy = screen_center_y - cy
+        dist = sqrt(dx * dx + dy * dy)
+
+        # Threshold in pixels: below this, the direction has no more stable
+        # visual sense (body almost centered on the screen) — avoids erratic
+        # sign due to floating-point noise.
+        STABLE_DIRECTION_THRESHOLD = 2.0
+
+        if dist < STABLE_DIRECTION_THRESHOLD:
+            ux, uy = 0.0, 0.0
+        else:
+            ux, uy = dx / dist, dy / dist
+
+        # ===== SELECTION HIGHLIGHTING (same logic as draw_interpolated) =====
+        if self.full_selected_mode:
+            if self.is_selected:
+                self.color = Display.DUCKY_GREEN
+            else:
+                if state.engine.screen_mode == "dark":
+                    self.color = Display.WHITE
+                elif state.engine.screen_mode == "light":
+                    self.color = Display.BLACK
+        else:
+            if self.is_selected:
+                if radius <= 4:
+                    offset = 2
+                elif radius <= 20:
+                    offset = radius // 4 + 1
+                else:
+                    offset = 5
+                self._draw_flat_offset(screen, cx, cy, ux, uy, radius + offset, Display.DUCKY_GREEN)
+
+        # ===== DRAW SHADOW/OUTLINE (same logic as draw_interpolated) =====
+        if not self.is_selected:
+            if radius <= 4:
+                offset = 1
+            elif radius <= 20:
+                offset = radius // 5
+            else:
+                offset = 3
+            self._draw_flat_offset(screen, cx, cy, ux, uy, radius + offset, Display.DARK_GREY)
+
+        # ===== DRAW MAIN BODY (above, at true radius) =====
+        self._draw_flat_offset(screen, cx, cy, ux, uy, radius, self._current_body_color())
+
+        self.rect = screen.get_rect()
+
+
+    def _draw_flat_offset(self, screen, cx, cy, ux, uy, threshold, color):
+        """
+        Draws the INTERIOR half-plane of the body: the area between the body's
+        center and the tangent line at distance `threshold`, in the direction
+        (ux, uy). The fill must extend TOWARD the center of the body
+        (direction -ux), not the opposite — the interior of a sphere is on
+        its center's side, not the screen's.
+        """
+        if ux == 0.0 and uy == 0.0:
+            # Indefinite direction (body nearly centered on the screen, dist near
+            # zero): at this scale, the whole screen is inside the body,
+            # so fill it, rather than risking a degenerate polygon
+            # that would draw nothing.
+            fill_color = color.rgb if hasattr(color, "rgb") else color
+            screen.fill(fill_color)
+            return
+
+        sw, sh = screen.get_width(), screen.get_height()
+        edge_x = cx + ux * threshold
+        edge_y = cy + uy * threshold
+
+        perp_x, perp_y = -uy, ux
+        extent = 2 * sqrt(sw ** 2 + sh ** 2)
+
+        p1 = (edge_x + perp_x * extent, edge_y + perp_y * extent)
+        p2 = (edge_x - perp_x * extent, edge_y - perp_y * extent)
+        p3 = (p2[0] - ux * extent, p2[1] - uy * extent)
+        p4 = (p1[0] - ux * extent, p1[1] - uy * extent)
+
+        pygame.draw.polygon(screen, color, [p1, p2, p3, p4])
+
+
+    def _current_body_color(self):
+        """Main body color (handles case where full_selected_mode was already applied upstream)."""
+        return self.color
+
+    def _color_tuple(self):
+        """Normalize self.color (Color object or tuple) to RGB tuple for pygame."""
+        return self.color.rgb if hasattr(self.color, "rgb") else self.color
+
     def _will_collide_continuous(self, other, dt_sim: float) -> bool:
         """
         Continuous collision detection (CCD) over one time step.
@@ -762,7 +874,7 @@ class Circle:
         t1 = (-b - sqrt_disc) / (2.0 * a)
         t2 = (-b + sqrt_disc) / (2.0 * a)
 
-        # Collision si une des racines tombe dans [0,1]
+        # Collide if one of the roots falls in [0,1]
         return (0.0 <= t1 <= 1.0) or (0.0 <= t2 <= 1.0)
 
     def update_fusion(self, other, dt_sim: float):
@@ -853,7 +965,7 @@ class Circle:
         # ===== UPDATE MASS =====
         self.mass = total_mass
 
-        # ===== DENSITY (moyenne pondérée par la masse, cohérente avec V = m/ρ) =====
+        # ===== DENSITY (mass-weighted average, consistent with V = m/ρ) =====
         if d_self > 0 and d_other > 0:
             self.density = (m_self * d_self + m_other * d_other) / total_mass
         elif d_other > 0:

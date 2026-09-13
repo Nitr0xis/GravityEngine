@@ -45,7 +45,7 @@ def _ensure_dependencies(required: list[str] = None):
         )
         return
 
-    # Vérification finale après installation
+    # Final verification after installation
     still_missing = [pkg for pkg in missing if importlib.util.find_spec(pkg) is None]
     if still_missing:
         warnings.warn(

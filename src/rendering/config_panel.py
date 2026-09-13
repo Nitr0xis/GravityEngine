@@ -65,12 +65,12 @@ class ConfigPanel:
     
     def _build(self):
         self.widgets.clear()
-        # Espace laissé en haut pour le titre et la barre — à synchroniser avec le draw() ci-dessous
+        # Space left at the top for the title and bar — must be synchronized with draw() below
         y_offset_top = int(70 * state.engine.scale_coefficient)
         x, y = self.px + 25, self.py + y_offset_top
         w = (self.pw - 50)
 
-        # Garder la liste de tous les paramètres effectivement présents dans le panel, dans l'ordre
+        # Keep the list of all parameters actually present in the panel, in order
         self._build_param_keys = []
 
         # === SIMULATION ===
@@ -94,8 +94,16 @@ class ConfigPanel:
 
         # === VISUAL ===
         y = self._sec(x, y, "Visual")
-        y = self._slider(x, y, w, "Camera Zoom", "camera_zoom",
-                         self.engine.camera.min_scale, self.engine.camera.max_scale, True, "{:.2e}x")
+
+        # = Camera Zoom Specifications =
+        self.widgets.append(Slider(x, y, w, "Camera Zoom", self.font_sm,
+                            self.engine.camera.min_scale, self.engine.camera.max_scale,
+                            self.engine.camera.scale, True, "{:.2e}x",
+                            self._on_zoom_slider))
+        self._build_param_keys.append("camera_zoom")
+        y += 60 * state.engine.scale_coefficient
+        # = = = = = = = = = = = = = = =
+
         y = self._checkbox(x, y, "Show Vectors", "vectors_printed")
         y = self._slider(x, y, w, "Vector Scale", "vector_scale",
                          0.1, 10.0, False, "{:.1f}×")
@@ -119,13 +127,18 @@ class ConfigPanel:
                  50, 2000, True, "{:.0f} bodies")
 
         # === BUTTONS ===
-        y += 20
-        bw = (w - 20) // 3
-        self.widgets.append(Button(x, y, bw, 35, "Save Config", self.font_sm, self._save))
-        self.widgets.append(Button(x + bw + 10, y, bw, 35, "Load Last Config", self.font_sm, self._load))
-        self.widgets.append(Button(x + 2*(bw+10), y, bw, 35, "Close (Escape)", self.font_sm, self.toggle))
+        y += int(20 * state.engine.scale_coefficient)
+        scale = state.engine.scale_coefficient
+        gap = int(10 * scale)
+        bw = (w - 2 * gap) // 3  # w est déjà la largeur du panneau, déjà cohérente
+        button_h = int(35 * scale)
 
-        self.max_scroll = max(0, y + 50 - (self.py + self.ph))
+        self.widgets.append(Button(x, y, bw, button_h, "Save Config", self.font_sm, self._save))
+        self.widgets.append(Button(x + bw + gap, y, bw, button_h, "Load Last Config", self.font_sm, self._load))
+        self.widgets.append(Button(x + 2 * (bw + gap), y, bw, button_h, "Close (Escape)", self.font_sm, self.toggle))
+
+        margin = button_h + int(20 * scale)
+        self.max_scroll = max(0, y + margin - (self.py + self.ph))
 
     def _sec(self, x, y, txt):
         y += 12
@@ -156,9 +169,13 @@ class ConfigPanel:
         self._build_param_keys.append(attr)
         return y + 60 * state.engine.scale_coefficient
 
+    def _on_zoom_slider(self, v):
+        screen_center = (state.engine.screen.get_width() // 2, state.engine.screen.get_height() // 2)
+        state.engine.camera.set_scale_anchored(v, screen_center)
+
     def _save(self):
-        # Seuls les paramètres réellement présents dans le panel sont sauvegardés
-        # On utilise self._build_param_keys qui est généré lors du dernier _build
+        # Only the parameters actually present in the panel are saved
+        # We use self._build_param_keys, which is generated during the last _build
         param_keys = getattr(self, "_build_param_keys", [])
         cfg = {k: getattr(self.engine, k) for k in param_keys}
         payload = {
@@ -278,7 +295,7 @@ class ConfigPanel:
                         (self.px + 25, line_y),
                         (self.px + self.pw - 25, line_y), 2)
 
-        # Définir la zone scrollable pour les widgets — on ne veut pas qu'ils débordent sur le titre ou la barre
+        # Define the scrollable area for widgets — we don't want them to overflow over the title or bar
         panel_top = self.py + int(70 * state.engine.scale_coefficient)
         panel_bottom = self.py + self.ph
 
@@ -286,7 +303,7 @@ class ConfigPanel:
             w.rect.y -= self.scroll
             widget_top = w.rect.y
             widget_bottom = w.rect.y + w.rect.height
-            # On ne dessine le widget que s'il est entièrement visible DANS LA ZONE SCROLLABLE (en dessous du titre/barre)
+            # We only draw the widget if it is entirely visible INSIDE THE SCROLLABLE AREA (below the title/bar)
             if widget_top >= panel_top and widget_bottom <= panel_bottom:
                 w.draw(self.screen)
             w.rect.y += self.scroll

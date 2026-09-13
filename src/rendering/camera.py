@@ -128,3 +128,18 @@ class Camera:
 
         self.cam_x = ax - wx * self.scale
         self.cam_y = ay - wy * self.scale
+
+    def set_scale_anchored(self, new_scale: float, anchor_screen_pos: tuple[float, float]):
+        """
+        Set the zoom to an absolute value (useful for a slider), while keeping
+        a given screen point fixed in world position — like zoom_anchored,
+        but for a target value rather than a relative step.
+        """
+        ax, ay = anchor_screen_pos
+        wx, wy = self.screen_to_world(ax, ay)
+
+        self.scale = max(self.min_scale, min(new_scale, self.max_scale))
+
+        self.cam_x = ax - wx * self.scale
+        self.cam_y = ay - wy * self.scale
+   

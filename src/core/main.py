@@ -162,7 +162,7 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.11.1"
+        self.project_version = "3.11.2"
         self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
         
         # ==================== DISPLAY SETTINGS ====================
@@ -183,6 +183,11 @@ class Engine:
             self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         
         pygame.display.set_caption(f'Gravity Engine {self.project_version} by {self.author_first_name} {self.author_last_name}')
+
+        # ==================== "STATE" VARIABLE ====================
+
+        global engine
+        state.engine = self
 
         # ==================== TIMESTEP SETTINGS ====================
         # FPS number targeted
@@ -220,16 +225,20 @@ class Engine:
         
         # Temporary texts
         self.temp_texts: list[TempText] = []
-
+        
+        scale = state.engine.scale_coefficient
+        _focus_button_w = int(140 * scale)
+        _focus_button_h = int(32 * scale)
         self.focus_button = Button(
-            x=(self.screen.get_width() - 140 * self.scale_coefficient) // 2,
-            y=(self.screen.get_height() - 32 * self.scale_coefficient - 2 * self.txt_gap - self.txt_size),
-            w=int(140 * self.scale_coefficient),
-            h=int(32 * self.scale_coefficient),
+            x=(self.screen.get_width() - _focus_button_w) // 2,
+            y=(self.screen.get_height() - _focus_button_h - 2 * self.txt_gap - self.txt_size),
+            w=_focus_button_w,
+            h=_focus_button_h,
             text="Focus", font=self.font,
             cb=ActionManager.toggle_focus_selected,
             visible_if=lambda: self.circle_selected,
         )
+   
 
         self.buttons: list[Button] = [
             self.focus_button
@@ -360,9 +369,6 @@ class Engine:
         self.circle_collided = False
         self.collision_detected = False
         self.temp_circle: Circle
-
-        global engine
-        state.engine = self
 
         Logger.info(f"Engine initialized in {(time.perf_counter() - t_start)*1000:.0f}ms")
 
@@ -1395,14 +1401,14 @@ class Engine:
             else:
                 self.screen.fill(Display.WHITE)
             
-            # Update and filter expired temporary texts
-            self.temp_texts = [text for text in self.temp_texts if text.update()]
-            
             # Handle background music
             self.handle_music()
             
             # Render with interpolation
             self.render(alpha)
+
+            # Update and filter expired temporary texts
+            self.temp_texts = [text for text in self.temp_texts if text.update()]
 
             # ===== DRAW CONFIG PANEL (OVERLAY) =====
             if hasattr(self, 'config_panel') and self.config_panel:

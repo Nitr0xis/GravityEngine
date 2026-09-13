@@ -1,5 +1,5 @@
 {
-  "version": "3.11.1",
+  "version": "3.11.2",
   "config": {
     "FPS_TARGET": 120,
     "time_acceleration": 20000.0,
