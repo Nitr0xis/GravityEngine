@@ -293,7 +293,7 @@ src/
 │ ├── temp_text.py            # Timed on-screen notifications
 │ └── ui_widgets.py           # Base widgets (sliders, buttons, etc...)
 └── tools/
-└── calibrate_threshold.py    # Dev script: NumPy vs Barnes-Hut benchmarking
+  └── calibrate_threshold.py  # Dev script: NumPy vs Barnes-Hut benchmarking
 ```
 
 ### Force Computation Strategy
