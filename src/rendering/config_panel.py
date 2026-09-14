@@ -307,3 +307,4 @@ class ConfigPanel:
             if widget_top >= panel_top and widget_bottom <= panel_bottom:
                 w.draw(self.screen)
             w.rect.y += self.scroll
+            

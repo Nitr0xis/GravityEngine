@@ -105,6 +105,7 @@ $RECYCLE.BIN/
 /src/temp.py
 /user_data/logs/
 /user_data/screenshots/
+GravityEngine_Documentation_Technique.pdf
 
 # Temporary files
 *.tmp
