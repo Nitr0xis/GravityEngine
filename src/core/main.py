@@ -796,7 +796,7 @@ class Engine:
             current_line += 1
         
         # ===== FOOTER =====
-        footer_y = self.screen.get_height() - 50
+        footer_y = self.screen.get_height() - 100
         
         # Version and author (centered, grey)
         footer_text = f"Gravity Engine v{self.project_version} by {self.author_first_name} {self.author_last_name}"
