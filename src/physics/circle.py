@@ -879,11 +879,7 @@ class Circle:
 
     def update_fusion(self, other, dt_sim: float):
         """
-        Check and perform fusion with double verification.
-
-        Checks TWO conditions:
-        1. Visual collision detected (interpolated positions)
-        2. Physical collision confirmed (real positions)
+        Check and perform fusion when bodies overlap now or cross during this step.
         """
         if not state.engine.fusions:
             return
@@ -903,32 +899,8 @@ class Circle:
         if not physical_collision:
             physical_collision = self._will_collide_continuous(other, dt_sim)
 
-        # ===== VISUAL VERIFICATION (interpolated positions) =====
-        alpha = state.engine.current_alpha
-
-        visual_x1 = self.prev_x + (self.x - self.prev_x) * alpha
-        visual_y1 = self.prev_y + (self.y - self.prev_y) * alpha
-
-        visual_x2 = other.prev_x + (other.x - other.prev_x) * alpha
-        visual_y2 = other.prev_y + (other.y - other.prev_y) * alpha
-
-        dx_visual = visual_x2 - visual_x1
-        dy_visual = visual_y2 - visual_y1
-        distance_visual = sqrt(dx_visual**2 + dy_visual**2)
-
-        # Interpolated radius
-        radius1 = self.prev_radius + (self.radius - self.prev_radius) * alpha
-        radius2 = other.prev_radius + (other.radius - other.prev_radius) * alpha
-
-        visual_collision = distance_visual <= (radius1 + radius2)
-
-        # ===== FUSION IF BOTH CONDITIONS ARE TRUE =====
-        if physical_collision and visual_collision:
+        if physical_collision:
             self.fusion(other)
-        elif visual_collision and not physical_collision:
-            # Visual collision detected but not physical collision
-            # → Force a physics step (already handled by _check_visual_collisions)
-            pass
 
     def fusion(self, other):
         """

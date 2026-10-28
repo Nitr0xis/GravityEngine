@@ -16,50 +16,49 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 """
-Gravity Engine 3.11 by Nils DONTOT (Nitr0xis) - Real-time N-body Gravity Simulator
+Gravity Engine 3.12 — Helpful Boxes Edition
+Real-time N-body gravitational simulator by Nils DONTOT (Nitr0xis)
 Copyright (c) 2026 Nils DONTOT
 
---- Informations ---
+--- Project Information ---
 Email: nils.dontot.pro@gmail.com
 GitHub account: https://github.com/Nitr0xis/
 GitHub repository: https://github.com/Nitr0xis/GravityEngine/
-LICENCE: GPL-3.0 License (https://www.gnu.org/licenses/gpl-3.0)
+License: GPL-3.0 (https://www.gnu.org/licenses/gpl-3.0)
 README: https://github.com/Nitr0xis/GravityEngine/blob/main/README.md
 
 --- Dependencies ---
 Pygame: https://www.pygame.org/
-Atlas - My own file managing module:
+Atlas - File management module:
     Email: nils.dontot.pro@gmail.com
     GitHub account: https://github.com/Nitr0xis/
     GitHub repository: https://github.com/Nitr0xis/Atlas/
-    LICENCE: MIT License (https://opensource.org/licenses/MIT)
+    License: MIT (https://opensource.org/licenses/MIT)
     README: https://github.com/Nitr0xis/Atlas/blob/main/README.md
 
 CONTROLS:
-    H/I : Display info
-    A/E : Zoom in/Zoom out
-    Space : Pause/Unpause      
-    V : Toggle vectors    
-    R : Random mode
-    G : Toggle reversed gravity     
-    P : Generate 20 bodies
-    T : Reset camera zoom
-    Delete : Delete selected     
-    Escape : Exit
-    Left click : Click to select/create bodies, hold to increase size
-    Right click : Move the camera
-    Mouse wheel (optional) : Zoom in and Zoom out
-    B : Toggle gravitational lensing grid (background)
-
-CONFIGURATION (in state.engine.__init__()) (Main parameters):
-    time_acceleration     : Simulation speed (default: 4e6)
-    FPS_TARGET            : Rendering FPS (default: 120)
-    default_density       : Body density kg/m³ (default: 5514)
-    fusions               : Enable/disable body fusion (default: True)
+    H/I : Display the help overlay
+    A/E : Zoom in/out
+    Arrow keys : Pan the camera
+    Space : Pause/resume the simulation
+    V : Toggle velocity and force vectors
+    R : Toggle random velocity mode
+    G : Toggle reversed gravity
+    P : Generate a random environment
+    T : Reset the camera
+    F : Focus on the selected body
+    Delete/Backspace : Delete the selected body
+    Escape : Exit or close the configuration panel
+    Left click : Select a body or create one in empty space
+    Left-click and hold : Increase the size of a new body
+    Right-click and drag : Pan the camera
+    Mouse wheel : Zoom in/out
+    B : Toggle the gravitational lensing grid
+    C : Open/close the configuration panel
 
 PHYSICS:
     Newtonian gravity (F = G×m₁×m₂/r²), momentum conservation,
-    fixed timestep, visual collision detection
+    fixed timestep, continuous collision detection and body fusion
 """
 
 
@@ -99,16 +98,13 @@ engine: Optional["Engine"] = None
 
  
 """
-Todo:
-    - redo the key bindings using the ctrl key
-    - update code structure
-    - add a focus mode
-    - add a "define as referential button"
-    - add collision epsilon
-    - add a color field which shows the attract field of the selected body
-    - mass transfer on collision without fusion
-    - add senarios in json
-    - add .csv export method
+TODO:
+   - redo the key bindings using the ctrl key
+   - add collision epsilon
+   - add a color field which shows the attract field of the selected body
+   - mass transfer on collision without fusion
+   - add scenarios in JSON
+   - add a CSV export method
 
 For my NSI projects:
     - advanced data system with curves (choice between pygame and tkinter) [using matplotlib + tkinter in the same window]
@@ -162,8 +158,10 @@ class Engine:
         self.splash_screen_duration = 3.0  # Duration in seconds (can be adjusted)
         self.author_first_name = "Nils"  # Your first name
         self.author_last_name = "DONTOT"  # Your last name
-        self.project_version = "3.11.4"
-        self.project_description = f"Gravity Engine v{self.project_version} - A celestial body simulation"  # Project description
+        self.project_version = "3.12.0"
+        self.project_description = (
+            f"Gravity Engine v{self.project_version} — Helpful Boxes Edition"
+        )
         
         # ==================== DISPLAY SETTINGS ====================
         self.screen_size_mode: Optional[str] = "FULLSCREEN"  # Between "FULLSCREEN" (Recommended), "FULLWINDOW" or None (if None, modify screen_size)
@@ -584,11 +582,16 @@ class Engine:
         Args:
             number: The unique identifier of the body to select
         """
-        for circle in state.circles:
-            if circle.number == number:
-                circle.is_selected = True
-                self.circle_selected = True
-                return None
+        selected = next(
+            (circle for circle in state.circles if circle.number == number),
+            None,
+        )
+        if selected is not None:
+            for circle in state.circles:
+                circle.is_selected = circle is selected
+            self.circle_selected = True
+            self.enter_body_frame(selected)
+            return None
         # Display error message if body not found
         TempText(f"Body n°{number} does not exist", 3)
 
@@ -865,7 +868,7 @@ class Engine:
             except (FileNotFoundError, OSError, pygame.error, AttributeError):
                 Logger.error(f"Music files not found in {mus_dir}")
     
-    ### A passer en GO
+    # Physics update loop
     def physics_step(self, dt):
         # physics_step: Perform a single physics step using a fixed timestep.
         #
@@ -902,10 +905,10 @@ class Engine:
                 barnes_hut_theta=self.barnes_hut_theta
             )
 
-            grid = build_collision_grid(state.circles)
+            grid = build_collision_grid(state.circles, dt_sim)
 
             for circle in state.circles:
-                for other_circle in grid.candidates_near(circle):
+                for other_circle in grid.candidates_near(circle, dt_sim):
                     if circle is not other_circle:
                         circle.update_fusion(other_circle, dt_sim)
 
@@ -1280,9 +1283,11 @@ class Engine:
                     if action:
                         action(event)
                 elif event.type == pygame.KEYDOWN:
-                    action = self.KEY_MAP.get(event.key)
-                    if action:
-                        action()
+                    panel = self.config_panel
+                    if not (panel is not None and panel.visible and panel.has_keyboard_focus):
+                        action = self.KEY_MAP.get(event.key)
+                        if action:
+                            action()
 
             # ===== UPDATE CONFIG PANEL =====
             if hasattr(self, 'config_panel') and self.config_panel:

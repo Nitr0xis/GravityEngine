@@ -2,7 +2,7 @@
 
 *N-body gravitational simulator built with Python and Pygame.*
 
-**v3.11.4** — *High Resolution Edition*
+**v3.12.0** — *Helpful Boxes Edition*
 
 **Author:** Nils DONTOT  
 **Repository:** [github.com/Nitr0xis/GravityEngine](https://github.com/Nitr0xis/GravityEngine)  
@@ -22,7 +22,7 @@ I am 15 years old and passionate about space and physics. In mid-2025, I decided
 ## Table of Contents
 
 - [Overview](#overview)
-- [What's New in v3.11](#whats-new-in-v311)
+- [What's New in v3.12](#whats-new-in-v312)
 - [Installation](#installation)
 - [Building Executables](#building-executables)
 - [Controls](#controls)
@@ -51,6 +51,8 @@ Key features:
 - Full interpolation (position, velocity, force, radius) for smooth rendering
 - Zoom-adaptive body generation, complete camera system (pan/zoom/reset)
 - Body-centered **focus mode** (visual reference frame, world coordinates unchanged)
+- Select and focus a body by entering its number in the configuration panel
+- Delayed, contextual help boxes for configuration controls
 - Cross-platform file manager (dev + exe)
 - Rotating file logger for crash diagnostics
 - Adaptive performance mode: 120 FPS with 100+ bodies
@@ -58,26 +60,15 @@ Key features:
 
 ---
 
-## What's New in v3.11 — High Resolution Edition
+## What's New in v3.12 — Helpful Boxes Edition
 
-GravityEngine is now crisp and sharp on 4K, Retina, and any high-DPI display — both simulation and UI.
+The configuration panel now provides contextual help and direct body selection:
 
-### High-DPI Rendering
+- Hover over a supported control for half a second to display a help box describing its action.
+- Enter a body's number in the **Body Selection** section to select and focus it.
+- Invalid or empty body numbers display an error below the input field.
 
-All rendering is now natively high resolution on displays with DPI scaling (Windows, macOS, Linux):
-
-- Automatic detection and support for system DPI
-- All graphics, text, UI widgets, and screenshots are rendered at native pixel density
-- No blur or scaling artifacts: simulation visuals and UI remain perfectly sharp, regardless of operating system or display
-- "Super-res" screenshots: saved screenshots now match the true display DPI and can be larger than the window in logical pixels
-
-### Additional Changes
-
-- The configuration panel, HUD, and tooltips scale smoothly with UI resolution.
-- Font rendering and icons are pin-sharp even at 200%, 300%, 400% scaling.
-- No more blurry circles or antialiased artifacts on Retina/HiDPI screens.
-
-No change to simulation logic, physics accuracy, or compatibility. All previous features (focus mode, quadtree, config panel, etc.) remain. Rendering is now future-proofed for modern displays.
+Fast bodies are also less likely to pass through other bodies between physics updates: collision checks now account for their movement during each step.
 
 ---
 
@@ -206,6 +197,10 @@ Press `C` to open. Parameters take effect immediately.
 | Grid Lens Strength | 0–10 | 3.5 |
 | Grid Spacing | 40–160 px | 72 px |
 
+**Body Selection**
+
+Enter a body's number and press `Enter` or click `Select`. The body is selected and the camera focuses on it. If the number is empty or does not match an existing body, an error appears below the input field.
+
 **Advanced (Collisions)**
 
 | Parameter | Type | Default |
@@ -248,7 +243,7 @@ Applies to position, velocity, force, radius. Click detection uses interpolated 
 
 ### Collision and Fusion
 
-Detection uses overlap of visual (interpolated) radii, confirmed on physical radii. Momentum conservation only:
+Collision detection checks body movement throughout each physics step, including fast bodies that cross between updates. The more massive body absorbs the smaller one. Momentum is conserved:
 
 ```
 v_merged = (m₁v₁ + m₂v₂) / (m₁ + m₂)
@@ -381,6 +376,7 @@ See [ROADMAP.md](ROADMAP.md) for complete history.
 
 | Version | Feature |
 |---|---|
+| v3.12.0 | Helpful Boxes Edition: contextual control help, body selection and focus by number, improved fast-body collision detection |
 | v3.11.0 | Native High-DPI rendering: sharp display and UI at any resolution |
 | v3.10.0 | Camera Focus mode (visual body-centered frame), HUD button visibility, two-way config toggle |
 | v3.9.0 | Barnes-Hut + NumPy force dispatch, spatial hash collision grid, package reorganization |
@@ -436,4 +432,4 @@ See [LICENSE](LICENSE) — full terms at [gnu.org/licenses/gpl-3.0](https://www.
 
 Made with ❤ by Nils DONTOT.
 
-*Last updated: October 2026 — v3.11.4*
+*Last updated: October 2026 — v3.12.0*

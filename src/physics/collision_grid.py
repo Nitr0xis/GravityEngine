@@ -20,8 +20,10 @@ from collections import defaultdict
 
 
 class SpatialHashGrid:
-    def __init__(self, cell_size: float):
+    def __init__(self, cell_size: float, max_radius: float, max_displacement: float):
         self.cell_size = max(cell_size, 1e-6)
+        self.max_radius = max_radius
+        self.max_displacement = max_displacement
         self.cells = defaultdict(list)
 
     def _cell_of(self, x, y):
@@ -30,20 +32,36 @@ class SpatialHashGrid:
     def insert(self, body):
         self.cells[self._cell_of(body.x, body.y)].append(body)
 
-    def candidates_near(self, body):
+    def candidates_near(self, body, dt_sim: float = 0.0):
         ix, iy = self._cell_of(body.x, body.y)
+        displacement = math.hypot(body.vx, body.vy) * abs(dt_sim)
+        search_radius = (
+            displacement
+            + self.max_displacement
+            + body.radius
+            + self.max_radius
+        )
+        cell_range = max(1, math.ceil(search_radius / self.cell_size))
         result = []
-        for dx in (-1, 0, 1):
-            for dy in (-1, 0, 1):
+        for dx in range(-cell_range, cell_range + 1):
+            for dy in range(-cell_range, cell_range + 1):
                 result.extend(self.cells.get((ix + dx, iy + dy), ()))
         return result
 
 
-def build_collision_grid(circles):
+def build_collision_grid(circles, dt_sim: float = 0.0):
     if not circles:
         return None
     max_radius = max(c.radius for c in circles)
-    grid = SpatialHashGrid(cell_size=max(2 * max_radius, 1.0))
+    max_displacement = max(
+        math.hypot(c.vx, c.vy) * abs(dt_sim)
+        for c in circles
+    )
+    grid = SpatialHashGrid(
+        cell_size=max(2 * max_radius, 1.0),
+        max_radius=max_radius,
+        max_displacement=max_displacement,
+    )
     for c in circles:
         grid.insert(c)
     return grid

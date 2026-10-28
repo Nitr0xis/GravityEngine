@@ -43,12 +43,14 @@ class C:
 
 
 class Widget:
-    def __init__(self, x, y, w, h):
+    def __init__(self, x, y, w, h, help_text=""):
         self.rect = pygame.Rect(x, y, w, h)
+        self.hover_rect = self.rect.copy()
         self.hovered = False
+        self.help_text = help_text
 
     def update(self, events):
-        self.hovered = self.rect.collidepoint(pygame.mouse.get_pos())
+        self.hovered = self.hover_rect.collidepoint(pygame.mouse.get_pos())
 
     def draw(self, surf):
         pass
@@ -57,10 +59,10 @@ class Widget:
 class SectionTitle(Widget):
     """Section title (text only, non-interactive, scaled)."""
 
-    def __init__(self, x, y, text, font):
+    def __init__(self, x, y, text, font, help_text=""):
         scale = state.engine.scale_coefficient
         font_height = int(22 * scale)
-        super().__init__(x, y, 1, font_height)
+        super().__init__(x, y, 1, font_height, help_text)
         self.text = text
         self.font = font
         self._scale = scale  # keep in case padding adjustment is needed later
@@ -75,10 +77,15 @@ class SectionTitle(Widget):
 
 
 class Checkbox(Widget):
-    def __init__(self, x, y, label, font, val, cb):
+    def __init__(self, x, y, label, font, val, cb, help_text=""):
         scale = state.engine.scale_coefficient
         size = int(20 * scale)
-        super().__init__(x, y, size, size)
+        label_width = font.size(label)[0]
+        super().__init__(x, y, size, size, help_text)
+        self.hover_rect = pygame.Rect(
+            x, y, size + int(30 * scale) + label_width,
+            max(size, font.get_height())
+        )
         self.label, self.font, self.val, self.cb = label, font, val, cb
         self.anim = 1.0 if val else 0.0
         self._scale = scale  # store the scale for use in draw
@@ -86,7 +93,7 @@ class Checkbox(Widget):
     def update(self, events):
         super().update(events)
         for e in events:
-            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.rect.collidepoint(e.pos):
+            if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1 and self.hover_rect.collidepoint(e.pos):
                 self.val = not self.val
                 if self.cb:
                     self.cb(self.val)
@@ -124,12 +131,12 @@ class Toggle(Widget):
     """Two-option selector. Values default to False / True but can be any type."""
 
     def __init__(self, x, y, w, label, font, val, label_a, label_b, cb,
-                 value_a=False, value_b=True):
+                 value_a=False, value_b=True, help_text=""):
         # The base dimensions are multiplied by the scale_coefficient
         scale = state.engine.scale_coefficient
         base_height = 28
         scaled_height = int(base_height * scale)
-        super().__init__(x, y, w, scaled_height)
+        super().__init__(x, y, w, scaled_height, help_text)
         self.label, self.font, self.val = label, font, val
         self.label_a, self.label_b, self.cb = label_a, label_b, cb
         self.value_a, self.value_b = value_a, value_b
@@ -157,8 +164,7 @@ class Toggle(Widget):
 
     def update(self, events):
         self._layout()
-        mx, my = pygame.mouse.get_pos()
-        self.hovered = self._a_rect.collidepoint(mx, my) or self._b_rect.collidepoint(mx, my)
+        self.hovered = self.hover_rect.collidepoint(pygame.mouse.get_pos())
         for e in events:
             if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
                 if self._a_rect.collidepoint(e.pos):
@@ -190,9 +196,12 @@ class Toggle(Widget):
 
 
 class Slider(Widget):
-    def __init__(self, x, y, w, label, font, mn, mx, val, log, fmt, cb):
+    def __init__(self, x, y, w, label, font, mn, mx, val, log, fmt, cb,
+                 help_text=""):
         # Height dynamically scaled with the coefficient
-        super().__init__(x, y, w, int(50 * state.engine.scale_coefficient))
+        super().__init__(
+            x, y, w, int(50 * state.engine.scale_coefficient), help_text
+        )
         self.label = label
         self.font = font
         self.mn = mn
@@ -291,8 +300,9 @@ class Slider(Widget):
 
 
 class Button(Widget):
-    def __init__(self, x, y, w, h, text, font, cb, visible_if=None):
-        super().__init__(x, y, w, h)
+    def __init__(self, x, y, w, h, text, font, cb, visible_if=None,
+                 help_text=""):
+        super().__init__(x, y, w, h, help_text)
         self.text = text
         self.font = font
         self.cb = cb
@@ -328,3 +338,80 @@ class Button(Widget):
                 self.rect.centery - txt.get_height() // 2
             )
         )
+
+
+class TextInput(Widget):
+    """Single-line, digits-only text input used for selecting bodies by ID."""
+
+    def __init__(self, x, y, w, label, font, on_submit, help_text=""):
+        scale = state.engine.scale_coefficient
+        super().__init__(x, y, w, int(75 * scale), help_text)
+        self.label = label
+        self.font = font
+        self.on_submit = on_submit
+        self.value = ""
+        self.error = ""
+        self.focused = False
+        self._scale = scale
+
+    def _field_rect(self):
+        scale = state.engine.scale_coefficient
+        field_y = self.rect.y + int(22 * scale)
+        field_h = int(31 * scale)
+        return pygame.Rect(self.rect.x, field_y, self.rect.width, field_h)
+
+    def _set_focus(self, focused):
+        if self.focused == focused:
+            return
+        self.focused = focused
+        if focused:
+            pygame.key.start_text_input()
+            pygame.key.set_text_input_rect(self._field_rect())
+        else:
+            pygame.key.stop_text_input()
+
+    def update(self, events):
+        super().update(events)
+        if self.focused:
+            pygame.key.set_text_input_rect(self._field_rect())
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                self._set_focus(self.hover_rect.collidepoint(event.pos))
+            elif self.focused and event.type == pygame.TEXTINPUT:
+                self.value += "".join(char for char in event.text if char.isdecimal())
+                self.error = ""
+            elif self.focused and event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+                    self.value = self.value[:-1]
+                    self.error = ""
+                elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                    self.on_submit(self.value)
+                    self._set_focus(False)
+                elif event.key == pygame.K_ESCAPE:
+                    self._set_focus(False)
+
+    def draw(self, surf):
+        scale = state.engine.scale_coefficient
+        label = self.font.render(self.label, True, C.WHITE)
+        surf.blit(label, (self.rect.x, self.rect.y))
+
+        field = self._field_rect()
+        pygame.draw.rect(surf, C.PANEL, field, border_radius=int(4 * scale))
+        border_color = C.GREEN if self.focused else C.TRACK
+        pygame.draw.rect(
+            surf, border_color, field, max(1, int(2 * scale)),
+            border_radius=int(4 * scale)
+        )
+        text = self.value if self.value else "Enter a number"
+        color = C.WHITE if self.value else C.GREY
+        rendered = self.font.render(text, True, color)
+        surf.blit(
+            rendered,
+            (field.x + int(8 * scale), field.centery - rendered.get_height() // 2)
+        )
+        if self.error:
+            error = self.font.render(self.error, True, (255, 100, 100))
+            surf.blit(
+                error,
+                (self.rect.x, field.bottom + int(2 * scale))
+            )
